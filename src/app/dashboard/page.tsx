@@ -35,6 +35,56 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
+// INJECT PROFESSIONAL STYLES - MATCH LANDING PAGE
+// ============================================================================
+const injectDashboardStyles = () => {
+  if (typeof document === 'undefined') return;
+  
+  const styleId = 'dashboard-professional-styles';
+  if (document.getElementById(styleId)) return;
+  
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+    
+    @keyframes blob {
+      0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+      50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+    }
+    
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    
+    .floating {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .blob-decoration {
+      animation: blob 8s ease-in-out infinite;
+    }
+    
+    .dashboard-card {
+      background: linear-gradient(135deg, #1A1D23 0%, #22252B 100%);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .dashboard-card:hover {
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15), 0 0 40px rgba(16, 185, 129, 0.05);
+      transform: translateY(-4px) scale(1.01);
+    }
+  `;
+  document.head.appendChild(style);
+};
+
+// ============================================================================
 // BANNER IMAGE COMPONENT
 // ============================================================================
 interface BannerImageProps {
@@ -44,7 +94,7 @@ interface BannerImageProps {
 const BannerImage: React.FC<BannerImageProps> = ({ src, alt = 'Banner' }) => {
   return (
     <div className="w-full mb-6 lg:mb-8">
-      <div className="relative rounded-2xl overflow-hidden shadow-xl border border-emerald-500/40">
+      <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-emerald-500/30 hover:border-emerald-500/50 transition-all duration-500 hover:shadow-emerald-500/20">
         <img
           src={src}
           alt={alt}
@@ -114,23 +164,23 @@ const StatCard: React.FC<StatCardProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-5 sm:p-6 transition-all duration-200 hover:border-emerald-500/20">
+    <div className="dashboard-card rounded-3xl p-5 sm:p-6">
       <div className="flex items-start justify-between mb-4">
-        <div className="p-2 bg-emerald-500/5 rounded-lg border border-emerald-500/40">
-          <div className="text-emerald-400/80">
+        <div className="p-3 bg-emerald-500/15 rounded-2xl border border-emerald-500/30">
+          <div className="text-emerald-400">
             {icon}
           </div>
         </div>
         {trend !== 'neutral' && (
-          <div className={`text-xs font-medium ${getTrendColor()}`}>
+          <div className={`text-xs font-medium px-3 py-1.5 rounded-full ${getTrendColor()} ${trend === 'up' ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
             {trend === 'up' ? '↑' : '↓'}
           </div>
         )}
       </div>
       {isLoading ? (
         <div className="space-y-3">
-          <div className="h-4 bg-gray-800 rounded w-3/4 animate-pulse"></div>
-          <div className="h-8 bg-gray-800 rounded w-1/2 animate-pulse"></div>
+          <div className="h-4 bg-gray-800 rounded-lg w-3/4 animate-pulse"></div>
+          <div className="h-8 bg-gray-800 rounded-lg w-1/2 animate-pulse"></div>
         </div>
       ) : (
         <>
@@ -157,15 +207,17 @@ const ProfitCard: React.FC<ProfitCardProps> = ({
 }) => {
   const isProfit = todayProfit >= 0;
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 overflow-hidden transition-all duration-200 hover:border-emerald-500/20">
+    <div className="dashboard-card rounded-3xl border-2 border-emerald-500/30 overflow-hidden">
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
         </div>
       ) : (
         <div className="text-center py-8 px-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <DollarSign className="w-5 h-5 text-emerald-400/70" />
+            <div className="p-2 bg-emerald-500/15 rounded-full border border-emerald-500/30">
+              <DollarSign className="w-5 h-5 text-emerald-400" />
+            </div>
             <h2 className="text-sm font-semibold text-gray-300 tracking-wide">
               Profit Hari Ini
             </h2>
@@ -186,10 +238,9 @@ const RealtimeClockCard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
 
-  // ✅ FIX: Prevent hydration error by only updating time on client-side
   useEffect(() => {
     setIsMounted(true);
-    setCurrentTime(new Date()); // Set initial time on client mount
+    setCurrentTime(new Date());
     
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -212,17 +263,16 @@ const RealtimeClockCard: React.FC = () => {
     return `UTC${offset >= 0 ? '+' : ''}${offset}`;
   };
 
-  // Show loading state during SSR to prevent hydration mismatch
   if (!isMounted) {
     return (
-      <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-6 transition-all duration-200 hover:border-emerald-500/20">
-        <div className="w-full border-2 border-emerald-500/40 rounded-lg overflow-hidden p-3">
-          <div className="px-4 py-3 bg-emerald-500/5 border-2 border-emerald-500/30 rounded-lg mb-3">
+      <div className="dashboard-card rounded-3xl p-6">
+        <div className="w-full border-2 border-emerald-500/30 rounded-2xl overflow-hidden p-3">
+          <div className="px-4 py-3 bg-emerald-500/15 border-2 border-emerald-500/30 rounded-2xl mb-3">
             <div className="font-mono text-3xl font-bold text-emerald-400 text-center tracking-wide">
               --:--:--
             </div>
           </div>
-          <div className="px-4 py-2 bg-emerald-500/10 flex items-center justify-between rounded-lg">
+          <div className="px-4 py-2 bg-emerald-500/10 flex items-center justify-between rounded-xl">
             <span className="text-emerald-400/80 text-xs font-medium">UTC</span>
             <div className="flex items-center gap-1">
               <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
@@ -235,10 +285,9 @@ const RealtimeClockCard: React.FC = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-6 transition-all duration-200 hover:border-emerald-500/20">
-      <div className="w-full border-2 border-emerald-500/40 rounded-lg overflow-hidden p-3">
-        {/* Time Box - Layer Dalam dengan Border */}
-        <div className="px-4 py-3 bg-emerald-500/5 border-2 border-emerald-500/30 rounded-lg mb-3">
+    <div className="dashboard-card rounded-3xl p-6">
+      <div className="w-full border-2 border-emerald-500/30 rounded-2xl overflow-hidden p-3">
+        <div className="px-4 py-3 bg-emerald-500/15 border-2 border-emerald-500/30 rounded-2xl mb-3">
           <div 
             className="font-mono text-3xl font-bold text-emerald-400 text-center tracking-wide"
             suppressHydrationWarning
@@ -247,8 +296,7 @@ const RealtimeClockCard: React.FC = () => {
           </div>
         </div>
         
-        {/* Info Bar - UTC kiri, Live kanan */}
-        <div className="px-4 py-2 bg-emerald-500/10 flex items-center justify-between rounded-lg">
+        <div className="px-4 py-2 bg-emerald-500/10 flex items-center justify-between rounded-xl">
           <span className="text-emerald-400/80 text-xs font-medium" suppressHydrationWarning>
             {getTimezone()}
           </span>
@@ -281,7 +329,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg border border-emerald-500/40 transition-all duration-200 hover:border-emerald-500/20">
+    <div className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-xl border border-emerald-500/20 transition-all duration-300 hover:border-emerald-500/40">
       <div>
         <span className="text-sm font-medium text-gray-200">{label}</span>
         {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
@@ -295,7 +343,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
           className="sr-only peer"
         />
         <div
-          className={`w-12 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ${checked ? 'bg-emerald-600' : 'bg-gray-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} transition-all duration-200`}
+          className={`w-12 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ${checked ? 'bg-gradient-to-r from-emerald-600 to-emerald-500' : 'bg-gray-700'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} transition-all duration-200`}
         ></div>
       </label>
     </div>
@@ -452,27 +500,29 @@ const BulkScheduleModal: React.FC<BulkScheduleModalProps> = ({
       ></div>
 
       <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="relative bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-emerald-500/40">
+        <div className="relative dashboard-card rounded-3xl border-2 border-emerald-500/30 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-emerald-500/20">
             <div className="flex items-center gap-3">
-              <Clock className="w-6 h-6 text-emerald-400" />
+              <div className="p-2 bg-emerald-500/15 rounded-2xl border border-emerald-500/30">
+                <Clock className="w-6 h-6 text-emerald-400" />
+              </div>
               <h2 className="text-xl font-bold text-gray-100">Input Jadwal Trading Massal</h2>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-200 transition-colors">
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-200 transition-colors p-2 hover:bg-gray-800 rounded-2xl">
               <X className="w-6 h-6" />
             </button>
           </div>
 
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-            <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-200 space-y-1">
                   <p className="font-semibold">Format Input Fleksibel:</p>
                   <ul className="list-disc list-inside space-y-1 text-blue-300/90">
-                    <li>Waktu: <code className="bg-blue-900/30 px-1 rounded">12:12</code>, <code className="bg-blue-900/30 px-1 rounded">12.12</code>, atau <code className="bg-blue-900/30 px-1 rounded">1212</code></li>
-                    <li>Trend: <code className="bg-blue-900/30 px-1 rounded">buy/b</code> atau <code className="bg-blue-900/30 px-1 rounded">sell/s</code></li>
-                    <li>Contoh: <code className="bg-blue-900/30 px-1 rounded">09:30 buy</code>, <code className="bg-blue-900/30 px-1 rounded">14.15 s</code>, <code className="bg-blue-900/30 px-1 rounded">1600 sell</code></li>
+                    <li>Waktu: <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">12:12</code>, <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">12.12</code>, atau <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">1212</code></li>
+                    <li>Trend: <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">buy/b</code> atau <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">sell/s</code></li>
+                    <li>Contoh: <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">09:30 buy</code>, <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">14.15 s</code>, <code className="bg-blue-900/30 px-1.5 py-0.5 rounded">1600 sell</code></li>
                   </ul>
                 </div>
               </div>
@@ -485,34 +535,34 @@ const BulkScheduleModal: React.FC<BulkScheduleModalProps> = ({
                     <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0" />
                     <span className="truncate">Jadwal ({schedules.length}/{maxCount})</span>
                   </h3>
-                  <button onClick={handleClearAll} className="text-[10px] sm:text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 flex-shrink-0">
+                  <button onClick={handleClearAll} className="text-[10px] sm:text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 flex-shrink-0 px-2 py-1 hover:bg-red-500/10 rounded-lg">
                     <Trash2 className="w-3 h-3" />
                     <span className="hidden xs:inline">Hapus</span>
                   </button>
                 </div>
-                <div className="h-40 sm:h-48 overflow-y-auto space-y-1.5 sm:space-y-2 custom-scrollbar pr-1 sm:pr-2 bg-[#0f0f0f] rounded-lg p-2 border border-emerald-500/10">
+                <div className="h-40 sm:h-48 overflow-y-auto space-y-1.5 sm:space-y-2 custom-scrollbar pr-1 sm:pr-2 bg-[#0f0f0f] rounded-xl p-2 border border-emerald-500/10">
                   {schedules.map((schedule, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-[#1a1a1a] rounded-lg border border-emerald-500/10 hover:border-emerald-500/20 transition-all gap-1.5 sm:gap-2">
+                    <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-[#1a1a1a] rounded-xl border border-emerald-500/10 hover:border-emerald-500/20 transition-all gap-1.5 sm:gap-2">
                       <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
                         <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-[10px] sm:text-sm border border-emerald-500/20 flex-shrink-0">
                           {index + 1}
                         </div>
                         <span className="text-xs sm:text-sm font-medium text-gray-100 font-mono min-w-[42px] sm:min-w-[45px] flex-shrink-0">{schedule.time}</span>
                         {schedule.trend === 'buy' ? (
-                          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+                          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                             <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             <span className="hidden xs:inline">BUY</span>
                             <span className="xs:hidden">B</span>
                           </span>
                         ) : (
-                          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+                          <span className="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                             <TrendingDown className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             <span className="hidden xs:inline">SELL</span>
                             <span className="xs:hidden">S</span>
                           </span>
                         )}
                       </div>
-                      <button onClick={() => onRemoveSchedule(index)} className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0">
+                      <button onClick={() => onRemoveSchedule(index)} className="text-red-400 hover:text-red-300 transition-colors flex-shrink-0 p-1 hover:bg-red-500/10 rounded-lg">
                         <X className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                       </button>
                     </div>
@@ -529,7 +579,7 @@ const BulkScheduleModal: React.FC<BulkScheduleModalProps> = ({
                 value={bulkInput}
                 onChange={(e) => setBulkInput(e.target.value)}
                 placeholder="09:00 buy&#10;09:30 sell&#10;10.00 b&#10;1030 s&#10;11:00 buy"
-                className="w-full px-4 py-3 text-sm bg-[#1a1a1a] text-gray-100 border border-emerald-500/20 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 resize-none font-mono transition-all duration-200"
+                className="w-full px-4 py-3 text-sm bg-[#1a1a1a] text-gray-100 border border-emerald-500/20 rounded-xl focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 resize-none font-mono transition-all duration-200"
                 rows={8}
               />
               <p className="mt-2 text-xs text-gray-400">
@@ -538,7 +588,7 @@ const BulkScheduleModal: React.FC<BulkScheduleModalProps> = ({
             </div>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                   <div className="text-xs text-red-300 whitespace-pre-line">{error}</div>
@@ -550,12 +600,12 @@ const BulkScheduleModal: React.FC<BulkScheduleModalProps> = ({
               <button
                 onClick={handleBulkAdd}
                 disabled={!bulkInput.trim() || schedules.length >= maxCount}
-                className="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-gray-700 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-600 active:from-emerald-800 active:to-emerald-700 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none hover:scale-105"
               >
                 <Plus className="w-5 h-5" />
                 Tambah Jadwal
               </button>
-              <button onClick={onClose} className="px-6 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-all duration-200 font-medium">
+              <button onClick={onClose} className="px-6 py-3 bg-gray-700 text-gray-200 rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium hover:scale-105">
                 Tutup
               </button>
             </div>
@@ -583,28 +633,30 @@ const ScheduleButton: React.FC<ScheduleButtonProps> = ({
   maxCount = 50,
 }) => {
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 transition-all duration-200 hover:border-emerald-500/20">
+    <div className="dashboard-card rounded-3xl">
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-emerald-400/70" />
+            <div className="p-2 bg-emerald-500/10 rounded-xl">
+              <Clock className="w-5 h-5 text-emerald-400" />
+            </div>
             <span className="text-sm font-semibold text-gray-100">Jadwal Trading</span>
           </div>
-          <span className="text-xs text-gray-400 bg-[#1a1a1a] px-3 py-1 rounded-full border border-emerald-500/40">
+          <span className="text-xs text-gray-400 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-emerald-500/20">
             {schedules.length}/{maxCount}
           </span>
         </div>
 
         {schedules.length > 0 ? (
-          <div className="h-40 sm:h-48 overflow-y-auto space-y-1.5 sm:space-y-2 mb-4 custom-scrollbar pr-1 sm:pr-2 bg-[#0f0f0f] rounded-lg p-2 border border-emerald-500/10">
+          <div className="h-40 sm:h-48 overflow-y-auto space-y-1.5 sm:space-y-2 mb-4 custom-scrollbar pr-1 sm:pr-2 bg-[#0f0f0f] rounded-xl p-2 border border-emerald-500/10">
             {schedules.map((schedule, index) => (
-              <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-[#1a1a1a] rounded-lg border border-emerald-500/10 gap-1.5 sm:gap-2">
+              <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-[#1a1a1a] rounded-xl border border-emerald-500/10 gap-1.5 sm:gap-2 hover:border-emerald-500/20 transition-all">
                 <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1">
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400/80 font-bold text-[10px] sm:text-sm border border-emerald-500/20 flex-shrink-0">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-[10px] sm:text-sm border border-emerald-500/20 flex-shrink-0">
                     {index + 1}
                   </div>
                   <span className="text-xs sm:text-sm font-medium text-gray-100 font-mono min-w-[42px] sm:min-w-[45px] flex-shrink-0">{schedule.time}</span>
-                  <span className={`px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-medium flex-shrink-0 ${
+                  <span className={`px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-medium flex-shrink-0 ${
                     schedule.trend === 'buy'
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                       : 'bg-red-500/10 text-red-400 border border-red-500/20'
@@ -617,7 +669,7 @@ const ScheduleButton: React.FC<ScheduleButtonProps> = ({
             ))}
           </div>
         ) : (
-          <div className="mb-4 p-6 bg-[#1a1a1a] rounded-lg border border-emerald-500/10 text-center">
+          <div className="mb-4 p-6 bg-[#1a1a1a] rounded-xl border border-emerald-500/10 text-center">
             <Calendar className="w-12 h-12 text-gray-600 mx-auto mb-3" />
             <p className="text-sm text-gray-400">Belum ada jadwal trading</p>
           </div>
@@ -626,7 +678,7 @@ const ScheduleButton: React.FC<ScheduleButtonProps> = ({
         <button
           onClick={onOpenModal}
           disabled={isDisabled || schedules.length >= maxCount}
-          className="w-full px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-600 active:from-emerald-800 active:to-emerald-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none hover:scale-105"
         >
           <Plus className="w-5 h-5" />
           {schedules.length === 0 ? 'Tambah Jadwal' : 'Kelola Jadwal'}
@@ -703,14 +755,14 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 transition-all duration-200 hover:border-emerald-500/30 shadow-lg hover:shadow-emerald-500/10">
+    <div className="dashboard-card rounded-3xl">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 cursor-pointer border-b border-emerald-500/40 transition-all duration-200 hover:bg-[#1a1a1a]"
+        className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 cursor-pointer border-b border-emerald-500/20 transition-all duration-200 hover:bg-[#1a1a1a] rounded-t-3xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30">
             <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
           </div>
           <div>
@@ -722,15 +774,15 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {settings.assetSymbol && (
-            <span className="hidden sm:flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-xs border border-emerald-500/20">
+            <span className="hidden sm:flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs border border-emerald-500/20">
               <CheckCircle className="w-3 h-3" />
               Ready
             </span>
           )}
           {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-emerald-400/70 transition-transform duration-200" />
+            <ChevronUp className="w-5 h-5 text-emerald-400 transition-transform duration-200" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-emerald-400/70 transition-transform duration-200" />
+            <ChevronDown className="w-5 h-5 text-emerald-400 transition-transform duration-200" />
           )}
         </div>
       </div>
@@ -747,7 +799,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
             </div>
 
             {/* Asset Selection */}
-            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
               <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-300 mb-2">
                 <Target className="w-4 h-4 text-emerald-400" />
                 Aset Trading
@@ -769,7 +821,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                   }
                 }}
                 disabled={isDisabled}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-xl focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
               >
                 <option value="">Pilih Aset Trading</option>
                 {assets.length === 0 && (
@@ -782,7 +834,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                 ))}
               </select>
               {settings.assetSymbol && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/5 px-2 py-1.5 rounded border border-emerald-500/10">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/5 px-2 py-1.5 rounded-lg border border-emerald-500/10">
                   <CheckCircle className="w-3 h-3 flex-shrink-0" />
                   <span className="font-medium truncate">{settings.assetSymbol} - {settings.assetName}</span>
                 </div>
@@ -792,7 +844,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
             {/* Account Type & Duration Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Account Type */}
-              <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+              <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-300 mb-2">
                   <DollarSign className="w-4 h-4 text-emerald-400" />
                   Tipe Akun
@@ -801,7 +853,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                   value={settings.accountType}
                   onChange={(e) => onChange({ ...settings, accountType: e.target.value as 'demo' | 'real' })}
                   disabled={isDisabled}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-xl focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
                 >
                   <option value="demo">🎮 Demo Account</option>
                   <option value="real">💰 Real Account</option>
@@ -809,7 +861,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
               </div>
 
               {/* Timeframe */}
-              <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+              <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
                 <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-300 mb-2">
                   <Clock className="w-4 h-4 text-emerald-400" />
                   Timeframe
@@ -818,7 +870,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                   value={settings.duration.toString()}
                   onChange={(e) => onChange({ ...settings, duration: parseInt(e.target.value) })}
                   disabled={isDisabled}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-xl focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed appearance-none transition-all duration-200 font-medium"
                 >
                   {DURATION_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -828,7 +880,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
             </div>
 
             {/* Amount */}
-            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
               <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-300 mb-2">
                 <BarChart2 className="w-4 h-4 text-emerald-400" />
                 Jumlah per Order
@@ -845,7 +897,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                   min="1000"
                   step="1000"
                   placeholder="10000"
-                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-emerald-500/20 rounded-xl focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
@@ -865,10 +917,12 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
             </div>
 
             {/* Martingale Toggle */}
-            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/0 border border-orange-500/20 rounded-lg p-3 sm:p-4">
+            <div className="bg-gradient-to-br from-orange-500/5 to-orange-500/0 border border-orange-500/20 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-orange-400" />
+                  <div className="p-2 bg-orange-500/10 rounded-xl">
+                    <Zap className="w-5 h-5 text-orange-400" />
+                  </div>
                   <div>
                     <span className="text-sm font-semibold text-gray-200 block">Martingale</span>
                     <p className="text-xs text-gray-500">Gandakan amount setelah loss</p>
@@ -883,7 +937,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                     className="sr-only peer"
                   />
                   <div
-                    className={`w-12 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ${isMartingaleEnabled ? 'bg-orange-600' : 'bg-gray-700'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} transition-all duration-200`}
+                    className={`w-12 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-500/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all ${isMartingaleEnabled ? 'bg-gradient-to-r from-orange-600 to-orange-500' : 'bg-gray-700'} ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} transition-all duration-200`}
                   ></div>
                 </label>
               </div>
@@ -904,7 +958,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                         disabled={isDisabled}
                         min="1"
                         max="10"
-                        className="w-full px-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-orange-500/20 rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                        className="w-full px-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-orange-500/20 rounded-xl focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
                       />
                     </div>
 
@@ -922,13 +976,13 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                         min="1"
                         max="5"
                         step="0.1"
-                        className="w-full px-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-orange-500/20 rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                        className="w-full px-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-orange-500/20 rounded-xl focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
                       />
                     </div>
                   </div>
 
                   {/* Info Card */}
-                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2.5 sm:p-3">
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-2.5 sm:p-3">
                     <p className="text-xs text-orange-300 flex items-start gap-2">
                       <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                       <span>
@@ -951,7 +1005,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
               </h3>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500/5 to-blue-500/0 border border-blue-500/20 rounded-lg p-3 sm:p-4">
+            <div className="bg-gradient-to-br from-blue-500/5 to-blue-500/0 border border-blue-500/20 rounded-xl p-3 sm:p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Stop Loss */}
                 <div>
@@ -969,7 +1023,7 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                       onChange={(e) => updateNestedSetting('stopLossProfit', 'stopLoss', e.target.value ? parseInt(e.target.value) : undefined)}
                       disabled={isDisabled}
                       placeholder="Opsional"
-                      className="w-full pl-9 sm:pl-10 pr-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-blue-500/20 rounded-lg focus:ring-2 focus:ring-red-500/30 focus:border-red-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                      className="w-full pl-9 sm:pl-10 pr-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-blue-500/20 rounded-xl focus:ring-2 focus:ring-red-500/30 focus:border-red-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
                     />
                   </div>
                 </div>
@@ -990,14 +1044,14 @@ const OrderSettingsCard: React.FC<OrderSettingsCardProps> = ({
                       onChange={(e) => updateNestedSetting('stopLossProfit', 'stopProfit', e.target.value ? parseInt(e.target.value) : undefined)}
                       disabled={isDisabled}
                       placeholder="Opsional"
-                      className="w-full pl-9 sm:pl-10 pr-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-blue-500/20 rounded-lg focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                      className="w-full pl-9 sm:pl-10 pr-3 py-2.5 text-xs sm:text-sm bg-[#0f0f0f] text-gray-100 border border-blue-500/20 rounded-xl focus:ring-2 focus:ring-green-500/30 focus:border-green-500/30 disabled:bg-[#151515] disabled:cursor-not-allowed transition-all duration-200 font-medium"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Info */}
-              <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-lg p-2.5">
+              <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-xl p-2.5">
                 <p className="text-xs text-blue-300 flex items-start gap-2">
                   <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   <span>Bot akan otomatis berhenti saat mencapai target profit atau loss yang ditentukan.</span>
@@ -1072,14 +1126,14 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
   const statusConfig = getStatusConfig();
 
   return (
-    <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 transition-all duration-200 hover:border-emerald-500/30 shadow-lg hover:shadow-emerald-500/10">
+    <div className="dashboard-card rounded-3xl">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 cursor-pointer border-b border-emerald-500/40 transition-all duration-200 hover:bg-[#1a1a1a]"
+        className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 cursor-pointer border-b border-emerald-500/20 transition-all duration-200 hover:bg-[#1a1a1a] rounded-t-3xl"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30">
             <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
           </div>
           <div>
@@ -1090,16 +1144,16 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
           </div>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-emerald-400/70 transition-transform duration-200" />
+          <ChevronUp className="w-5 h-5 text-emerald-400 transition-transform duration-200" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-emerald-400/70 transition-transform duration-200" />
+          <ChevronDown className="w-5 h-5 text-emerald-400 transition-transform duration-200" />
         )}
       </div>
 
       {isExpanded && (
         <div className="p-4 sm:p-6 space-y-5">
           {/* Status Card - Prominent */}
-          <div className={`relative overflow-hidden bg-gradient-to-br ${statusConfig.bgGradient} border ${statusConfig.borderColor} rounded-xl p-5 transition-all duration-300`}>
+          <div className={`relative overflow-hidden bg-gradient-to-br ${statusConfig.bgGradient} border ${statusConfig.borderColor} rounded-2xl p-5 transition-all duration-300`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] flex items-center justify-center border ${statusConfig.borderColor}`}>
@@ -1123,7 +1177,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-3">
             {/* Jadwal Aktif */}
-            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-emerald-400" />
                 <p className="text-xs text-gray-400">Jadwal Aktif</p>
@@ -1134,7 +1188,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
             </div>
 
             {/* Current Profit */}
-            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-lg p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
+            <div className="bg-[#1a1a1a]/50 border border-emerald-500/10 rounded-xl p-3 sm:p-4 hover:border-emerald-500/20 transition-all">
               <div className="flex items-center gap-2 mb-2">
                 <DollarSign className="w-4 h-4 text-emerald-400" />
                 <p className="text-xs text-gray-400">Profit Sesi</p>
@@ -1149,7 +1203,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
           {(status.nextExecutionTime || status.lastExecutionTime) && (
             <div className="space-y-2">
               {status.nextExecutionTime && (
-                <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-400" />
                     <span className="text-xs sm:text-sm text-gray-300">Eksekusi Berikutnya</span>
@@ -1160,7 +1214,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
                 </div>
               )}
               {status.lastExecutionTime && (
-                <div className="flex items-center justify-between p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-purple-400" />
                     <span className="text-xs sm:text-sm text-gray-300">Eksekusi Terakhir</span>
@@ -1175,7 +1229,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 animate-pulse">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 animate-pulse">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-red-300">{errorMessage}</p>
             </div>
@@ -1187,7 +1241,7 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
               <button
                 onClick={onStart}
                 disabled={isLoading || !canStart}
-                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-600 active:from-emerald-800 active:to-emerald-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none touch-manipulation"
+                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-600 active:from-emerald-800 active:to-emerald-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 disabled:shadow-none touch-manipulation hover:scale-105"
               >
                 {isLoading ? (
                   <>
@@ -1200,7 +1254,6 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
                     <span>{status.isPaused ? 'Lanjutkan Bot' : 'Mulai Bot'}</span>
                   </>
                 )}
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
               </button>
             )}
             
@@ -1208,11 +1261,10 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
               <button
                 onClick={onPause}
                 disabled={isLoading}
-                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-lg hover:from-yellow-700 hover:to-yellow-600 active:from-yellow-800 active:to-yellow-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 disabled:shadow-none touch-manipulation"
+                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white rounded-xl hover:from-yellow-700 hover:to-yellow-600 active:from-yellow-800 active:to-yellow-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 disabled:shadow-none touch-manipulation hover:scale-105"
               >
                 <Pause className="w-5 h-5" />
                 <span>Jeda Bot</span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
               </button>
             )}
             
@@ -1220,18 +1272,17 @@ const BotControlCard: React.FC<BotControlCardProps> = ({
               <button
                 onClick={onStop}
                 disabled={isLoading}
-                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-700 hover:to-red-600 active:from-red-800 active:to-red-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-red-500/20 hover:shadow-red-500/30 disabled:shadow-none touch-manipulation"
+                className="w-full group relative overflow-hidden flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl hover:from-red-700 hover:to-red-600 active:from-red-800 active:to-red-700 disabled:from-[#2a2a2a] disabled:to-[#2a2a2a] disabled:cursor-not-allowed transition-all duration-200 font-semibold text-sm shadow-lg shadow-red-500/20 hover:shadow-red-500/30 disabled:shadow-none touch-manipulation hover:scale-105"
               >
                 <Square className="w-5 h-5" />
                 <span>Hentikan Bot</span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
               </button>
             )}
           </div>
 
           {/* Info Message */}
           {!canStart && !errorMessage && (
-            <div className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 rounded-lg flex items-start gap-3">
+            <div className="p-4 bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/20 rounded-xl flex items-start gap-3">
               <Info className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-yellow-300 mb-1">
@@ -1297,6 +1348,10 @@ export default function DashboardPage() {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   useEffect(() => {
+    injectDashboardStyles();
+  }, []);
+
+  useEffect(() => {
     if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.push('/');
@@ -1343,8 +1398,6 @@ export default function DashboardPage() {
         currentProfit: schedulesData.reduce((sum: number, s: any) => sum + (s.currentProfit || 0), 0),
       });
 
-      // ✅ IMPROVED: Get today's stats from execution history (more accurate)
-      // This will fetch all executions from today across all schedules
       const todayStatsData = await api.getTodayStats();
       
       setTodayStats({
@@ -1484,12 +1537,11 @@ export default function DashboardPage() {
 
   const canStartBot = !!(orderSettings.assetSymbol && orderSettings.schedules.length > 0);
 
-  // ✅ Auth Guard: tampilkan loading saat hydration, atau null jika belum login
   if (!hasHydrated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#161616] to-[#0F0F0F] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin"></div>
           <p className="text-gray-500 text-sm">Memuat...</p>
         </div>
       </div>
@@ -1497,7 +1549,7 @@ export default function DashboardPage() {
   }
 
   if (!isAuthenticated) {
-    return null; // useEffect sudah handle redirect ke /
+    return null;
   }
 
   return (
@@ -1524,21 +1576,30 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 relative">
+        {/* Decorative Blobs */}
+        <div className="absolute top-20 left-0 w-72 h-72 rounded-full opacity-20 blur-3xl blob-decoration pointer-events-none" style={{
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)'
+        }} />
+        <div className="absolute top-40 right-0 w-96 h-96 rounded-full opacity-15 blur-3xl blob-decoration pointer-events-none" style={{
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
+          animationDelay: '2s'
+        }} />
+        
         <BannerImage
           src="/header3.jpg"
           alt="Banner Bot Trading"
         />
 
         {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-5 flex items-start gap-3">
+          <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-red-300">{error}</p>
             </div>
             <button
               onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-300 text-2xl flex-shrink-0 transition-colors duration-200"
+              className="text-red-400 hover:text-red-300 text-2xl flex-shrink-0 transition-colors duration-200 p-1 hover:bg-red-500/10 rounded-lg"
             >
               ×
             </button>
@@ -1575,10 +1636,12 @@ export default function DashboardPage() {
             />
 
             {/* Chart Card */}
-            <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-6 transition-all duration-200 hover:border-emerald-500/20">
+            <div className="dashboard-card rounded-3xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
-                  <BarChart2 className="w-5 h-5 text-emerald-400/70" />
+                  <div className="p-2 bg-emerald-500/15 rounded-xl border border-emerald-500/30">
+                    <BarChart2 className="w-5 h-5 text-emerald-400" />
+                  </div>
                   Grafik Langsung
                 </h3>
               </div>
@@ -1586,7 +1649,6 @@ export default function DashboardPage() {
                 assetSymbol={orderSettings.assetSymbol}
                 height={300}
               />
-              {/* Selected Asset Text */}
               <div className="mt-3 text-center">
                 <p className="text-sm text-gray-400">
                   {orderSettings.assetSymbol && orderSettings.assetName 
@@ -1655,10 +1717,12 @@ export default function DashboardPage() {
               isLoading={isLoading}
             />
 
-            <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-5 transition-all duration-200 hover:border-emerald-500/20">
+            <div className="dashboard-card rounded-3xl p-5">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-base font-semibold text-gray-100 flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-emerald-400/70" />
+                  <div className="p-2 bg-emerald-500/15 rounded-xl border border-emerald-500/30">
+                    <BarChart2 className="w-4 h-4 text-emerald-400" />
+                  </div>
                   Grafik
                 </h3>
               </div>
@@ -1666,7 +1730,6 @@ export default function DashboardPage() {
                 assetSymbol={orderSettings.assetSymbol}
                 height={250}
               />
-              {/* Selected Asset Text */}
               <div className="mt-3 text-center">
                 <p className="text-sm text-gray-400">
                   {orderSettings.assetSymbol && orderSettings.assetName 
@@ -1713,19 +1776,19 @@ export default function DashboardPage() {
           />
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-[#1E1E1E] to-[#181818] rounded-xl border border-emerald-500/40 p-3 transition-all duration-200">
+            <div className="dashboard-card rounded-3xl p-3">
               <div className="mb-3">
                 <h2 className="text-[10px] font-semibold text-gray-100 flex items-center gap-1 mb-2">
-                  <Clock className="w-3 h-3 text-emerald-400/70" />
+                  <Clock className="w-3 h-3 text-emerald-400" />
                   <span>Waktu</span>
                 </h2>
                 <RealtimeClockDisplay />
               </div>
-              <div className="border-t border-emerald-500/40 my-3"></div>
+              <div className="border-t border-emerald-500/20 my-3"></div>
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[10px] font-semibold text-gray-100 flex items-center gap-1">
-                    <Activity className="w-3 h-3 text-emerald-400/70" />
+                    <Activity className="w-3 h-3 text-emerald-400" />
                     Grafik
                   </h3>
                 </div>
@@ -1733,7 +1796,6 @@ export default function DashboardPage() {
                   assetSymbol={orderSettings.assetSymbol}
                   height={100}
                 />
-                {/* Selected Asset Text */}
                 <div className="mt-2 text-center">
                   <p className="text-[9px] text-gray-400">
                     {orderSettings.assetSymbol && orderSettings.assetName 
@@ -1832,16 +1894,14 @@ const RealtimeClockDisplay: React.FC = () => {
   };
 
   return (
-    <div className="w-full border-2 border-emerald-500/40 rounded-lg overflow-hidden p-2">
-      {/* Time Box - Layer Dalam dengan Border */}
-      <div className="px-3 py-2 bg-emerald-500/5 border-2 border-emerald-500/30 rounded-lg mb-2">
+    <div className="w-full border-2 border-emerald-500/30 rounded-xl overflow-hidden p-2">
+      <div className="px-3 py-2 bg-emerald-500/10 border-2 border-emerald-500/20 rounded-xl mb-2">
         <div className="font-mono text-xl font-bold text-emerald-400 text-center tracking-wide">
           {formatTime(currentTime)}
         </div>
       </div>
       
-      {/* Info Bar - UTC kiri, Live kanan */}
-      <div className="px-3 py-1.5 bg-emerald-500/10 flex items-center justify-between rounded-lg">
+      <div className="px-3 py-1.5 bg-emerald-500/10 flex items-center justify-between rounded-xl">
         <span className="text-emerald-400/80 text-[10px] font-medium">{getTimezone()}</span>
         <div className="flex items-center gap-1">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>

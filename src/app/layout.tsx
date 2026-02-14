@@ -13,8 +13,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Order Schedule Platform',
-  description: 'Professional trading schedule management',
+  title: 'STC AUtoTrade',
+  description: 'Platform dengan penarikan kilat, profit hingga 100%, dan keamanan maksimal.',
+  keywords: ['binary option', 'trading', 'IDX_STC', 'forex', 'crypto', 'Stouch' ,'STC AutoTrade'],
 };
 
 export default function RootLayout({
