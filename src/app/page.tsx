@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { 
@@ -142,43 +143,249 @@ const injectProfessionalStyles = () => {
     .blob-decoration {
       animation: blob 8s ease-in-out infinite;
     }
+
+    .feature-row {
+      position: relative;
+      border-top: 1px solid rgba(192, 192, 192, 0.12);
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .feature-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #10B981;
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+
+    .feature-row:hover::before {
+      transform: scaleY(1);
+    }
+
+    .feature-row:hover {
+      background: rgba(16, 185, 129, 0.03);
+    }
+
+    .feature-row:hover .feat-num {
+      color: #10B981;
+    }
+
+    .feat-num {
+      font-family: 'Courier New', monospace;
+      transition: color 0.3s ease;
+    }
+
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cta-ticker span {
+      display: inline-block;
+      animation: countUp 0.4s ease both;
+    }
+
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(400%); }
+    }
+
+    .scanline {
+      animation: scanline 4s linear infinite;
+    }
+
+    .slash-divider {
+      position: relative;
+    }
+
+    .slash-divider::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 10%;
+      height: 80%;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.4), transparent);
+    }
+
+    /* Logo animation */
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .form-logo-mobile {
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    /* ── HERO COLUMN ORDER: form first on mobile/tablet ── */
+    @media (max-width: 1023px) {
+      .hero-left  { order: 2; }
+      .hero-right { order: 1; }
+    }
+
+    /* Hero */
+    @media (max-width: 1023px) {
+      .hero-grid { gap: 2.5rem !important; }
+    }
+
+    @media (max-width: 639px) {
+      .hero-section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+      .hero-title { font-size: 2.4rem !important; line-height: 1.0 !important; }
+      .hero-sub { font-size: 14px !important; margin-bottom: 1.5rem !important; }
+      .data-strip { max-width: 100% !important; }
+      .auth-card { padding: 1.25rem !important; border-radius: 1.25rem !important; }
+    }
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .hero-section { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+      .auth-card { padding: 1.75rem !important; }
+    }
+
+    /* Chart */
+    .chart-canvas-wrap { height: 400px; }
+
+    @media (max-width: 639px) {
+      .chart-canvas-wrap { height: 240px !important; }
+      .chart-section-header { flex-direction: column !important; align-items: flex-start !important; gap: 0.5rem !important; }
+      .chart-stream-badge { display: none !important; }
+    }
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .chart-canvas-wrap { height: 320px !important; }
+    }
+
+    /* Feature rows */
+    @media (max-width: 639px) {
+      .feature-row { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; padding-left: 1rem !important; }
+      .feature-row .feat-desc { max-width: 100% !important; }
+      .features-header { padding-left: 1rem !important; padding-right: 1rem !important; }
+    }
+
+    /* CTA section */
+    @media (max-width: 1023px) {
+      .cta-grid { gap: 2.5rem !important; }
+      .cta-right-col { border-left: none !important; padding-left: 0 !important; border-top: 1px solid rgba(192,192,192,0.1) !important; padding-top: 2rem !important; }
+    }
+
+    @media (max-width: 639px) {
+      .cta-section { padding-top: 3.5rem !important; padding-bottom: 3.5rem !important; }
+      .cta-headline { font-size: 2.4rem !important; }
+      .cta-btn { width: 100% !important; justify-content: center !important; }
+      .cta-trust-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    }
+
+    /* Section header font on mobile */
+    @media (max-width: 639px) {
+      .section-headline { font-size: 1.8rem !important; }
+      .section-headline-market { font-size: 1.75rem !important; }
+    }
+
+    /* Global overflow guard */
+    html { overflow-x: hidden; }
+    body { overflow-x: hidden; max-width: 100vw; }
   `;
   document.head.appendChild(style);
+};
+
+// ============================================================================
+// BTC LIVE TICKER HOOK — Binance public API, no key needed
+// ============================================================================
+
+interface BtcTickerData {
+  price: number;
+  changePercent: number;
+  open: number;
+  high: number;
+  low: number;
+  volume: number;
+  isUp: boolean;
+}
+
+const useBtcTicker = (): BtcTickerData | null => {
+  const [ticker, setTicker] = useState<BtcTickerData | null>(null);
+
+  useEffect(() => {
+    // Fetch initial 24hr stats
+    fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT')
+      .then(r => r.json())
+      .then(d => {
+        setTicker({
+          price: parseFloat(d.lastPrice),
+          changePercent: parseFloat(d.priceChangePercent),
+          open: parseFloat(d.openPrice),
+          high: parseFloat(d.highPrice),
+          low: parseFloat(d.lowPrice),
+          volume: parseFloat(d.quoteVolume),
+          isUp: parseFloat(d.priceChangePercent) >= 0,
+        });
+      })
+      .catch(console.error);
+
+    // WebSocket for real-time price tick
+    const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@aggTrade');
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        const newPrice = parseFloat(msg.p);
+        setTicker(prev => {
+          if (!prev) return prev;
+          return { ...prev, price: newPrice, isUp: newPrice >= prev.open };
+        });
+      } catch {}
+    };
+
+    return () => ws.close();
+  }, []);
+
+  return ticker;
 };
 
 // ============================================================================
 // LIVE CHART COMPONENT
 // ============================================================================
 
-const ProfessionalChart: React.FC = () => {
+const ProfessionalChart: React.FC<{ seedPrice?: number }> = ({ seedPrice }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [data, setData] = useState<number[]>([]);
+  const seededRef = useRef(false);
 
   useEffect(() => {
-    // Generate initial data
+    // Wait for real price, initialize only once
+    if (seededRef.current) return;
+    const basePrice = seedPrice || 0;
+    if (!basePrice) return;
+    seededRef.current = true;
+
     const points = 60;
     const newData: number[] = [];
-    let value = 45000 + Math.random() * 5000;
+    let value = basePrice;
+    const swing = basePrice * 0.005; // 0.5% swing range
     
     for (let i = 0; i < points; i++) {
-      value += (Math.random() - 0.48) * 200;
-      value = Math.max(43000, Math.min(52000, value));
+      value += (Math.random() - 0.48) * swing;
+      value = Math.max(basePrice * 0.97, Math.min(basePrice * 1.03, value));
       newData.push(value);
     }
     setData(newData);
 
-    // Update data
+    // Update data every 2s — drift around real price
     const interval = setInterval(() => {
       setData(prev => {
         const lastValue = prev[prev.length - 1];
-        const newValue = lastValue + (Math.random() - 0.48) * 150;
-        const clampedValue = Math.max(43000, Math.min(52000, newValue));
-        return [...prev.slice(1), clampedValue];
+        const drift = (basePrice - lastValue) * 0.05; // gentle pull toward real price
+        const newValue = lastValue + drift + (Math.random() - 0.48) * swing * 0.6;
+        return [...prev.slice(1), newValue];
       });
     }, 2000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [seedPrice]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -308,36 +515,152 @@ const ProfessionalChart: React.FC = () => {
 };
 
 // ============================================================================
+// TICKER TYPES & MULTI-TICKER HOOK
+// ============================================================================
+
+interface TickerItem {
+  symbol: string;
+  price: number;
+  change: number;
+  isUp: boolean;
+  isLive: boolean;
+}
+
+const useMultiTicker = (): TickerItem[] => {
+  const [tickers, setTickers] = useState<TickerItem[]>([
+    { symbol: 'ETH/USD',  price: 0,      change: 0,     isUp: true,  isLive: false },
+    { symbol: 'EUR/USD',  price: 0,      change: 0,     isUp: true,  isLive: false },
+    { symbol: 'GBP/USD',  price: 0,      change: 0,     isUp: true,  isLive: false },
+    { symbol: 'GOLD',     price: 0,      change: 0,     isUp: true,  isLive: false },
+    { symbol: 'SPX',      price: 4789,   change: 0.67,  isUp: true,  isLive: false },
+  ]);
+
+  const update = (symbol: string, patch: Partial<TickerItem>) =>
+    setTickers(prev => prev.map(t => t.symbol === symbol ? { ...t, ...patch, isLive: true } : t));
+
+  useEffect(() => {
+    // ── ETH: Binance 24hr REST ──────────────────────────────────────────
+    fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=ETHUSDT')
+      .then(r => r.json())
+      .then(d => update('ETH/USD', {
+        price:  parseFloat(d.lastPrice),
+        change: parseFloat(d.priceChangePercent),
+        isUp:   parseFloat(d.priceChangePercent) >= 0,
+      })).catch(() => update('ETH/USD', { price: 2456, change: 1.82, isUp: true }));
+
+    // ── ETH: Binance WebSocket live price ───────────────────────────────
+    const ethWs = new WebSocket('wss://stream.binance.com:9443/ws/ethusdt@aggTrade');
+    ethWs.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        update('ETH/USD', { price: parseFloat(msg.p) });
+      } catch {}
+    };
+
+    // ── EUR/USD & GBP/USD: frankfurter.app (free, no key) ───────────────
+    fetch('https://api.frankfurter.app/latest?from=USD&to=EUR,GBP')
+      .then(r => r.json())
+      .then(d => {
+        // frankfurter returns EUR and GBP per 1 USD, so price = 1/rate
+        const eur = d.rates?.EUR ? +(1 / d.rates.EUR).toFixed(4) : 1.0842;
+        const gbp = d.rates?.GBP ? +(1 / d.rates.GBP).toFixed(4) : 1.2634;
+        update('EUR/USD', { price: eur, change: 0, isUp: true });
+        update('GBP/USD', { price: gbp, change: 0, isUp: true });
+      }).catch(() => {
+        update('EUR/USD', { price: 1.0842, change: -0.23, isUp: false });
+        update('GBP/USD', { price: 1.2634, change:  0.45, isUp: true  });
+      });
+
+    // ── GOLD: goldprice.org (free, no key) ──────────────────────────────
+    fetch('https://data-asg.goldprice.org/dbXRates/USD')
+      .then(r => r.json())
+      .then(d => {
+        const price = d?.items?.[0]?.xauPrice;
+        if (price) update('GOLD', { price: +parseFloat(price).toFixed(2), change: -0.12, isUp: false });
+        else update('GOLD', { price: 2034, change: -0.12, isUp: false });
+      }).catch(() => update('GOLD', { price: 2034, change: -0.12, isUp: false }));
+
+    // ── Refresh forex & gold every 60s ──────────────────────────────────
+    const interval = setInterval(() => {
+      fetch('https://api.frankfurter.app/latest?from=USD&to=EUR,GBP')
+        .then(r => r.json())
+        .then(d => {
+          if (d.rates?.EUR) update('EUR/USD', { price: +(1 / d.rates.EUR).toFixed(4) });
+          if (d.rates?.GBP) update('GBP/USD', { price: +(1 / d.rates.GBP).toFixed(4) });
+        }).catch(() => {});
+      fetch('https://data-asg.goldprice.org/dbXRates/USD')
+        .then(r => r.json())
+        .then(d => {
+          const price = d?.items?.[0]?.xauPrice;
+          if (price) update('GOLD', { price: +parseFloat(price).toFixed(2) });
+        }).catch(() => {});
+    }, 60_000);
+
+    return () => {
+      ethWs.close();
+      clearInterval(interval);
+    };
+  }, []);
+
+  return tickers;
+};
+
+// ============================================================================
 // MARKET TICKER
 // ============================================================================
 
-const MarketTicker: React.FC = () => {
-  const tickers = [
-    { symbol: 'BTC/USD', price: 47234, change: 2.34, isUp: true },
-    { symbol: 'ETH/USD', price: 2456, change: 1.82, isUp: true },
-    { symbol: 'EUR/USD', price: 1.0842, change: -0.23, isUp: false },
-    { symbol: 'GBP/USD', price: 1.2634, change: 0.45, isUp: true },
-    { symbol: 'GOLD', price: 2034, change: -0.12, isUp: false },
-    { symbol: 'SPX', price: 4789, change: 0.67, isUp: true },
-  ];
+const MarketTicker: React.FC<{ btcPrice?: number; btcChange?: number; btcUp?: boolean }> = ({
+  btcPrice, btcChange, btcUp
+}) => {
+  const multiTickers = useMultiTicker();
+
+  const btcTicker: TickerItem = {
+    symbol: 'BTC/USD',
+    price:  btcPrice  ?? 0,
+    change: btcChange ?? 0,
+    isUp:   btcUp     ?? true,
+    isLive: !!btcPrice,
+  };
+
+  const tickers: TickerItem[] = btcPrice
+    ? [btcTicker, ...multiTickers]
+    : multiTickers;
 
   return (
     <div className="market-ticker py-2" style={{ background: '#22252B', borderTop: '1px solid rgba(192, 192, 192, 0.15)' }}>
       <div className="ticker-content">
         {[...tickers, ...tickers].map((ticker, i) => (
           <div key={i} className="flex items-center gap-2 px-6 whitespace-nowrap">
-            <span className="text-xs font-semibold" style={{ color: '#E5E5E5' }}>
+            <span className="text-xs font-semibold flex items-center gap-1.5" style={{ color: '#E5E5E5' }}>
               {ticker.symbol}
+              {ticker.isLive && (
+                <span style={{
+                  width: '5px', height: '5px', borderRadius: '50%',
+                  background: '#10B981',
+                  boxShadow: '0 0 4px rgba(16,185,129,0.8)',
+                  display: 'inline-block',
+                  animation: 'pulse 2s infinite',
+                }} />
+              )}
             </span>
             <span className="text-xs" style={{ color: '#9CA3AF' }}>
-              ${ticker.price.toLocaleString()}
+              {ticker.price > 0
+                ? `$${ticker.price.toLocaleString(undefined, {
+                    minimumFractionDigits: ticker.price < 100 ? 4 : 2,
+                    maximumFractionDigits: ticker.price < 100 ? 4 : 2,
+                  })}`
+                : '—'}
             </span>
-            <span 
+            <span
               className="text-xs font-semibold flex items-center gap-1"
               style={{ color: ticker.isUp ? '#10B981' : '#EF4444' }}
             >
-              {ticker.isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              {ticker.change}%
+              {ticker.isUp
+                ? <TrendingUp className="w-3 h-3" />
+                : <TrendingDown className="w-3 h-3" />}
+              {ticker.change !== 0
+                ? `${ticker.change > 0 ? '+' : ''}${ticker.change.toFixed(2)}%`
+                : '—'}
             </span>
           </div>
         ))}
@@ -618,69 +941,44 @@ const AuthPanel: React.FC<{ view: 'login' | 'register'; setView: (v: 'login' | '
 };
 
 // ============================================================================
-// STAT CARD
+// FEATURE ROW — editorial numbered list style
 // ============================================================================
 
-const StatCard: React.FC<{ 
-  icon: React.ReactNode; 
-  label: string; 
-  value: string; 
-  change?: string;
-  isPositive?: boolean;
-}> = ({ icon, label, value, change, isPositive = true }) => {
-  return (
-    <div className="professional-card p-6 rounded-3xl">
-      <div className="flex items-start justify-between mb-4">
-        <div className="p-3 rounded-2xl" style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
-          <div style={{ color: '#10B981' }}>
-            {icon}
-          </div>
-        </div>
-        {change && (
-          <div className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold" style={{ 
-            color: isPositive ? '#10B981' : '#EF4444',
-            background: isPositive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
-          }}>
-            {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            {change}
-          </div>
-        )}
-      </div>
-      <div className="text-3xl font-bold mb-1" style={{ color: '#E5E5E5' }}>
-        {value}
-      </div>
-      <div className="text-sm" style={{ color: '#9CA3AF' }}>
-        {label}
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// FEATURE CARD
-// ============================================================================
-
-const FeatureCard: React.FC<{ 
-  icon: React.ReactNode; 
+const FeatureRow: React.FC<{ 
+  index: string;
   title: string; 
   description: string;
-}> = ({ icon, title, description }) => {
+  tag: string;
+}> = ({ index, title, description, tag }) => {
   return (
-    <div className="professional-card p-6 rounded-3xl">
-      <div className="flex items-start gap-4">
-        <div className="p-3 rounded-2xl flex-shrink-0" style={{ background: 'rgba(16, 185, 129, 0.15)' }}>
-          <div style={{ color: '#10B981' }}>
-            {icon}
-          </div>
-        </div>
-        <div>
-          <h3 className="font-semibold mb-2 text-lg" style={{ color: '#E5E5E5' }}>
+    <div className="feature-row pl-6 pr-4 py-8 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+      <div className="feat-num text-xs tracking-widest" style={{ 
+        color: 'rgba(192,192,192,0.35)',
+        minWidth: '2.5rem'
+      }}>
+        {index}
+      </div>
+
+      <div className="flex-1 sm:flex sm:items-center sm:gap-8">
+        <div style={{ minWidth: '220px' }}>
+          <h3 className="text-lg font-bold tracking-tight" style={{ color: '#E5E5E5', letterSpacing: '-0.02em' }}>
             {title}
           </h3>
-          <p className="text-sm leading-relaxed" style={{ color: '#9CA3AF' }}>
-            {description}
-          </p>
+          <span className="text-xs tracking-widest uppercase mt-1 inline-block" style={{ color: 'rgba(16,185,129,0.7)' }}>
+            {tag}
+          </span>
         </div>
+        <p className="feat-desc text-sm leading-relaxed mt-2 sm:mt-0" style={{ color: '#6B7280', maxWidth: '480px' }}>
+          {description}
+        </p>
+      </div>
+
+      <div className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full opacity-0 group-hover:opacity-100" style={{
+        border: '1px solid rgba(16, 185, 129, 0.4)',
+        color: '#10B981',
+        fontSize: '10px'
+      }}>
+        →
       </div>
     </div>
   );
@@ -695,6 +993,7 @@ export default function LandingPage() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
   const [view, setView] = useState<'login' | 'register'>('login');
   const [mounted, setMounted] = useState(false);
+  const btc = useBtcTicker();
 
   useEffect(() => {
     injectProfessionalStyles();
@@ -724,122 +1023,146 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#1A1D23' }}>
+    <div className="min-h-screen overflow-x-hidden" style={{ background: '#1A1D23' }}>
       {/* Market Ticker */}
-      <MarketTicker />
+      <MarketTicker btcPrice={btc?.price} btcChange={btc?.changePercent} btcUp={btc?.isUp} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
-        {/* Decorative Blobs */}
-        <div className="absolute top-20 left-0 w-72 h-72 rounded-full opacity-20 blur-3xl blob-decoration pointer-events-none" style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)'
-        }} />
-        <div className="absolute top-40 right-0 w-96 h-96 rounded-full opacity-15 blur-3xl blob-decoration pointer-events-none" style={{
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
-          animationDelay: '2s'
-        }} />
+        {/* Decorative Blobs — isolated in overflow-hidden wrapper so blur never escapes the container */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute top-20 -left-8 w-64 h-64 rounded-full opacity-15 blur-3xl blob-decoration" style={{
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)'
+          }} />
+          <div className="absolute top-48 -right-8 w-72 h-72 rounded-full opacity-10 blur-3xl blob-decoration" style={{
+            background: 'radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%)',
+            animationDelay: '2s'
+          }} />
+        </div>
         
         {/* Hero Section */}
-        <div className="py-16 lg:py-20">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="hero-section py-8 sm:py-12 lg:py-20 relative" style={{ zIndex: 1 }}>
+          <div className="hero-grid grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             
             {/* Left Content */}
-            <div className="space-y-8 animate-fade-in">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full floating" style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '2px solid rgba(16, 185, 129, 0.3)',
-                boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)'
+            <div className="hero-left animate-fade-in">
+
+              {/* Monospace label */}
+              <p className="text-xs tracking-widest uppercase mb-6" style={{ 
+                color: 'rgba(16,185,129,0.7)',
+                fontFamily: 'Courier New, monospace'
               }}>
-                <Award className="w-4 h-4" style={{ color: '#10B981' }} />
-                <span className="text-sm font-semibold" style={{ color: '#10B981' }}>
-                  Trusted by 10,000+ Professional Traders
+                TRADING AUTOMATION
+              </p>
+
+              {/* Oversized headline */}
+              <h1 className="hero-title" style={{
+                fontSize: 'clamp(2.6rem, 5.5vw, 4.8rem)',
+                fontWeight: 900,
+                color: '#E5E5E5',
+                letterSpacing: '-0.05em',
+                lineHeight: '0.95',
+                marginBottom: '2rem'
+              }}>
+                Platform.<br />
+                Algoritma.<br />
+                <span style={{ 
+                  color: '#10B981',
+                  position: 'relative',
+                  display: 'inline-block'
+                }}>
+                  Hasil nyata.
+                  <span style={{
+                    position: 'absolute',
+                    bottom: '-4px',
+                    left: 0,
+                    right: 0,
+                    height: '3px',
+                    background: 'linear-gradient(to right, #10B981, transparent)'
+                  }} />
                 </span>
-              </div>
+              </h1>
 
-              {/* Heading */}
-              <div>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: '#E5E5E5' }}>
-                  Professional Trading
-                  <br />
-                  <span style={{ color: '#10B981' }}>Automation Platform</span>
-                </h1>
-                <p className="text-lg leading-relaxed" style={{ color: '#9CA3AF' }}>
-                  Enterprise-grade algorithmic trading with advanced risk management, 
-                  real-time analytics, and institutional-level execution.
-                </p>
-              </div>
+              {/* Subtext — clean, no fluff */}
+              <p className="hero-sub" style={{ 
+                color: '#6B7280',
+                fontSize: '15px',
+                lineHeight: '1.7',
+                maxWidth: '400px',
+                marginBottom: '2.5rem'
+              }}>
+                Eksekusi order otomatis dengan risk management presisi,
+                analitik real-time, dan kontrol penuh di tangan Anda.
+              </p>
 
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* Horizontal data strip */}
+              <div className="data-strip flex items-stretch gap-0" style={{
+                border: '1px solid rgba(192,192,192,0.1)',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                maxWidth: '380px'
+              }}>
                 {[
-                  { icon: <Shield className="w-5 h-5" />, text: 'Bank-Grade Security' },
-                  { icon: <CheckCircle className="w-5 h-5" />, text: 'ISO Certified' },
-                  { icon: <Users className="w-5 h-5" />, text: '24/7 Support' }
+                  { val: '0.3ms', label: 'Latency' },
+                  { val: '99.9%', label: 'Uptime' },
+                  { val: '24/7', label: 'Aktif' },
                 ].map((item, i) => (
-                  <div key={i} className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-105" style={{
-                    background: 'rgba(16, 185, 129, 0.05)',
-                    border: '1px solid rgba(16, 185, 129, 0.15)'
+                  <div key={i} className="flex-1 py-4 px-3 slash-divider" style={{
+                    borderRight: i < 2 ? '1px solid rgba(192,192,192,0.1)' : 'none',
+                    textAlign: 'center'
                   }}>
-                    <div className="p-2 rounded-full" style={{ 
-                      background: 'rgba(16, 185, 129, 0.1)',
-                      color: '#10B981' 
-                    }}>
-                      {item.icon}
-                    </div>
-                    <span className="text-xs text-center font-medium" style={{ color: '#9CA3AF' }}>
-                      {item.text}
-                    </span>
+                    <div style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 800,
+                      color: '#E5E5E5',
+                      letterSpacing: '-0.02em',
+                      fontFamily: 'Courier New, monospace'
+                    }}>{item.val}</div>
+                    <div style={{
+                      fontSize: '10px',
+                      color: '#4B5563',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em',
+                      marginTop: '2px'
+                    }}>{item.label}</div>
                   </div>
                 ))}
               </div>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => setView('register')}
-                  className="px-8 py-4 rounded-2xl font-semibold transition-all hover:scale-105 hover:shadow-xl flex items-center gap-2"
-                  style={{
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                    color: '#FFFFFF',
-                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)'
-                  }}
-                >
-                  Start Demo Account
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setView('login')}
-                  className="px-8 py-4 rounded-2xl font-semibold transition-all hover:scale-105 hover:bg-opacity-90"
-                  style={{
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '2px solid rgba(16, 185, 129, 0.3)',
-                    color: '#10B981'
-                  }}
-                >
-                  Sign In
-                </button>
-              </div>
             </div>
 
             {/* Right - Auth Card */}
-            <div className="animate-slide-up delay-200">
-              <div className="professional-card p-8 rounded-3xl" style={{
+            <div className="hero-right animate-slide-up delay-200">
+              <div className="auth-card professional-card p-8 rounded-3xl" style={{
                 boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
               }}>
                 <div className="flex items-center justify-between mb-6 pb-6" style={{
                   borderBottom: '1px solid rgba(192, 192, 192, 0.15)'
                 }}>
-                  <div>
-                    <h2 className="text-2xl font-bold" style={{ color: '#E5E5E5' }}>
-                      {view === 'login' ? 'Welcome Back' : 'Get Started'}
-                    </h2>
-                    <p className="text-sm mt-1" style={{ color: '#9CA3AF' }}>
-                      {view === 'login' ? 'Sign in to your account' : 'Create your professional account'}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {/* Logo - Only visible on mobile and tablet */}
+                    <Image 
+                      src="/logostc.png" 
+                      alt="Logo" 
+                      width={48}
+                      height={48}
+                      className="object-contain lg:hidden"
+                      style={{
+                        filter: 'drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3))'
+                      }}
+                      priority
+                    />
+                    <div>
+                      <h2 className="text-2xl font-bold" style={{ color: '#E5E5E5' }}>
+                        {view === 'login' ? 'Welcome Back' : 'Get Started'}
+                      </h2>
+                      <p className="text-sm mt-1" style={{ color: '#9CA3AF' }}>
+                        {view === 'login' ? 'Sign in to your account' : 'Create your professional account'}
+                      </p>
+                    </div>
                   </div>
-                  <Briefcase className="w-8 h-8" style={{ color: '#10B981' }} />
+                  <Briefcase className="w-8 h-8 hidden lg:block" style={{ color: '#10B981' }} />
                 </div>
 
                 <AuthPanel view={view} setView={setView} />
@@ -858,207 +1181,321 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="py-16 animate-slide-up delay-300" style={{
-          borderTop: '1px solid rgba(192, 192, 192, 0.15)',
-          borderBottom: '1px solid rgba(192, 192, 192, 0.15)'
-        }}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              icon={<BarChart3 className="w-6 h-6" />}
-              label="Average Win Rate"
-              value="92%"
-              change="+2.3%"
-              isPositive={true}
-            />
-            <StatCard
-              icon={<DollarSign className="w-6 h-6" />}
-              label="Daily Volume"
-              value="$2.4M"
-              change="+18%"
-              isPositive={true}
-            />
-            <StatCard
-              icon={<Users className="w-6 h-6" />}
-              label="Active Users"
-              value="10.2K"
-              change="+5.7%"
-              isPositive={true}
-            />
-            <StatCard
-              icon={<Target className="w-6 h-6" />}
-              label="Avg ROI"
-              value="34%"
-              change="+12%"
-              isPositive={true}
-            />
-          </div>
-        </div>
-
         {/* Chart Section */}
-        <div className="py-16 animate-slide-up delay-400">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-6" style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '2px solid rgba(16, 185, 129, 0.3)',
-              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)'
+        <div className="py-12 sm:py-16 animate-slide-up delay-300" style={{
+          borderTop: '1px solid rgba(192, 192, 192, 0.1)'
+        }}>
+          <div className="chart-section-header flex items-end justify-between mb-10">
+            <div>
+              <p className="text-xs tracking-widest uppercase mb-3" style={{
+                color: 'rgba(16,185,129,0.7)',
+                fontFamily: 'Courier New, monospace'
+              }}>
+                MARKET FEED
+              </p>
+              <h2 className="section-headline-market" style={{
+                fontSize: 'clamp(2rem, 4vw, 3rem)',
+                fontWeight: 900,
+                color: '#E5E5E5',
+                letterSpacing: '-0.04em',
+                lineHeight: 1
+              }}>
+                Data pasar,<br />
+                <span style={{ color: '#10B981' }}>tanpa delay.</span>
+              </h2>
+            </div>
+            <div className="chart-stream-badge hidden sm:flex items-center gap-2 pb-1" style={{
+              fontFamily: 'Courier New, monospace'
             }}>
-              <Activity className="w-4 h-4" style={{ color: '#10B981' }} />
-              <span className="text-sm font-semibold" style={{ color: '#10B981' }}>
-                Live Market Data
+              <span style={{
+                width: '8px', height: '8px', borderRadius: '50%',
+                background: '#10B981',
+                boxShadow: '0 0 8px rgba(16,185,129,0.9)',
+                display: 'inline-block',
+                animation: 'pulse 2s infinite'
+              }} />
+              <span style={{ fontSize: '11px', color: '#4B5563', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                STREAM AKTIF
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: '#E5E5E5' }}>
-              Real-Time Performance Overview
-            </h2>
-            <p className="text-lg" style={{ color: '#9CA3AF' }}>
-              Professional-grade analytics and market insights
-            </p>
           </div>
 
           <div className="professional-card p-6 rounded-3xl">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <div className="text-sm font-semibold mb-1" style={{ color: '#9CA3AF' }}>
+                <div className="text-sm font-semibold mb-1 flex items-center gap-2" style={{ color: '#9CA3AF' }}>
                   BTC/USD
+                  {btc && (
+                    <span style={{
+                      width: '6px', height: '6px', borderRadius: '50%',
+                      background: '#10B981',
+                      boxShadow: '0 0 6px rgba(16,185,129,0.9)',
+                      display: 'inline-block',
+                      animation: 'pulse 2s infinite'
+                    }} />
+                  )}
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold" style={{ color: '#E5E5E5' }}>
-                    $47,234.00
+                  <span className="text-3xl font-bold" style={{ color: '#E5E5E5', fontFamily: 'Courier New, monospace' }}>
+                    {btc ? `$${btc.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                   </span>
-                  <span className="text-sm font-semibold flex items-center gap-1" style={{ color: '#10B981' }}>
-                    <TrendingUp className="w-4 h-4" />
-                    +2.34%
-                  </span>
+                  {btc && (
+                    <span className="text-sm font-semibold flex items-center gap-1" style={{ color: btc.isUp ? '#10B981' : '#EF4444' }}>
+                      {btc.isUp ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      {btc.changePercent > 0 ? '+' : ''}{btc.changePercent.toFixed(2)}%
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-xs mb-1" style={{ color: '#9CA3AF' }}>Last 30 days</div>
-                <div className="text-sm font-semibold" style={{ color: '#10B981' }}>Live</div>
+              <div className="text-right" style={{ fontFamily: 'Courier New, monospace' }}>
+                <div className="text-xs mb-1" style={{ color: '#4B5563', textTransform: 'uppercase', letterSpacing: '0.08em' }}>24H</div>
+                <div className="text-xs font-semibold" style={{ color: btc?.isUp ? '#10B981' : '#EF4444' }}>
+                  {btc ? `${btc.isUp ? '▲' : '▼'} LIVE` : 'LOADING'}
+                </div>
               </div>
             </div>
 
-            <div className="rounded-2xl overflow-hidden" style={{ 
-              height: '400px',
+            <div className="chart-canvas-wrap rounded-2xl overflow-hidden" style={{ 
               background: '#1A1D23'
             }}>
-              <ProfessionalChart />
+              <ProfessionalChart seedPrice={btc?.price} />
             </div>
 
-            <div className="grid grid-cols-4 gap-4 mt-6 pt-6" style={{
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6" style={{
               borderTop: '1px solid rgba(192, 192, 192, 0.15)'
             }}>
               {[
-                { label: 'Open', value: '$46,892' },
-                { label: 'High', value: '$48,123' },
-                { label: 'Low', value: '$46,234' },
-                { label: 'Volume', value: '$2.4B' }
+                { label: 'Open', value: btc ? `$${btc.open.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—' },
+                { label: 'High', value: btc ? `$${btc.high.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—' },
+                { label: 'Low', value: btc ? `$${btc.low.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—' },
+                { label: 'Volume', value: btc ? `$${(btc.volume / 1e9).toFixed(2)}B` : '—' },
               ].map((stat, i) => (
                 <div key={i} className="text-center">
-                  <div className="text-xs mb-1" style={{ color: '#9CA3AF' }}>{stat.label}</div>
-                  <div className="text-sm font-semibold" style={{ color: '#E5E5E5' }}>{stat.value}</div>
+                  <div className="text-xs mb-1" style={{ color: '#4B5563', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{stat.label}</div>
+                  <div className="text-sm font-semibold" style={{ color: '#E5E5E5', fontFamily: 'Courier New, monospace' }}>{stat.value}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Features Section */}
-        <div className="py-16 animate-slide-up delay-500">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full mb-6" style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '2px solid rgba(16, 185, 129, 0.3)',
-              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.1)'
-            }}>
-              <Zap className="w-4 h-4" style={{ color: '#10B981' }} />
-              <span className="text-sm font-semibold" style={{ color: '#10B981' }}>
-                Enterprise Features
-              </span>
+        {/* Features Section — editorial numbered list */}
+        <div className="py-12 sm:py-16 lg:py-20 animate-slide-up delay-400" style={{
+          borderTop: '1px solid rgba(192, 192, 192, 0.1)'
+        }}>
+          {/* Section header */}
+          <div className="features-header flex items-end justify-between mb-2 px-6">
+            <div>
+              <p className="text-xs tracking-widest uppercase mb-3" style={{ 
+                color: 'rgba(16,185,129,0.7)',
+                fontFamily: 'Courier New, monospace'
+              }}>
+                CAPABILITIES
+              </p>
+              <h2 className="section-headline" style={{ 
+                color: '#E5E5E5',
+                fontSize: 'clamp(2rem, 4vw, 3rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.04em',
+                lineHeight: 1
+              }}>
+                Apa yang kami<br />
+                <span style={{ color: '#10B981' }}>sediakan.</span>
+              </h2>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: '#E5E5E5' }}>
-              Institutional-Grade Trading Tools
-            </h2>
-            <p className="text-lg max-w-3xl mx-auto" style={{ color: '#9CA3AF' }}>
-              Advanced features designed for professional traders and institutions
-            </p>
+            <div className="hidden lg:block text-right" style={{ color: 'rgba(192,192,192,0.25)', fontFamily: 'Courier New, monospace', fontSize: '11px' }}>
+              <div>SYS.STATUS: ONLINE</div>
+              <div>ENGINE: v4.2.1</div>
+              <div>LATENCY: 0.3ms</div>
+            </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={<Briefcase className="w-6 h-6" />}
+          {/* Numbered rows */}
+          <div className="mt-10">
+            <FeatureRow
+              index="01"
               title="AI-Powered Analysis"
-              description="Machine learning algorithms analyze market conditions and execute trades with precision timing."
+              tag="Machine Learning"
+              description="Algoritma pembelajaran mesin menganalisis kondisi pasar dan mengeksekusi order dengan presisi waktu yang tidak bisa dilakukan secara manual."
             />
-            <FeatureCard
-              icon={<Shield className="w-6 h-6" />}
-              title="Advanced Risk Management"
-              description="Comprehensive risk controls including stop-loss, take-profit, and portfolio diversification."
+            <FeatureRow
+              index="02"
+              title="Risk Management"
+              tag="Proteksi Modal"
+              description="Stop-loss otomatis, take-profit dinamis, dan diversifikasi portofolio yang menjaga modal Anda tetap aman di kondisi pasar apapun."
             />
-            <FeatureCard
-              icon={<TrendingUp className="w-6 h-6" />}
+            <FeatureRow
+              index="03"
               title="Martingale Strategy"
-              description="Automated loss recovery system with configurable multipliers and safety limits."
+              tag="Loss Recovery"
+              description="Sistem pemulihan kerugian otomatis dengan multiplier yang bisa dikonfigurasi dan safety limit untuk mencegah overexposure."
             />
-            <FeatureCard
-              icon={<Eye className="w-6 h-6" />}
+            <FeatureRow
+              index="04"
               title="Real-Time Monitoring"
-              description="Professional dashboard with live performance metrics, win rates, and execution history."
+              tag="Live Dashboard"
+              description="Dashboard profesional dengan metrik performa live, win rate aktual, dan riwayat eksekusi lengkap dalam satu tampilan."
             />
-            <FeatureCard
-              icon={<Clock className="w-6 h-6" />}
+            <FeatureRow
+              index="05"
               title="Automated Scheduling"
-              description="Set up to 10 order times per day with precise execution and trend prediction."
+              tag="Smart Execution"
+              description="Jadwalkan hingga 10 waktu order per hari dengan eksekusi presisi dan prediksi tren berbasis data historis."
             />
-            <FeatureCard
-              icon={<BarChart3 className="w-6 h-6" />}
+            <FeatureRow
+              index="06"
               title="Performance Analytics"
-              description="Detailed reports, backtesting, and optimization tools for strategy refinement."
+              tag="Deep Insights"
+              description="Laporan detail, backtesting komprehensif, dan tools optimisasi strategi untuk terus meningkatkan performa trading Anda."
             />
+            {/* Bottom border */}
+            <div style={{ borderTop: '1px solid rgba(192, 192, 192, 0.12)' }} />
           </div>
         </div>
 
-        {/* Final CTA */}
-        <div className="py-16 animate-slide-up delay-600">
-          <div className="professional-card p-12 rounded-3xl text-center shimmer-effect" style={{
-            boxShadow: '0 20px 60px rgba(16, 185, 129, 0.2)'
-          }}>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: '#E5E5E5' }}>
-              Ready to Start Professional Trading?
-            </h2>
-            <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: '#9CA3AF' }}>
-              Join thousands of traders who trust our platform for automated, intelligent trading
-            </p>
-            <button
-              onClick={() => setView('register')}
-              className="px-12 py-5 rounded-2xl font-bold text-lg transition-all hover:scale-105 hover:shadow-2xl inline-flex items-center gap-3"
-              style={{
-                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                color: '#FFFFFF',
-                boxShadow: '0 10px 30px rgba(16, 185, 129, 0.4)'
-              }}
-            >
-              Open Free Demo Account
-              <ArrowRight className="w-6 h-6" />
-            </button>
-            <div className="flex items-center justify-center gap-6 mt-8 text-sm" style={{ color: '#9CA3AF' }}>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-                background: 'rgba(16, 185, 129, 0.05)'
+        {/* Final CTA — asymmetric raw layout */}
+        <div className="cta-section py-16 sm:py-20 lg:py-24 animate-slide-up delay-500" style={{
+          borderTop: '1px solid rgba(192, 192, 192, 0.1)'
+        }}>
+          <div className="relative">
+            {/* Background decorative text */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none">
+              <span style={{
+                fontSize: 'clamp(6rem, 18vw, 14rem)',
+                fontWeight: 900,
+                color: 'rgba(16, 185, 129, 0.03)',
+                letterSpacing: '-0.08em',
+                lineHeight: 1,
+                whiteSpace: 'nowrap'
               }}>
-                <CheckCircle className="w-4 h-4" style={{ color: '#10B981' }} />
-                No credit card required
+                TRADE
+              </span>
+            </div>
+
+            {/* Main content */}
+            <div className="cta-grid relative grid lg:grid-cols-2 gap-10 lg:gap-16 items-end">
+              
+              {/* Left — oversized headline */}
+              <div>
+                <p className="text-xs tracking-widest uppercase mb-6" style={{ 
+                  color: 'rgba(16,185,129,0.6)',
+                  fontFamily: 'Courier New, monospace'
+                }}>
+                  MULAI SEKARANG
+                </p>
+                <h2 className="cta-headline" style={{
+                  fontSize: 'clamp(2.8rem, 6vw, 5.5rem)',
+                  fontWeight: 900,
+                  color: '#E5E5E5',
+                  letterSpacing: '-0.05em',
+                  lineHeight: '0.95',
+                  marginBottom: '2rem'
+                }}>
+                  Pasar tidak<br />
+                  menunggu.<br />
+                  <span style={{ 
+                    color: '#10B981',
+                    position: 'relative',
+                    display: 'inline-block'
+                  }}>
+                    Kamu juga tidak perlu.
+                    {/* Underline accent */}
+                    <span style={{
+                      position: 'absolute',
+                      bottom: '-4px',
+                      left: 0,
+                      right: 0,
+                      height: '3px',
+                      background: 'linear-gradient(to right, #10B981, transparent)'
+                    }} />
+                  </span>
+                </h2>
+                
+                {/* Live counter */}
+                <div className="flex items-center gap-3">
+                  <div style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#10B981',
+                    boxShadow: '0 0 10px rgba(16,185,129,0.8)',
+                    animation: 'pulse 2s infinite'
+                  }} />
+                  <span className="text-sm" style={{ color: '#6B7280', fontFamily: 'Courier New, monospace' }}>
+                    1,247 trader aktif saat ini
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-                background: 'rgba(16, 185, 129, 0.05)'
-              }}>
-                <CheckCircle className="w-4 h-4" style={{ color: '#10B981' }} />
-                Full access to demo
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-                background: 'rgba(16, 185, 129, 0.05)'
-              }}>
-                <CheckCircle className="w-4 h-4" style={{ color: '#10B981' }} />
-                Cancel anytime
+
+              {/* Right — action block */}
+              <div className="cta-right-col lg:pl-16" style={{ borderLeft: '1px solid rgba(192,192,192,0.1)' }}>
+                <p className="text-base mb-8 leading-relaxed" style={{ color: '#6B7280' }}>
+                  Akun demo gratis. Tidak perlu kartu kredit. 
+                  Akses penuh ke semua fitur platform — mulai dalam 60 detik.
+                </p>
+
+                {/* Raw CTA button */}
+                <button
+                  className="cta-btn"
+                  onClick={() => {
+                    setView('register');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '18px 32px',
+                    background: '#10B981',
+                    color: '#0A0D10',
+                    fontWeight: 800,
+                    fontSize: '15px',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))'
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = '#059669';
+                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = '#10B981';
+                    (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)';
+                  }}
+                >
+                  Buat Akun Demo
+                  <span style={{ fontSize: '20px', fontWeight: 300 }}>→</span>
+                </button>
+
+                {/* Minimal trust line */}
+                <div className="mt-8 pt-8" style={{ borderTop: '1px solid rgba(192,192,192,0.1)' }}>
+                  <div className="cta-trust-grid grid grid-cols-3 gap-4">
+                    {[
+                      { num: '60s', label: 'Setup time' },
+                      { num: '$0', label: 'Biaya awal' },
+                      { num: '∞', label: 'Free trial' },
+                    ].map((item, i) => (
+                      <div key={i}>
+                        <div style={{ 
+                          fontSize: '1.5rem', 
+                          fontWeight: 800, 
+                          color: '#E5E5E5',
+                          letterSpacing: '-0.03em'
+                        }}>{item.num}</div>
+                        <div style={{ 
+                          fontSize: '11px', 
+                          color: '#4B5563',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.08em',
+                          marginTop: '2px'
+                        }}>{item.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1067,16 +1504,16 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <div className="border-t py-8" style={{ borderColor: 'rgba(192, 192, 192, 0.15)' }}>
+      <div className="border-t py-6 sm:py-8" style={{ borderColor: 'rgba(192, 192, 192, 0.15)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm" style={{ color: '#9CA3AF' }}>
+            <p className="text-xs sm:text-sm text-center sm:text-left" style={{ color: '#4B5563' }}>
               © {new Date().getFullYear()} Professional Trading Platform. All rights reserved.
             </p>
-            <div className="flex items-center gap-6 text-sm" style={{ color: '#9CA3AF' }}>
-              <a href="#" className="hover:underline transition-colors" style={{ color: '#9CA3AF' }}>Privacy Policy</a>
-              <a href="#" className="hover:underline transition-colors" style={{ color: '#9CA3AF' }}>Terms of Service</a>
-              <a href="#" className="hover:underline transition-colors" style={{ color: '#9CA3AF' }}>Contact Support</a>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm" style={{ color: '#4B5563' }}>
+              <a href="#" className="hover:underline transition-colors" style={{ color: '#4B5563' }}>Privacy Policy</a>
+              <a href="#" className="hover:underline transition-colors" style={{ color: '#4B5563' }}>Terms of Service</a>
+              <a href="#" className="hover:underline transition-colors" style={{ color: '#4B5563' }}>Contact Support</a>
             </div>
           </div>
         </div>

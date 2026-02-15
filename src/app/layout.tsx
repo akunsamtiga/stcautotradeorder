@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'STC AUtoTrade',
+  title: 'STC AutoTrade',
   description: 'Platform dengan penarikan kilat, profit hingga 100%, dan keamanan maksimal.',
   keywords: ['binary option', 'trading', 'IDX_STC', 'forex', 'crypto', 'Stouch' ,'STC AutoTrade'],
 };
