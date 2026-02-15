@@ -96,10 +96,6 @@ class ApiClient {
     return data;
   }
 
-  // ============================================================================
-  // USER METHODS
-  // ============================================================================
-
   async getProfile() {
     const { data } = await this.client.get('/auth/profile');
     return data;
@@ -108,6 +104,149 @@ class ApiClient {
   async updateProfile(userData: Partial<{ fullName: string; phoneNumber: string }>) {
     const { data } = await this.client.patch('/auth/profile', userData);
     return data;
+  }
+
+  // ============================================================================
+  // USER PROFILE METHODS (NEW)
+  // ============================================================================
+
+  async getUserProfile() {
+    try {
+      const { data } = await this.client.get('/user/profile');
+      console.log('✅ User profile:', data);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch user profile:', error);
+      throw error;
+    }
+  }
+
+  async updateUserProfile(userData: any) {
+    try {
+      const { data } = await this.client.put('/user/profile', userData);
+      console.log('✅ Profile updated:', data);
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      console.error('❌ Failed to update profile:', error);
+      throw new Error(error.response?.data?.message || 'Failed to update profile');
+    }
+  }
+
+  async getUserPreferences() {
+    try {
+      const { data } = await this.client.get('/user/preferences');
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch preferences:', error);
+      throw error;
+    }
+  }
+
+  async updateUserPreferences(preferences: any) {
+    try {
+      const { data } = await this.client.put('/user/preferences', preferences);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to update preferences:', error);
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    try {
+      const { data } = await this.client.post('/user/change-password', {
+        currentPassword,
+        newPassword,
+        confirmNewPassword: newPassword,
+      });
+      return data;
+    } catch (error: any) {
+      console.error('❌ Failed to change password:', error);
+      throw new Error(error.response?.data?.message || 'Failed to change password');
+    }
+  }
+
+  async getAffiliateStats() {
+    try {
+      const { data } = await this.client.get('/user/affiliate');
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch affiliate stats:', error);
+      throw error;
+    }
+  }
+
+  async getVerificationStatus() {
+    try {
+      const { data } = await this.client.get('/user/verification-status');
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch verification status:', error);
+      throw error;
+    }
+  }
+
+  async uploadAvatar(avatarData: { url: string }) {
+    try {
+      const { data } = await this.client.post('/user/avatar', avatarData);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to upload avatar:', error);
+      throw error;
+    }
+  }
+
+  async uploadKTP(ktpData: { frontUrl: string; backUrl: string; number?: string }) {
+    try {
+      const { data } = await this.client.post('/user/ktp', ktpData);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to upload KTP:', error);
+      throw error;
+    }
+  }
+
+  async uploadSelfie(selfieData: { url: string }) {
+    try {
+      const { data } = await this.client.post('/user/selfie', selfieData);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to upload selfie:', error);
+      throw error;
+    }
+  }
+
+  async verifyPhone(phoneNumber: string, code: string) {
+    try {
+      const { data } = await this.client.post('/user/verify-phone', {
+        phoneNumber,
+        code,
+      });
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to verify phone:', error);
+      throw error;
+    }
+  }
+
+  async completeTutorial() {
+    try {
+      const { data } = await this.client.post('/user/complete-tutorial');
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to complete tutorial:', error);
+      throw error;
+    }
+  }
+
+  async resetTutorial() {
+    try {
+      const { data } = await this.client.post('/user/reset-tutorial');
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to reset tutorial:', error);
+      throw error;
+    }
   }
 
   // ============================================================================
@@ -123,6 +262,26 @@ class ApiClient {
       };
     } catch (error) {
       console.error('Failed to fetch balance:', error);
+      throw error;
+    }
+  }
+
+  async getDemoBalance() {
+    try {
+      const { data } = await this.client.get('/balance/demo');
+      return data.data?.balance || 0;
+    } catch (error) {
+      console.error('Failed to fetch demo balance:', error);
+      throw error;
+    }
+  }
+
+  async getRealBalance() {
+    try {
+      const { data } = await this.client.get('/balance/real');
+      return data.data?.balance || 0;
+    } catch (error) {
+      console.error('Failed to fetch real balance:', error);
       throw error;
     }
   }
@@ -145,12 +304,26 @@ class ApiClient {
     return data;
   }
 
+  async getBalanceHistory(accountType?: 'demo' | 'real', limit: number = 50) {
+    try {
+      const params: any = { limit };
+      if (accountType) params.accountType = accountType;
+
+      const { data } = await this.client.get('/balance/history', { params });
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch balance history:', error);
+      throw error;
+    }
+  }
+
   // ============================================================================
   // BINARY ORDERS METHODS
   // ============================================================================
 
-    async getBinaryOrders(query?: {
-    status?: 'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED';
+  // ✅ UPDATED: Added 'DRAW' to status union type to match backend
+  async getBinaryOrders(query?: {
+    status?: 'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED' | 'DRAW';
     accountType?: 'demo' | 'real';
     page?: number;
     limit?: number;
@@ -212,6 +385,36 @@ class ApiClient {
     }
   }
 
+  async createBinaryOrder(orderData: {
+    assetId: string;
+    direction: 'CALL' | 'PUT';
+    amount: number;
+    duration: number;
+    accountType: 'demo' | 'real';
+  }) {
+    try {
+      const { data } = await this.client.post('/binary-orders', orderData);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to create binary order:', error);
+      throw error;
+    }
+  }
+
+  async getBinaryOrder(orderId: string) {
+    try {
+      const { data } = await this.client.get(`/binary-orders/${orderId}`);
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error(`❌ Failed to fetch binary order ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // ASSETS METHODS
+  // ============================================================================
+
   async getAssetBySymbol(symbol: string) {
     try {
       const { data } = await this.client.get(`/assets/${symbol}`);
@@ -222,7 +425,7 @@ class ApiClient {
     }
   }
 
-    async getActiveAssets() {
+  async getActiveAssets() {
     try {
       console.log('🔍 Fetching active assets from:', `${API_URL}/assets`);
       
@@ -253,55 +456,23 @@ class ApiClient {
         assets = data.data;
         console.log('✅ Using data.data format');
       }
-      // Format 4: Direct array
+      // Format 4: Direct array [...]
       else if (Array.isArray(data)) {
         assets = data;
         console.log('✅ Using direct array format');
       }
-      // Format 5: { assets: [...] } without success flag
-      else if (Array.isArray(data.assets)) {
-        assets = data.assets;
-        console.log('✅ Using data.assets (no success flag) format');
-      }
       else {
-        console.warn('⚠️ Unknown response format:', data);
+        console.warn('⚠️ Unexpected assets response format:', data);
         console.warn('Available keys:', Object.keys(data));
-        
-        // Try to find assets anywhere in the response
-        if (data.data && typeof data.data === 'object') {
-          console.log('Checking data.data for arrays...');
-          const dataKeys = Object.keys(data.data);
-          for (const key of dataKeys) {
-            if (Array.isArray(data.data[key])) {
-              console.log(`Found array at data.data.${key}`);
-              assets = data.data[key];
-              break;
-            }
-          }
-        }
-        
-        if (assets.length === 0) {
-          assets = [];
-        }
+        assets = [];
       }
+
+      // Filter only active assets
+      const activeAssets = assets.filter((asset: any) => 
+        asset.isActive === true || asset.isActive === 'true'
+      );
       
-      console.log(`✅ Retrieved ${assets.length} assets:`, assets);
-      
-      // ✅ Filter active assets di client-side sebagai backup
-      const activeAssets = assets.filter((asset: any) => {
-        return asset.isActive === true || 
-               asset.is_active === true || 
-               asset.active === true ||
-               asset.status === 'active';
-      });
-      
-      console.log(`✅ Filtered to ${activeAssets.length} active assets`);
-      
-      if (activeAssets.length === 0) {
-        console.warn('⚠️ No active assets found!');
-        console.warn('Total assets received:', assets.length);
-        console.warn('Sample asset:', assets[0]);
-      }
+      console.log(`✅ Found ${activeAssets.length} active assets out of ${assets.length} total assets`);
       
       return activeAssets;
     } catch (error: any) {
@@ -311,50 +482,60 @@ class ApiClient {
         response: error.response?.data,
         status: error.response?.status,
       });
-      throw error;
+      
+      // Return empty array instead of throwing to prevent app crash
+      return [];
+    }
+  }
+
+  async getAllAssets() {
+    try {
+      const { data } = await this.client.get('/assets');
+      
+      if (data.success && data.data && Array.isArray(data.data.assets)) {
+        return data.data.assets;
+      } else if (data.success && Array.isArray(data.data)) {
+        return data.data;
+      } else if (Array.isArray(data)) {
+        return data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('❌ Failed to fetch all assets:', error);
+      return [];
     }
   }
 
   // ============================================================================
-  // ORDER SCHEDULES METHODS
+  // ORDER SCHEDULE METHODS
   // ============================================================================
 
   async getOrderSchedules(query?: {
-    accountType?: 'demo' | 'real';
     status?: 'pending' | 'active' | 'paused' | 'completed' | 'cancelled';
+    accountType?: 'demo' | 'real';
     assetSymbol?: string;
-    fromDate?: string;
-    toDate?: string;
   }) {
     try {
-      const params = new URLSearchParams();
+      console.log('📦 Fetching order schedules with query:', query);
       
-      if (query?.accountType) params.append('accountType', query.accountType);
-      if (query?.status) params.append('status', query.status);
-      if (query?.assetSymbol) params.append('assetSymbol', query.assetSymbol);
-      if (query?.fromDate) params.append('fromDate', query.fromDate);
-      if (query?.toDate) params.append('toDate', query.toDate);
+      const { data } = await this.client.get('/order-schedule', {
+        params: query
+      });
       
-      const url = `/order-schedule${params.toString() ? `?${params.toString()}` : ''}`;
-      console.log('🔍 Fetching order schedules:', url);
-      
-      const { data } = await this.client.get(url);
-      
-      console.log('📦 Raw order schedules response:', data);
+      console.log('✅ Order schedules response:', data);
       
       // Handle different response formats
       if (data.success && Array.isArray(data.data)) {
-        console.log('✅ Found schedules in data.data');
         return data.data;
-      }
-      
-      if (Array.isArray(data)) {
-        console.log('✅ Found schedules as direct array');
+      } else if (Array.isArray(data)) {
         return data;
+      } else if (data.success && data.schedules) {
+        return data.schedules;
+      } else {
+        console.warn('⚠️ Unexpected response format:', data);
+        return [];
       }
-      
-      console.warn('⚠️ Unexpected response format, returning empty array');
-      return [];
     } catch (error: any) {
       console.error('❌ Failed to fetch order schedules:', error);
       console.error('Error details:', {
@@ -563,8 +744,8 @@ class ApiClient {
         const orderDate = new Date(order.createdAt);
         const isToday = orderDate >= today && orderDate <= todayEnd;
         
-        // Only count completed orders (WON or LOST)
-        const isCompleted = order.status === 'WON' || order.status === 'LOST';
+        // Only count completed orders (WON, LOST, or DRAW)
+        const isCompleted = order.status === 'WON' || order.status === 'LOST' || order.status === 'DRAW';
         
         return isToday && isCompleted;
       });
@@ -584,6 +765,7 @@ class ApiClient {
           const loss = order.profit !== null ? order.profit : -order.amount;
           totalProfit += loss;
         }
+        // DRAW orders don't affect profit but count as execution
       });
 
       const winRate = totalExecutions > 0 ? (totalSuccess / totalExecutions) * 100 : 0;
@@ -606,6 +788,52 @@ class ApiClient {
       console.error('❌ Failed to calculate today\'s stats:', error);
       // Return zeros instead of throwing to prevent dashboard from breaking
       return { profit: 0, executions: 0, winRate: 0 };
+    }
+  }
+
+  // ============================================================================
+  // NOTIFICATIONS METHODS
+  // ============================================================================
+
+  async getNotifications(limit: number = 20) {
+    try {
+      const { data } = await this.client.get('/notifications', {
+        params: { limit }
+      });
+      return data.success ? data.data : data;
+    } catch (error) {
+      console.error('❌ Failed to fetch notifications:', error);
+      return [];
+    }
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    try {
+      const { data } = await this.client.patch(`/notifications/${notificationId}/read`);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to mark notification as read:', error);
+      throw error;
+    }
+  }
+
+  async markAllNotificationsAsRead() {
+    try {
+      const { data } = await this.client.post('/notifications/mark-all-read');
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to mark all notifications as read:', error);
+      throw error;
+    }
+  }
+
+  async deleteNotification(notificationId: string) {
+    try {
+      const { data } = await this.client.delete(`/notifications/${notificationId}`);
+      return data;
+    } catch (error) {
+      console.error('❌ Failed to delete notification:', error);
+      throw error;
     }
   }
 }

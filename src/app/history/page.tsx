@@ -11,19 +11,39 @@ import {
 } from 'lucide-react';
 
 // ============================================================================
-// TYPES
+// TYPES - Matching Backend Response
 // ============================================================================
-interface Execution {
+interface BinaryOrder {
   id: string;
-  scheduleId: string;
+  user_id: string;
+  asset_id: string;
+  assetSymbol: string;
+  assetName?: string;
+  direction: 'CALL' | 'PUT'; // Backend uses CALL/PUT
+  amount: number;
+  duration: number; // in minutes
+  durationDisplay?: string;
+  accountType: 'demo' | 'real';
+  status: 'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED' | 'DRAW';
+  profit?: number;
+  entry_price?: number;
+  exit_price?: number;
+  entry_time?: string;
+  exit_time?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Helper type for frontend display
+interface ExecutionDisplay {
+  id: string;
   executedAt: string;
   trend: 'buy' | 'sell';
   assetSymbol: string;
   amount: number;
   duration: number;
   accountType: 'demo' | 'real';
-  martingaleStep?: number;
-  status: 'pending' | 'executed' | 'failed' | 'skipped';
+  status: 'pending' | 'active' | 'completed';
   result?: 'win' | 'loss' | 'draw';
   profit?: number;
 }
@@ -36,9 +56,52 @@ const fmt = {
     new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
   time: (iso: string) =>
     new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-  duration: (sec: number) =>
-    sec >= 3600 ? `${sec / 3600}j` : sec >= 60 ? `${sec / 60}m` : `${sec}d`,
+  duration: (minutes: number) => {
+    if (minutes < 1) {
+      const seconds = Math.round(minutes * 60);
+      return `${seconds}d`;
+    }
+    return minutes >= 60 ? `${minutes / 60}j` : `${minutes}m`;
+  },
   idr: (n: number) => `Rp ${Math.abs(n).toLocaleString('id-ID')}`,
+};
+
+// Transform backend order to frontend display format
+const transformOrder = (order: BinaryOrder): ExecutionDisplay => {
+  // Map direction (CALL/PUT) to trend (buy/sell)
+  const trend = order.direction === 'CALL' ? 'buy' : 'sell';
+  
+  // Map status to result
+  let result: 'win' | 'loss' | 'draw' | undefined;
+  let status: 'pending' | 'active' | 'completed';
+  
+  if (order.status === 'WON') {
+    result = 'win';
+    status = 'completed';
+  } else if (order.status === 'LOST') {
+    result = 'loss';
+    status = 'completed';
+  } else if (order.status === 'DRAW') {
+    result = 'draw';
+    status = 'completed';
+  } else if (order.status === 'ACTIVE') {
+    status = 'active';
+  } else {
+    status = 'pending';
+  }
+
+  return {
+    id: order.id,
+    executedAt: order.createdAt,
+    trend,
+    assetSymbol: order.assetSymbol,
+    amount: order.amount,
+    duration: order.duration,
+    accountType: order.accountType,
+    status,
+    result,
+    profit: order.profit,
+  };
 };
 
 // ============================================================================
@@ -87,7 +150,7 @@ const Pill = ({
 // ============================================================================
 // EXECUTION ROW
 // ============================================================================
-const ExecutionRow = ({ exec }: { exec: Execution }) => {
+const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
   const isBuy = exec.trend === 'buy';
   const result = exec.result;
 
@@ -113,11 +176,6 @@ const ExecutionRow = ({ exec }: { exec: Execution }) => {
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/25">
             {exec.accountType.toUpperCase()}
           </span>
-          {(exec.martingaleStep ?? 0) > 0 && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400">
-              M{exec.martingaleStep}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-white/20">
           <Clock className="w-3 h-3" />
@@ -144,8 +202,11 @@ const ExecutionRow = ({ exec }: { exec: Execution }) => {
             {exec.profit >= 0 ? '+' : '-'}{fmt.idr(exec.profit)}
           </span>
         )}
-        {!result && exec.status === 'failed' && (
-          <span className="text-[11px] text-red-400/60">Gagal</span>
+        {!result && exec.status === 'active' && (
+          <span className="text-[11px] text-blue-400/60">Active</span>
+        )}
+        {!result && exec.status === 'pending' && (
+          <span className="text-[11px] text-yellow-400/60">Pending</span>
         )}
       </div>
     </div>
@@ -160,7 +221,7 @@ export default function HistoryPage() {
   const { isAuthenticated, hasHydrated } = useAuthStore();
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  const [allExecs,     setAllExecs]     = useState<Execution[]>([]);
+  const [allExecs,     setAllExecs]     = useState<ExecutionDisplay[]>([]);
   const [isLoading,    setIsLoading]    = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error,        setError]        = useState<string | null>(null);
@@ -169,7 +230,11 @@ export default function HistoryPage() {
   const [filterAccount, setFilterAccount] = useState<'all' | 'demo' | 'real'>('all');
   const [filterTrend,   setFilterTrend]   = useState<'all' | 'buy' | 'sell'>('all');
   const [search,        setSearch]        = useState('');
+  
+  // Server-side pagination state
   const [page,          setPage]          = useState(1);
+  const [totalPages,    setTotalPages]    = useState(1);
+  const [totalOrders,   setTotalOrders]   = useState(0);
   const PER_PAGE = 25;
 
   useEffect(() => {
@@ -178,25 +243,108 @@ export default function HistoryPage() {
     load();
   }, [hasHydrated, isAuthenticated]); // eslint-disable-line
 
+  // Reload when filters or page change
+  useEffect(() => {
+    if (hasHydrated && isAuthenticated) {
+      load();
+    }
+  }, [filterResult, filterAccount, filterTrend, search, page]); // eslint-disable-line
+
+  // Reset to page 1 when filters change
+  useEffect(() => { 
+    if (page !== 1) {
+      setPage(1); 
+    }
+  }, [filterResult, filterAccount, filterTrend, search]); // eslint-disable-line
+
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    
     try {
-      const schedules = await api.getOrderSchedules().catch(() => []);
-      const batches   = await Promise.all(
-        schedules.map((s: any) => api.getOrderHistory(s.id, 500).catch(() => []))
-      );
-      const merged = (batches.flat() as Execution[])
-        .filter(Boolean)
-        .sort((a, b) => new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime());
-      setAllExecs(merged);
+      // Map frontend filter values to backend status values
+      const statusMap: { [key: string]: Array<'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED'> } = {
+        'all': [],
+        'win': ['WON'],
+        'loss': ['LOST'],
+        'draw': ['DRAW'] as any, // Backend might need DRAW added to type
+      };
+
+      // ✅ FIX: Properly type the query object to match API expectations
+      const query: {
+        status?: 'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED';
+        accountType?: 'demo' | 'real';
+        page: number;
+        limit: number;
+      } = {
+        page: page,
+        limit: PER_PAGE,
+      };
+
+      // Add filters to query
+      if (filterResult !== 'all') {
+        const statuses = statusMap[filterResult];
+        if (statuses.length > 0) {
+          // ✅ FIX: Use the first status from the array instead of joining
+          // If your API needs comma-separated statuses, you'll need to update the API type
+          query.status = statuses[0] as 'PENDING' | 'ACTIVE' | 'WON' | 'LOST' | 'EXPIRED';
+        }
+      }
+
+      if (filterAccount !== 'all') {
+        query.accountType = filterAccount;
+      }
+
+      console.log('📡 Fetching orders with query:', query);
+      
+      // Get orders from backend
+      const orders = await api.getBinaryOrders(query);
+      
+      console.log('✅ Received orders:', orders);
+
+      if (!Array.isArray(orders)) {
+        console.error('❌ Orders is not an array:', orders);
+        setAllExecs([]);
+        return;
+      }
+
+      // Transform orders to display format
+      let transformedOrders = orders.map(transformOrder);
+
+      // Client-side filtering for trend (since backend doesn't have trend filter)
+      if (filterTrend !== 'all') {
+        transformedOrders = transformedOrders.filter(e => e.trend === filterTrend);
+      }
+
+      // Client-side filtering for search (since backend doesn't have search)
+      if (search) {
+        transformedOrders = transformedOrders.filter(e => 
+          e.assetSymbol.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      setAllExecs(transformedOrders);
+      setTotalOrders(transformedOrders.length);
+      
+      // Calculate total pages
+      // Note: This is approximate since we're doing some client-side filtering
+      // In a perfect world, backend would handle all filtering
+      const calculatedPages = Math.max(1, Math.ceil(transformedOrders.length / PER_PAGE));
+      setTotalPages(calculatedPages);
+
     } catch (e: any) {
-      if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
+      console.error('❌ Failed to load orders:', e);
+      if (e?.response?.status === 401) { 
+        clearAuth(); 
+        router.push('/'); 
+        return; 
+      }
       setError('Gagal memuat riwayat. Silakan coba lagi.');
+      setAllExecs([]);
     } finally {
       setIsLoading(false);
     }
-  }, [clearAuth, router]);
+  }, [clearAuth, router, page, filterResult, filterAccount, filterTrend, search]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -204,21 +352,8 @@ export default function HistoryPage() {
     setIsRefreshing(false);
   };
 
-  useEffect(() => { setPage(1); }, [filterResult, filterAccount, filterTrend, search]);
-
-  // Filtered + paginated
-  const filtered = allExecs.filter((e) => {
-    if (filterResult  !== 'all' && e.result      !== filterResult)  return false;
-    if (filterAccount !== 'all' && e.accountType !== filterAccount) return false;
-    if (filterTrend   !== 'all' && e.trend       !== filterTrend)   return false;
-    if (search && !e.assetSymbol.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
-
-  // Stats
-  const stats = filtered.reduce(
+  // Stats calculation
+  const stats = allExecs.reduce(
     (acc, e) => {
       acc.total++;
       if (e.result === 'win')  { acc.wins++;   acc.profit += e.profit ?? 0; }
@@ -255,7 +390,7 @@ export default function HistoryPage() {
           <div>
             <h1 className="text-sm font-semibold text-white">Riwayat Eksekusi</h1>
             <p className="text-[11px] text-white/20 mt-0.5">
-              {allExecs.length.toLocaleString()} transaksi
+              {totalOrders.toLocaleString()} transaksi
             </p>
           </div>
           <button
@@ -324,7 +459,7 @@ export default function HistoryPage() {
           </div>
 
           <p className="text-[11px] text-white/20">
-            {filtered.length.toLocaleString()} dari {allExecs.length.toLocaleString()} eksekusi
+            Menampilkan {allExecs.length.toLocaleString()} transaksi
           </p>
         </div>
 
@@ -339,18 +474,16 @@ export default function HistoryPage() {
               />
             ))}
           </div>
-        ) : paginated.length === 0 ? (
+        ) : allExecs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-white/40 text-sm mb-1">Tidak ada riwayat</p>
             <p className="text-white/20 text-xs max-w-xs leading-relaxed">
-              {allExecs.length === 0
-                ? 'Bot belum pernah dieksekusi. Mulai bot dari halaman Dashboard.'
-                : 'Tidak ada data yang cocok dengan filter yang dipilih.'}
+              Tidak ada data yang cocok dengan filter yang dipilih.
             </p>
           </div>
         ) : (
           <div className="space-y-1.5">
-            {paginated.map((exec) => (
+            {allExecs.map((exec) => (
               <ExecutionRow key={exec.id} exec={exec} />
             ))}
           </div>
