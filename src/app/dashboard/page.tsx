@@ -24,11 +24,11 @@ const C = {
   cyang: 'rgba(52,211,153,0.06)',
   coral: '#ff5263',
   cord:  'rgba(255,82,99,0.1)',
-  text:  '#eaf7f2',        // brighter — was #eaf7f2
-  sub:   '#9ecfbe',        // new: secondary text, readable
-  muted: 'rgba(234,247,242,0.55)', // was 0.45
-  faint: 'rgba(234,247,242,0.07)',
-  bdr:   'rgba(52,211,153,0.15)', // slightly stronger border
+  text:  '#ffffff',        // pure white untuk text utama
+  sub:   '#e8f5f1',        // off-white untuk secondary text
+  muted: 'rgba(255,255,255,0.65)', // white dengan opacity untuk muted text
+  faint: 'rgba(255,255,255,0.08)',
+  bdr:   'rgba(52,211,153,0.15)',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -55,44 +55,211 @@ const G = () => (
     @keyframes ping      { 0%{transform:scale(1);opacity:.8} 70%{transform:scale(2.2);opacity:0} 100%{transform:scale(2.2);opacity:0} }
     @keyframes slide-up  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes scanline  { 0%{top:-10%} 100%{top:110%} }
+    @keyframes float     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.5} }
+    @keyframes glow      { 0%,100%{opacity:.3} 50%{opacity:.8} }
+    @keyframes shimmer   { 0%{background-position:200% center} 100%{background-position:-200% center} }
+    @keyframes shimmer-vertical { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
+    @keyframes fade-in   { from{opacity:0} to{opacity:1} }
 
     *{box-sizing:border-box}
-    body{background:${C.bg};color:${C.text};-webkit-font-smoothing:antialiased}
+    body{
+      background:${C.bg};
+      color:${C.text};
+      -webkit-font-smoothing:antialiased;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    /* Emerald shimmer pattern layer */
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      background-image:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0px,
+          rgba(52,211,153,0.08) 1px,
+          transparent 2px,
+          transparent 30px
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent 0px,
+          rgba(52,211,153,0.06) 1px,
+          transparent 2px,
+          transparent 30px
+        );
+      pointer-events:none;
+      z-index:1;
+      opacity:1;
+    }
+
+    /* Animated shimmer overlay */
+    body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      background:linear-gradient(
+        180deg,
+        rgba(52,211,153,0.12) 0%,
+        transparent 15%,
+        transparent 35%,
+        rgba(52,211,153,0.08) 50%,
+        transparent 65%,
+        transparent 85%,
+        rgba(52,211,153,0.1) 100%
+      );
+      background-size:100% 200%;
+      animation:shimmer-vertical 10s ease-in-out infinite;
+      pointer-events:none;
+      z-index:1;
+      opacity:1;
+    }
+
+    /* Ensure content is above pattern */
+    body > *:not(style){
+      position:relative;
+      z-index:2;
+    }
+
     ::-webkit-scrollbar{width:3px}
-    ::-webkit-scrollbar-thumb{background:${C.bdr}}
+    ::-webkit-scrollbar-thumb{background:${C.bdr};transition:background .2s}
+    ::-webkit-scrollbar-thumb:hover{background:${C.cyan}80}
 
     /* inputs */
     .ds-input{
       width:100%;padding:10px 13px;
-      background:${C.s2}!important;color:${C.text}!important;
+      background:${C.s2}!important;color:#ffffff!important;
       border:1px solid ${C.bdr}!important;
       font-family:var(--font-mono)!important;font-size:13px!important;
       outline:none!important;border-radius:0!important;
-      transition:border-color .15s,box-shadow .15s;
+      transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
       line-height:1.4;
     }
     .ds-input:focus{
-      border-color:rgba(52,211,153,.5)!important;
-      box-shadow:0 0 0 2px rgba(52,211,153,.07)!important;
+      border-color:rgba(52,211,153,.6)!important;
+      box-shadow:0 0 0 3px rgba(52,211,153,.1)!important;
+      transform:translateY(-1px);
     }
-    select.ds-input option{background:${C.s1};color:${C.text}}
-    .ds-input::placeholder{color:rgba(234,247,242,.65)!important}
-    input[type=number]::-webkit-inner-spin-button{opacity:.25}
+    
+    /* Select dropdown styling */
+    .ds-input select,
+    select.ds-input{
+      cursor:pointer;
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2334d399' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 10px center;
+      padding-right:35px!important;
+      position:relative;
+    }
+    select.ds-input:hover{
+      border-color:rgba(52,211,153,.4)!important;
+      box-shadow:0 0 0 2px rgba(52,211,153,.08)!important;
+    }
+    select.ds-input:focus{
+      border-color:rgba(52,211,153,.6)!important;
+      box-shadow:0 0 0 3px rgba(52,211,153,.15), 0 4px 12px rgba(52,211,153,.1)!important;
+    }
+    select.ds-input option{
+      background:${C.s1};
+      color:#ffffff;
+      padding:12px 16px;
+      font-size:13px;
+      font-weight:500;
+      border-bottom:1px solid ${C.bdr};
+    }
+    select.ds-input option:hover{
+      background:${C.s2};
+      color:${C.cyan};
+    }
+    select.ds-input option:checked{
+      background:${C.cyand};
+      color:${C.cyan};
+      font-weight:700;
+    }
+    
+    .ds-input::placeholder{color:rgba(255,255,255,.6)!important}
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button{
+      -webkit-appearance:none;
+      margin:0;
+    }
+    input[type=number]{
+      -moz-appearance:textfield;
+    }
 
-    .ds-card{animation:slide-up .25s ease both}
+    .ds-card{
+      animation:slide-up .4s cubic-bezier(0.4, 0, 0.2, 1) both;
+      transition:transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s ease;
+    }
+    .ds-card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 30px rgba(52,211,153,.08), 0 0 1px rgba(52,211,153,.3)!important;
+    }
 
     /* hover helpers */
     .ds-btn-cyan:hover:not(:disabled){
-      background:rgba(52,211,153,.12)!important;
-      box-shadow:0 0 24px rgba(52,211,153,.14)!important;
+      background:rgba(52,211,153,.15)!important;
+      box-shadow:0 0 28px rgba(52,211,153,.18)!important;
+      transform:translateY(-1px);
     }
-    .ds-btn-coral:hover:not(:disabled){background:rgba(255,82,99,.12)!important}
+    .ds-btn-coral:hover:not(:disabled){
+      background:rgba(255,82,99,.15)!important;
+      transform:translateY(-1px);
+    }
     .ds-ghost:hover:not(:disabled){
-      color:rgba(234,247,242,.75)!important;
-      border-color:rgba(234,247,242,.68)!important;
+      color:rgba(234,247,242,.85)!important;
+      border-color:rgba(234,247,242,.75)!important;
+      transform:translateY(-1px);
     }
 
     textarea.ds-input{resize:none}
+
+    /* Smooth transitions for all buttons */
+    button{
+      transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Card hover glow effect */
+    .ds-card:hover .card-glow{
+      opacity:1;
+    }
+
+    /* Schedule item hover effects */
+    .schedule-item:hover{
+      background:${C.s3}!important;
+      transform:translateX(2px);
+    }
+
+    /* Quick amount button styling */
+    .quick-amount-btn{
+      padding:8px 12px;
+      background:${C.s2};
+      border:1px solid ${C.bdr};
+      color:rgba(255,255,255,.8);
+      font-family:var(--font-mono);
+      font-size:11px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all .25s cubic-bezier(0.4, 0, 0.2, 1);
+      clip-path:polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    }
+    .quick-amount-btn:hover{
+      background:rgba(52,211,153,.08);
+      border-color:rgba(52,211,153,.3);
+      color:${C.cyan};
+      transform:translateY(-1px);
+      box-shadow:0 4px 12px rgba(52,211,153,.12);
+    }
+    .quick-amount-btn.active{
+      background:rgba(52,211,153,.12);
+      border-color:${C.cyan};
+      color:${C.cyan};
+      box-shadow:0 0 16px rgba(52,211,153,.2);
+    }
   `}</style>
 );
 
@@ -106,14 +273,26 @@ const Card: React.FC<{
   glowColor?:string; clip?:boolean;
 }> = ({children, style, glowColor, clip=true}) => (
   <div className="ds-card" style={{
-    background:C.s1,
+    background:`linear-gradient(135deg, ${C.s1} 0%, ${C.s2} 100%)`,
     border:`1px solid ${C.bdr}`,
-    boxShadow: glowColor ? `0 0 30px ${glowColor}14, inset 0 1px 0 ${glowColor}10` : 'none',
+    boxShadow: glowColor 
+      ? `0 4px 20px ${glowColor}08, 0 0 40px ${glowColor}10, inset 0 1px 0 ${glowColor}12` 
+      : '0 2px 8px rgba(0,0,0,.2)',
     clipPath: clip
       ? 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))'
       : undefined,
-    position:'relative', overflow:'hidden', ...style,
+    position:'relative', overflow:'hidden',
+    transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+    ...style,
   }}>
+    {/* Subtle animated gradient overlay */}
+    <div style={{
+      position:'absolute', inset:0,
+      background:`linear-gradient(135deg, transparent 0%, ${C.cyan}03 50%, transparent 100%)`,
+      opacity:0,
+      transition:'opacity .3s ease',
+      pointerEvents:'none',
+    }} className="card-glow"/>
     {children}
   </div>
 );
@@ -127,7 +306,7 @@ const Divider = () => (
 );
 
 /* Section label */
-const SL: React.FC<{children:React.ReactNode; color?:string}> = ({children, color='rgba(234,247,242,.6)'}) => (
+const SL: React.FC<{children:React.ReactNode; color?:string}> = ({children, color='rgba(255,255,255,.75)'}) => (
   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
     <div style={{width:3,height:13,background:C.cyan,opacity:.65,flexShrink:0}}/>
     <span style={{
@@ -143,7 +322,7 @@ const FL: React.FC<{children:React.ReactNode}> = ({children}) => (
   <label style={{
     display:'block',fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,
     letterSpacing:'0.14em',textTransform:'uppercase',
-    color:'rgba(234,247,242,.5)',marginBottom:6,
+    color:'rgba(255,255,255,.7)',marginBottom:6,
   }}>{children}</label>
 );
 
@@ -154,19 +333,20 @@ const Toggle: React.FC<{checked:boolean;onChange:(v:boolean)=>void;disabled?:boo
     <input type="checkbox" checked={checked} onChange={e=>onChange(e.target.checked)}
       disabled={disabled} style={{position:'absolute',opacity:0,width:0,height:0}}/>
     <div style={{
-      width:42,height:20,
-      background:checked?C.cyand:'rgba(234,247,242,.05)',
+      width:48,height:24,
+      background:checked?C.cyand:'rgba(255,255,255,.08)',
       border:`1px solid ${checked?C.cyan:C.bdr}`,
-      position:'relative',transition:'all .2s',
-      clipPath:'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
-      boxShadow:checked?`0 0 12px rgba(52,211,153,.3)`:'none',
+      borderRadius:24,
+      position:'relative',transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow:checked?`0 0 16px rgba(52,211,153,.25)`:'none',
     }}>
       <div style={{
-        position:'absolute',top:2,left:checked?22:2,
-        width:14,height:14,
-        background:checked?C.cyan:'rgba(234,247,242,.65)',
-        transition:'all .2s',
-        boxShadow:checked?`0 0 8px ${C.cyan}`:'none',
+        position:'absolute',top:2,left:checked?26:2,
+        width:18,height:18,
+        background:checked?C.cyan:'rgba(255,255,255,.7)',
+        borderRadius:'50%',
+        transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow:checked?`0 0 8px ${C.cyan}, 0 2px 4px rgba(0,0,0,.2)`:'0 2px 4px rgba(0,0,0,.1)',
       }}/>
     </div>
   </label>
@@ -183,44 +363,86 @@ const RealtimeClock: React.FC = () => {
   const tz=()=>{if(!time)return'UTC';const o=-time.getTimezoneOffset()/60;return`UTC${o>=0?'+':''}${o}`};
 
   return (
-    <Card glowColor={C.cyan} style={{padding:'16px 18px',height:'100%'}}>
-      {/* Scanline sweep */}
+    <Card glowColor={C.cyan} style={{padding:'16px 18px',height:'100%',position:'relative'}}>
+      {/* Animated scanline sweep */}
       <div style={{
-        position:'absolute',left:0,right:0,height:'30%',
-        background:`linear-gradient(to bottom,transparent,rgba(52,211,153,.03),transparent)`,
-        animation:'scanline 4s linear infinite',pointerEvents:'none',
+        position:'absolute',left:0,right:0,height:'35%',
+        background:`linear-gradient(to bottom,transparent,rgba(52,211,153,.04),transparent)`,
+        animation:'scanline 5s linear infinite',pointerEvents:'none',
       }}/>
-      {/* Corner hex decoration */}
+      
+      {/* Corner hex decoration with pulse */}
       <div style={{
         position:'absolute',top:6,right:6,width:20,height:20,
-        border:`1px solid rgba(52,211,153,.2)`,
+        border:`1px solid rgba(52,211,153,.25)`,
         transform:'rotate(45deg)',
+        transition:'all .3s ease',
+      }}/>
+      
+      {/* Top glow line */}
+      <div style={{
+        position:'absolute',top:0,left:'20%',right:'20%',height:1,
+        background:`linear-gradient(90deg, transparent, ${C.cyan}40, transparent)`,
+        opacity:.5,
       }}/>
 
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,position:'relative'}}>
-        <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(234,247,242,.72)'}}>
+      <div style={{
+        display:'flex',alignItems:'center',justifyContent:'space-between',
+        marginBottom:12,position:'relative',
+      }}>
+        <span style={{
+          fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+          letterSpacing:'0.2em',textTransform:'uppercase',
+          color:'rgba(255,255,255,.85)',
+          transition:'color .3s ease',
+        }}>
           WAKTU LOKAL
         </span>
         <span style={{display:'flex',alignItems:'center',gap:5}}>
           <span style={{position:'relative',display:'inline-flex'}}>
-            <span style={{width:7,height:7,background:C.cyan,display:'block',borderRadius:'50%',boxShadow:`0 0 6px ${C.cyan}`}}/>
-            <span style={{position:'absolute',inset:0,background:C.cyan,borderRadius:'50%',animation:'ping 1.8s cubic-bezier(0,0,.2,1) infinite'}}/>
+            <span style={{
+              width:7,height:7,background:C.coral,display:'block',
+              borderRadius:'50%',boxShadow:`0 0 8px ${C.coral}`,
+            }}/>
+            <span style={{
+              position:'absolute',inset:0,background:C.coral,
+              borderRadius:'50%',
+              animation:'ping 2s cubic-bezier(0,0,.2,1) infinite',
+            }}/>
           </span>
-          <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.2em',color:C.cyan}}>LIVE</span>
+          <span style={{
+            fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+            letterSpacing:'0.2em',color:C.coral,
+            textShadow:`0 0 10px ${C.coral}40`,
+          }}>LIVE</span>
         </span>
       </div>
 
       <p suppressHydrationWarning style={{
         fontFamily:'var(--font-mono)',fontSize:28,fontWeight:600,
         color:C.text,letterSpacing:'0.05em',lineHeight:1,position:'relative',
-        textShadow:`0 0 24px rgba(52,211,153,.25)`,
+        textShadow:`0 0 30px rgba(52,211,153,.3), 0 0 15px rgba(52,211,153,.2)`,
+        transition:'all .5s cubic-bezier(0.4, 0, 0.2, 1)',
       }}>{time?fmt(time):'--:--:--'}</p>
 
-      <div style={{display:'flex',justifyContent:'space-between',marginTop:9,position:'relative'}}>
-        <span suppressHydrationWarning style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:500,color:'rgba(234,247,242,.72)'}}>
+      <div style={{
+        display:'flex',justifyContent:'space-between',
+        marginTop:10,position:'relative',
+      }}>
+        <span suppressHydrationWarning style={{
+          fontFamily:'var(--font-exo)',fontSize:11,fontWeight:500,
+          color:'rgba(255,255,255,.85)',
+          transition:'color .3s ease',
+        }}>
           {time?fmtD(time):''}
         </span>
-        <span suppressHydrationWarning style={{fontFamily:'var(--font-mono)',fontSize:10,color:`${C.cyan}cc`}}>
+        <span suppressHydrationWarning style={{
+          fontFamily:'var(--font-mono)',fontSize:10,
+          color:`${C.cyan}dd`,
+          padding:'2px 6px',
+          background:`${C.cyan}08`,
+          border:`1px solid ${C.cyan}15`,
+        }}>
           {tz()}
         </span>
       </div>
@@ -243,10 +465,10 @@ const RealtimeClockCompact: React.FC = () => {
       boxShadow:`0 0 16px rgba(52,211,153,.06)`,
     }}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-        <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(234,247,242,.72)'}}>WAKTU</span>
+        <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(255,255,255,.85)'}}>WAKTU</span>
         <span style={{position:'relative',display:'inline-flex',alignItems:'center'}}>
-          <span style={{width:5,height:5,background:C.cyan,borderRadius:'50%',display:'block',boxShadow:`0 0 5px ${C.cyan}`}}/>
-          <span style={{position:'absolute',inset:0,background:C.cyan,borderRadius:'50%',animation:'ping 1.8s cubic-bezier(0,0,.2,1) infinite'}}/>
+          <span style={{width:5,height:5,background:C.coral,borderRadius:'50%',display:'block',boxShadow:`0 0 5px ${C.coral}`}}/>
+          <span style={{position:'absolute',inset:0,background:C.coral,borderRadius:'50%',animation:'ping 1.8s cubic-bezier(0,0,.2,1) infinite'}}/>
         </span>
       </div>
       <p suppressHydrationWarning style={{fontFamily:'var(--font-mono)',fontSize:14,fontWeight:600,color:C.text,letterSpacing:'0.05em',lineHeight:1}}>
@@ -266,28 +488,54 @@ const StatCard: React.FC<{
 }> = ({title,value,icon,trend='neutral',isLoading=false}) => {
   const col = trend==='up'?C.cyan : trend==='down'?C.coral : C.muted;
   return (
-    <Card style={{padding:'14px 16px'}}>
+    <Card style={{padding:'14px 16px',position:'relative'}}>
+      {/* Animated gradient border on top */}
+      <div style={{
+        position:'absolute',top:0,left:0,right:0,height:2,
+        background:`linear-gradient(90deg, transparent, ${col}, transparent)`,
+        opacity:trend==='neutral'?0:.5,
+        transition:'opacity .3s ease',
+      }}/>
+      
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
         <div style={{flex:1}}>
-          <p style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(234,247,242,.62)',marginBottom:9}}>
+          <p style={{
+            fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+            letterSpacing:'0.18em',textTransform:'uppercase',
+            color:'rgba(255,255,255,.75)',marginBottom:9,
+            transition:'color .3s ease',
+          }}>
             {title}
           </p>
           {isLoading
-            ? <div style={{height:26,width:52,background:C.faint,animation:'pulse 1.5s ease infinite'}}/>
+            ? <div style={{
+                height:26,width:52,
+                background:`linear-gradient(90deg, ${C.faint} 0%, rgba(52,211,153,.08) 50%, ${C.faint} 100%)`,
+                backgroundSize:'200% 100%',
+                animation:'shimmer 2s ease infinite',
+              }}/>
             : <p style={{
                 fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:col,
                 letterSpacing:'-0.01em',lineHeight:1,
-                textShadow: trend==='up'?`0 0 20px rgba(52,211,153,.35)`
-                          : trend==='down'?`0 0 20px rgba(255,71,87,.25)`:'none',
+                textShadow: trend==='up'?`0 0 20px rgba(52,211,153,.4), 0 0 10px rgba(52,211,153,.2)`
+                          : trend==='down'?`0 0 20px rgba(255,71,87,.3), 0 0 10px rgba(255,71,87,.15)`:'none',
+                transition:'all .3s ease',
               }}>{value}</p>
           }
         </div>
-        <div style={{color:col,opacity:.4,marginTop:2}}>{icon}</div>
+        <div style={{
+          color:col,opacity:.4,marginTop:2,
+          transition:'all .3s ease',
+          transform:'scale(1)',
+        }} className="stat-icon">{icon}</div>
       </div>
-      {/* bottom glow strip */}
+      
+      {/* bottom glow strip with animation */}
       <div style={{
         position:'absolute',bottom:0,left:0,right:0,height:1,
-        background:`linear-gradient(to right,transparent,${col}40,transparent)`,
+        background:`linear-gradient(to right,transparent,${col}50,transparent)`,
+        opacity:trend==='neutral'?0:1,
+        transition:'opacity .3s ease',
       }}/>
     </Card>
   );
@@ -300,43 +548,121 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
   const isPos = todayProfit>=0;
   const col = isPos?C.cyan:C.coral;
   return (
-    <Card glowColor={col} style={{padding:'20px 24px'}}>
-      {/* Background gradient */}
+    <Card glowColor={col} style={{padding:'20px 24px',position:'relative',overflow:'visible'}}>
+      {/* Animated background gradient */}
       <div style={{
         position:'absolute',inset:0,
-        background:`radial-gradient(ellipse at 10% 50%,${col}08 0%,transparent 55%)`,
+        background:`radial-gradient(ellipse at 10% 50%,${col}10 0%,transparent 60%)`,
         pointerEvents:'none',
+        transition:'all .5s ease',
       }}/>
-      {/* Diagonal grid pattern */}
+      
+      {/* Animated diagonal grid pattern */}
       <div style={{
         position:'absolute',right:0,top:0,bottom:0,width:'50%',
-        backgroundImage:`repeating-linear-gradient(60deg,${col}06 0px,${col}06 1px,transparent 1px,transparent 12px)`,
+        backgroundImage:`repeating-linear-gradient(60deg,${col}08 0px,${col}08 1px,transparent 1px,transparent 12px)`,
         pointerEvents:'none',
+        opacity:.6,
+        transition:'opacity .3s ease',
+      }}/>
+
+      {/* Top glow accent */}
+      <div style={{
+        position:'absolute',top:0,left:'20%',right:'20%',height:2,
+        background:`linear-gradient(90deg, transparent, ${col}60, transparent)`,
+        opacity:.5,
+        transition:'opacity .3s ease',
       }}/>
 
       <div style={{position:'relative'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-          <div style={{width:3,height:12,background:col,opacity:.6}}/>
-          <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(234,247,242,.75)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <div style={{
+            width:3,height:12,background:col,opacity:.7,
+            transition:'all .3s ease',
+          }}/>
+          <span style={{
+            fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+            letterSpacing:'0.25em',textTransform:'uppercase',
+            color:'rgba(255,255,255,.9)',
+            transition:'color .3s ease',
+          }}>
             PROFIT HARI INI
           </span>
+          
+          {/* Live indicator */}
+          <div style={{
+            display:'flex',alignItems:'center',gap:4,marginLeft:'auto',
+          }}>
+            <span style={{position:'relative',display:'inline-flex',width:8,height:8}}>
+              <span style={{
+                width:8,height:8,background:col,borderRadius:'50%',
+                display:'block',boxShadow:`0 0 8px ${col}`,
+              }}/>
+              <span style={{
+                position:'absolute',inset:0,background:col,
+                borderRadius:'50%',animation:'ping 2s cubic-bezier(0,0,.2,1) infinite',
+              }}/>
+            </span>
+            <span style={{
+              fontFamily:'var(--font-exo)',fontSize:9,fontWeight:700,
+              letterSpacing:'0.2em',color:col,opacity:.7,
+            }}>LIVE</span>
+          </div>
         </div>
+        
         {isLoading
-          ? <div style={{height:44,width:220,background:C.faint}}/>
+          ? <div style={{
+              height:44,width:220,
+              background:`linear-gradient(90deg, ${C.faint} 0%, rgba(52,211,153,.08) 50%, ${C.faint} 100%)`,
+              backgroundSize:'200% 100%',
+              animation:'shimmer 2s ease infinite',
+            }}/>
           : <>
               <p style={{
                 fontFamily:'var(--font-mono)',fontWeight:600,
-                fontSize:'clamp(26px,5vw,42px)',
-                color:col,letterSpacing:'-0.02em',lineHeight:1,
-                textShadow:`0 0 40px ${col}50`,
+                fontSize:'clamp(28px,5vw,42px)',
+                color:col,letterSpacing:'-0.02em',lineHeight:1.1,
+                textShadow:`0 0 40px ${col}60, 0 0 20px ${col}40`,
+                transition:'all .4s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform:'scale(1)',
               }}>
                 {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
               </p>
-              {/* sub-indicator bar */}
+              
+              {/* Animated sub-indicator bar */}
               <div style={{
-                marginTop:12,height:2,width:'100%',
-                background:`linear-gradient(to right,${col}80,${col}20,transparent)`,
-              }}/>
+                marginTop:14,height:2,width:'100%',position:'relative',
+                background:C.faint,overflow:'hidden',
+              }}>
+                <div style={{
+                  position:'absolute',left:0,top:0,bottom:0,
+                  width:isPos?'70%':'30%',
+                  background:`linear-gradient(to right,${col}90,${col}40)`,
+                  transition:'width .5s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}/>
+              </div>
+              
+              {/* Profit percentage indicator */}
+              <div style={{
+                marginTop:10,display:'flex',alignItems:'center',gap:6,
+              }}>
+                <span style={{
+                  fontFamily:'var(--font-mono)',fontSize:11,
+                  color:'rgba(255,255,255,.75)',
+                }}>
+                  Status:
+                </span>
+                <span style={{
+                  fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+                  letterSpacing:'0.1em',color:col,
+                  padding:'2px 8px',
+                  background:`${col}12`,
+                  border:`1px solid ${col}25`,
+                  transition:'all .3s ease',
+                }}>
+                  {isPos ? 'PROFIT' : 'LOSS'}
+                </span>
+              </div>
             </>
         }
       </div>
@@ -352,50 +678,88 @@ const SchedulePanel: React.FC<{
   onOpenModal:()=>void; isDisabled?:boolean; maxCount?:number;
 }> = ({schedules,onOpenModal,isDisabled=false,maxCount=50}) => (
   <Card style={{display:'flex',flexDirection:'column',height:'100%'}}>
-    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px',borderBottom:`1px solid ${C.faint}`}}>
+    <div style={{
+      display:'flex',alignItems:'center',justifyContent:'space-between',
+      padding:'12px 14px',borderBottom:`1px solid ${C.faint}`,
+    }}>
       <div style={{display:'flex',alignItems:'center',gap:7}}>
         <div style={{width:3,height:13,background:C.cyan,opacity:.6}}/>
-        <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(234,247,242,.78)'}}>JADWAL</span>
+        <span style={{
+          fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+          letterSpacing:'0.18em',textTransform:'uppercase',
+          color:'rgba(255,255,255,.9)',
+        }}>JADWAL</span>
       </div>
     </div>
 
     {schedules.length===0 ? (
-      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20,gap:8}}>
-        <p style={{fontFamily:'var(--font-exo)',fontSize:12,fontWeight:500,color:'rgba(234,247,242,.55)'}}>Belum ada jadwal</p>
+      <div style={{
+        flex:1,display:'flex',flexDirection:'column',
+        alignItems:'center',justifyContent:'center',padding:20,gap:10,
+      }}>
+        <Calendar style={{width:32,height:32,color:'rgba(255,255,255,.2)',strokeWidth:1.5}}/>
+        <p style={{
+          fontFamily:'var(--font-exo)',fontSize:12,fontWeight:500,
+          color:'rgba(255,255,255,.65)',textAlign:'center',
+        }}>Belum ada jadwal</p>
       </div>
     ) : (
       <div style={{flex:1,overflowY:'auto',maxHeight:200}}>
         {schedules.map((s,i)=>(
           <div key={i} style={{
             display:'flex',alignItems:'center',gap:8,
-            padding:'7px 12px',
+            padding:'8px 12px',
             borderBottom:`1px solid ${C.faint}`,
             background: i%2===0?C.s2:'transparent',
-          }}>
-            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.68)',width:16,textAlign:'right',flexShrink:0}}>{String(i+1).padStart(2,'0')}</span>
-            <span style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500,color:C.text,flex:1}}>{s.time}</span>
+            transition:'all .25s cubic-bezier(0.4, 0, 0.2, 1)',
+            animation:`slide-up .3s ease both ${i*.05}s`,
+            cursor:'default',
+          }}
+          className="schedule-item">
             <span style={{
-              fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.12em',textTransform:'uppercase',
+              fontFamily:'var(--font-mono)',fontSize:10,
+              color:'rgba(255,255,255,.7)',width:18,
+              textAlign:'right',flexShrink:0,
+            }}>
+              {String(i+1).padStart(2,'0')}
+            </span>
+            
+            <span style={{
+              fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500,
+              color:C.text,flex:1,
+              transition:'color .3s ease',
+            }}>
+              {s.time}
+            </span>
+            
+            <span style={{
+              fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+              letterSpacing:'0.12em',textTransform:'uppercase',
               color:s.trend==='buy'?C.cyan:C.coral,
-              padding:'2px 6px',
+              padding:'3px 8px',
               background:s.trend==='buy'?C.cyand:C.cord,
-            }}>{s.trend}</span>
+              border:`1px solid ${s.trend==='buy'?`${C.cyan}20`:`${C.coral}20`}`,
+              transition:'all .3s ease',
+            }}>
+              {s.trend}
+            </span>
           </div>
         ))}
       </div>
     )}
 
     <div style={{padding:'8px 10px',borderTop:`1px solid ${C.faint}`}}>
-      <button onClick={onOpenModal} disabled={isDisabled||schedules.length>=maxCount}
+      <button onClick={onOpenModal} disabled={isDisabled}
         className="ds-btn-cyan"
         style={{
-          width:'100%',padding:'9px',
-          background:'transparent',border:`1px solid rgba(52,211,153,.22)`,color:C.cyan,
-          fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.18em',textTransform:'uppercase',
+          width:'100%',padding:'10px',
+          background:'transparent',border:`1px solid rgba(52,211,153,.25)`,color:C.cyan,
+          fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+          letterSpacing:'0.18em',textTransform:'uppercase',
           cursor:isDisabled?'not-allowed':'pointer',
           opacity:isDisabled?.3:1,
           display:'flex',alignItems:'center',justifyContent:'center',gap:6,
-          transition:'all .15s',
+          transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
           clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))',
         }}>
         <Plus style={{width:12,height:12}}/>
@@ -444,89 +808,268 @@ const BulkScheduleModal: React.FC<{
       result.push({time,trend});
     });
     if(errs.length){setError(errs.join('\n'));return}
-    if(schedules.length+result.length>maxCount){setError(`Melebihi batas ${maxCount}`);return}
     if(!result.length){setError('Tidak ada jadwal valid');return}
     onAddSchedules(result);setInput('');
   };
 
   return (
-    <div style={{position:'fixed',inset:0,zIndex:50,display:'flex',alignItems:'flex-end',justifyContent:'center',padding:16}}>
-      <div style={{position:'absolute',inset:0,background:'rgba(3,11,18,.9)',backdropFilter:'blur(8px)'}} onClick={onClose}/>
+    <div style={{
+      position:'fixed',inset:0,zIndex:50,
+      display:'flex',alignItems:'flex-end',justifyContent:'center',
+      padding:16,paddingBottom:88,
+      animation:'fade-in .2s ease',
+    }}>
+      <div style={{
+        position:'absolute',inset:0,
+        background:'rgba(3,11,18,.92)',
+        backdropFilter:'blur(12px)',
+      }} onClick={onClose}/>
+      
       <div style={{
         position:'relative',width:'100%',maxWidth:500,
-        background:C.s1,border:`1px solid ${C.bdr}`,
+        background:`linear-gradient(135deg, ${C.s1} 0%, ${C.s2} 100%)`,
+        border:`1px solid ${C.bdr}`,
         borderTop:`2px solid ${C.cyan}`,
-        display:'flex',flexDirection:'column',maxHeight:'90vh',
+        display:'flex',flexDirection:'column',maxHeight:'calc(100vh - 104px)',
         clipPath:'polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)',
-        boxShadow:`0 -16px 60px rgba(52,211,153,.08)`,
-        animation:'slide-up .2s ease',
+        boxShadow:`
+          0 -20px 80px rgba(52,211,153,.12),
+          0 -10px 40px rgba(52,211,153,.08),
+          0 0 0 1px rgba(52,211,153,.1)
+        `,
+        animation:'slide-up .3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 18px',borderBottom:`1px solid ${C.faint}`}}>
+        {/* Top glow accent */}
+        <div style={{
+          position:'absolute',top:0,left:'25%',right:'25%',height:2,
+          background:`linear-gradient(90deg, transparent, ${C.cyan}80, transparent)`,
+          opacity:.6,
+        }}/>
+        
+        {/* Header */}
+        <div style={{
+          display:'flex',alignItems:'center',justifyContent:'space-between',
+          padding:'16px 18px',
+          borderBottom:`1px solid ${C.faint}`,
+          background:`linear-gradient(180deg, ${C.s2} 0%, transparent 100%)`,
+        }}>
           <div>
-            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-              <div style={{width:3,height:14,background:C.cyan,opacity:.6}}/>
-              <h2 style={{fontFamily:'var(--font-exo)',fontSize:16,fontWeight:800,letterSpacing:'0.08em',textTransform:'uppercase',color:C.text}}>INPUT JADWAL</h2>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:5}}>
+              <div style={{
+                width:3,height:16,background:C.cyan,opacity:.7,
+                boxShadow:`0 0 8px ${C.cyan}60`,
+              }}/>
+              <h2 style={{
+                fontFamily:'var(--font-exo)',fontSize:16,fontWeight:800,
+                letterSpacing:'0.08em',textTransform:'uppercase',
+                color:C.text,
+                textShadow:`0 0 20px rgba(52,211,153,.2)`,
+              }}>INPUT JADWAL</h2>
             </div>
-            <p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.62)',paddingLeft:11}}>
-              Format: <span style={{color:C.cyan}}>09:30 buy</span> · satu per baris
+            <p style={{
+              fontFamily:'var(--font-mono)',fontSize:10,
+              color:'rgba(255,255,255,.75)',paddingLeft:11,
+            }}>
+              Format: <span style={{color:C.cyan,fontWeight:600}}>09:30 buy</span> · satu per baris
             </p>
           </div>
-          <button onClick={onClose} style={{width:28,height:28,background:C.faint,border:`1px solid ${C.bdr}`,color:C.muted,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <X style={{width:13,height:13}}/>
+          <button onClick={onClose} style={{
+            width:32,height:32,
+            background:`${C.faint}`,
+            border:`1px solid ${C.bdr}`,
+            color:C.muted,
+            cursor:'pointer',
+            display:'flex',alignItems:'center',justifyContent:'center',
+            transition:'all .25s cubic-bezier(0.4, 0, 0.2, 1)',
+            clipPath:'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = C.cord;
+            e.currentTarget.style.borderColor = `${C.coral}40`;
+            e.currentTarget.style.color = C.coral;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = C.faint;
+            e.currentTarget.style.borderColor = C.bdr;
+            e.currentTarget.style.color = C.muted;
+          }}>
+            <X style={{width:14,height:14}}/>
           </button>
         </div>
 
-        <div style={{flex:1,overflowY:'auto',padding:'14px 18px'}}>
+        <div style={{flex:1,overflowY:'auto',padding:'16px 18px'}}>
           {schedules.length>0&&(
-            <div style={{marginBottom:14}}>
-              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
-                <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.75)'}}>{schedules.length}/{maxCount} jadwal</span>
-                <button onClick={()=>window.confirm('Hapus semua?')&&onClearAll()} style={{display:'flex',alignItems:'center',gap:4,fontFamily:'var(--font-mono)',fontSize:10,color:`${C.coral}80`,background:'none',border:'none',cursor:'pointer'}}>
-                  <Trash2 style={{width:10,height:10}}/> Hapus semua
+            <div style={{marginBottom:16}}>
+              <div style={{
+                display:'flex',justifyContent:'space-between',alignItems:'center',
+                marginBottom:8,
+              }}>
+                <span style={{
+                  fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+                  letterSpacing:'0.12em',textTransform:'uppercase',
+                  color:'rgba(255,255,255,.85)',
+                }}>
+                  {schedules.length} Jadwal Aktif
+                </span>
+                <button 
+                  onClick={()=>window.confirm('Hapus semua jadwal?')&&onClearAll()} 
+                  style={{
+                    display:'flex',alignItems:'center',gap:5,
+                    fontFamily:'var(--font-mono)',fontSize:10,fontWeight:600,
+                    color:`${C.coral}bb`,
+                    background:'transparent',
+                    border:`1px solid ${C.coral}25`,
+                    padding:'4px 10px',
+                    cursor:'pointer',
+                    transition:'all .25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    clipPath:'polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,4px 100%,0 calc(100% - 4px))',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = C.cord;
+                    e.currentTarget.style.borderColor = `${C.coral}50`;
+                    e.currentTarget.style.color = C.coral;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.borderColor = `${C.coral}25`;
+                    e.currentTarget.style.color = `${C.coral}bb`;
+                  }}>
+                  <Trash2 style={{width:11,height:11}}/> Hapus semua
                 </button>
               </div>
-              <div style={{maxHeight:130,overflowY:'auto',border:`1px solid ${C.faint}`}}>
+              <div style={{
+                maxHeight:140,overflowY:'auto',
+                border:`1px solid ${C.bdr}`,
+                background:C.s2,
+              }}>
                 {schedules.map((s,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 10px',background:i%2===0?C.s2:'transparent',borderBottom:`1px solid ${C.faint}`}}>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:11,color:'rgba(234,247,242,.58)',width:16}}>{i+1}</span>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:C.text,flex:1}}>{s.time}</span>
-                    <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.1em',color:s.trend==='buy'?C.cyan:C.coral,padding:'1px 5px',background:s.trend==='buy'?C.cyand:C.cord}}>{s.trend.toUpperCase()}</span>
-                    <button onClick={()=>onRemoveSchedule(i)} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(234,247,242,.58)',padding:2}}><X style={{width:12,height:12}}/></button>
+                  <div key={i} style={{
+                    display:'flex',alignItems:'center',gap:10,
+                    padding:'8px 12px',
+                    background:i%2===0?C.s3:'transparent',
+                    borderBottom:i<schedules.length-1?`1px solid ${C.faint}`:'none',
+                    transition:'all .2s ease',
+                  }}
+                  className="schedule-item">
+                    <span style={{
+                      fontFamily:'var(--font-mono)',fontSize:10,
+                      color:'rgba(255,255,255,.75)',
+                      width:20,textAlign:'right',
+                    }}>
+                      {String(i+1).padStart(2,'0')}
+                    </span>
+                    <span style={{
+                      fontFamily:'var(--font-mono)',fontSize:13,fontWeight:600,
+                      color:C.text,flex:1,
+                    }}>
+                      {s.time}
+                    </span>
+                    <span style={{
+                      fontFamily:'var(--font-exo)',fontSize:10,fontWeight:700,
+                      letterSpacing:'0.12em',
+                      color:s.trend==='buy'?C.cyan:C.coral,
+                      padding:'3px 8px',
+                      background:s.trend==='buy'?C.cyand:C.cord,
+                      border:`1px solid ${s.trend==='buy'?`${C.cyan}25`:`${C.coral}25`}`,
+                    }}>
+                      {s.trend.toUpperCase()}
+                    </span>
+                    <button 
+                      onClick={()=>onRemoveSchedule(i)} 
+                      style={{
+                        background:'none',
+                        border:`1px solid transparent`,
+                        cursor:'pointer',
+                        color:'rgba(255,255,255,.5)',
+                        padding:4,
+                        display:'flex',
+                        alignItems:'center',
+                        justifyContent:'center',
+                        transition:'all .2s ease',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.color = C.coral;
+                        e.currentTarget.style.borderColor = `${C.coral}30`;
+                        e.currentTarget.style.background = `${C.coral}08`;
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.color = 'rgba(255,255,255,.5)';
+                        e.currentTarget.style.borderColor = 'transparent';
+                        e.currentTarget.style.background = 'none';
+                      }}>
+                      <X style={{width:13,height:13}}/>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
           <div style={{marginBottom:10}}>
-            <p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.58)',marginBottom:6}}>
-              <span style={{color:C.cyan}}>09:30 buy</span>{'  '}
-              <span style={{color:'rgba(234,247,242,.78)'}}>14.15 s</span>{'  '}
-              <span style={{color:'rgba(234,247,242,.78)'}}>1600 sell</span>
+            <p style={{
+              fontFamily:'var(--font-mono)',fontSize:10,
+              color:'rgba(255,255,255,.7)',marginBottom:8,
+              padding:'6px 10px',
+              background:`${C.faint}`,
+              border:`1px solid ${C.bdr}`,
+            }}>
+              Contoh: <span style={{color:C.cyan,fontWeight:600}}>09:30 buy</span>{' • '}
+              <span style={{color:'rgba(255,255,255,.9)'}}>14:15 s</span>{' • '}
+              <span style={{color:'rgba(255,255,255,.9)'}}>1600 sell</span>
             </p>
             <textarea className="ds-input" value={input} onChange={e=>setInput(e.target.value)}
-              placeholder={"09:00 buy\n09:30 sell\n1000 b"} rows={6}/>
+              placeholder={"09:00 buy\n09:30 sell\n1000 b\n14:15 buy"} rows={7}
+              style={{fontFamily:'var(--font-mono)',fontSize:12}}/>
           </div>
           {error&&(
-            <div style={{display:'flex',gap:8,padding:'10px 12px',background:C.cord,border:`1px solid rgba(255,71,87,.2)`,borderLeft:`2px solid ${C.coral}`}}>
-              <AlertCircle style={{width:13,height:13,color:C.coral,flexShrink:0,marginTop:1}}/>
-              <p style={{fontFamily:'var(--font-mono)',fontSize:11,color:'#ff8a94',whiteSpace:'pre-line'}}>{error}</p>
+            <div style={{
+              display:'flex',gap:8,padding:'11px 13px',
+              background:C.cord,
+              border:`1px solid rgba(255,71,87,.25)`,
+              borderLeft:`3px solid ${C.coral}`,
+              animation:'slide-up .2s ease',
+            }}>
+              <AlertCircle style={{width:14,height:14,color:C.coral,flexShrink:0,marginTop:1}}/>
+              <p style={{
+                fontFamily:'var(--font-mono)',fontSize:11,
+                color:'#ff8a94',whiteSpace:'pre-line',lineHeight:1.5,
+              }}>{error}</p>
             </div>
           )}
         </div>
 
-        <div style={{display:'flex',gap:8,padding:'12px 18px',borderTop:`1px solid ${C.faint}`}}>
-          <button onClick={handleAdd} disabled={!input.trim()||schedules.length>=maxCount}
+        <div style={{
+          display:'flex',gap:10,padding:'14px 18px',
+          borderTop:`1px solid ${C.faint}`,
+          background:`linear-gradient(0deg, ${C.s2} 0%, transparent 100%)`,
+        }}>
+          <button onClick={handleAdd} disabled={!input.trim()}
             className="ds-btn-cyan"
             style={{
-              flex:1,padding:'10px',background:C.cyand,border:`1px solid rgba(52,211,153,.3)`,color:C.cyan,
-              fontFamily:'var(--font-exo)',fontSize:12,fontWeight:700,letterSpacing:'0.18em',textTransform:'uppercase',
-              cursor:!input.trim()?'not-allowed':'pointer',opacity:!input.trim()?.4:1,transition:'all .15s',
+              flex:1,padding:'12px',
+              background:!input.trim()?C.faint:C.cyand,
+              border:`1px solid ${!input.trim()?C.bdr:'rgba(52,211,153,.35)'}`,
+              color:!input.trim()?'rgba(255,255,255,.4)':C.cyan,
+              fontFamily:'var(--font-exo)',fontSize:12,fontWeight:700,
+              letterSpacing:'0.18em',textTransform:'uppercase',
+              cursor:!input.trim()?'not-allowed':'pointer',
+              opacity:!input.trim()?.5:1,
+              transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
               clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))',
-            }}>TAMBAH</button>
+              boxShadow:!input.trim()?'none':`0 0 20px ${C.cyan}10`,
+            }}>
+            <Plus style={{width:13,height:13,display:'inline',marginRight:6,verticalAlign:'middle'}}/>
+            TAMBAH
+          </button>
           <button onClick={onClose} className="ds-ghost" style={{
-            padding:'10px 20px',background:'transparent',border:`1px solid ${C.bdr}`,color:'rgba(234,247,242,.68)',
-            fontFamily:'var(--font-exo)',fontSize:12,fontWeight:600,letterSpacing:'0.15em',textTransform:'uppercase',
-            cursor:'pointer',transition:'all .15s',
+            padding:'12px 24px',
+            background:'transparent',
+            border:`1px solid ${C.bdr}`,
+            color:'rgba(255,255,255,.8)',
+            fontFamily:'var(--font-exo)',fontSize:12,fontWeight:600,
+            letterSpacing:'0.15em',textTransform:'uppercase',
+            cursor:'pointer',
+            transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+            clipPath:'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))',
           }}>TUTUP</button>
         </div>
       </div>
@@ -582,35 +1125,96 @@ const OrderSettingsCard: React.FC<{
           <SL>Pengaturan Dasar</SL>
           <div style={{marginBottom:10}}>
             <FL>Aset Trading</FL>
-            <select className="ds-input" value={settings.assetSymbol} onChange={e=>{
-              const a=assets.find((x:any)=>x.symbol===e.target.value);
-              if(a){onChange({...settings,assetSymbol:a.symbol,assetName:a.name||a.symbol});onAssetSelect?.(a);}
-            }} disabled={isDisabled}>
-              <option value="">Pilih aset trading</option>
-              {assets.map((a:any)=><option key={a.id} value={a.symbol}>{a.name||a.symbol}</option>)}
-            </select>
+            <div style={{position:'relative'}}>
+              <select className="ds-input" value={settings.assetSymbol} onChange={e=>{
+                const a=assets.find((x:any)=>x.symbol===e.target.value);
+                if(a){onChange({...settings,assetSymbol:a.symbol,assetName:a.name||a.symbol});onAssetSelect?.(a);}
+              }} disabled={isDisabled}>
+                <option value="">Pilih aset trading</option>
+                {assets.map((a:any)=><option key={a.id} value={a.symbol}>{a.name||a.symbol}</option>)}
+              </select>
+              {/* Dropdown indicator overlay */}
+              <div style={{
+                position:'absolute',
+                right:12,top:'50%',
+                transform:'translateY(-50%)',
+                pointerEvents:'none',
+                display:'flex',
+                alignItems:'center',
+                gap:4,
+              }}>
+                <div style={{
+                  width:1,height:16,
+                  background:C.bdr,
+                }}/>
+              </div>
+            </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:10}}>
             <div>
               <FL>Tipe Akun</FL>
-              <select className="ds-input" value={settings.accountType} onChange={e=>set('accountType',e.target.value)} disabled={isDisabled}>
-                <option value="demo">Demo</option><option value="real">Real</option>
-              </select>
+              <div style={{position:'relative'}}>
+                <select className="ds-input" value={settings.accountType} onChange={e=>set('accountType',e.target.value)} disabled={isDisabled}>
+                  <option value="demo">Demo</option>
+                  <option value="real">Real</option>
+                </select>
+                <div style={{
+                  position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',
+                  pointerEvents:'none',display:'flex',alignItems:'center',gap:4,
+                }}>
+                  <div style={{width:1,height:16,background:C.bdr}}/>
+                </div>
+              </div>
             </div>
             <div>
               <FL>Timeframe</FL>
-              <select className="ds-input" value={settings.duration.toString()} onChange={e=>set('duration',+e.target.value)} disabled={isDisabled}>
-                {DURATIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <div style={{position:'relative'}}>
+                <select className="ds-input" value={settings.duration.toString()} onChange={e=>set('duration',+e.target.value)} disabled={isDisabled}>
+                  {DURATIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <div style={{
+                  position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',
+                  pointerEvents:'none',display:'flex',alignItems:'center',gap:4,
+                }}>
+                  <div style={{width:1,height:16,background:C.bdr}}/>
+                </div>
+              </div>
             </div>
           </div>
           <div style={{marginBottom:16}}>
             <FL>Jumlah per Order</FL>
-            <div style={{position:'relative'}}>
-              <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:11,color:'rgba(234,247,242,.62)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+            <div style={{position:'relative',marginBottom:8}}>
+              <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:11,color:'rgba(255,255,255,.75)',zIndex:1,pointerEvents:'none'}}>Rp</span>
               <input type="number" className="ds-input" value={settings.amount}
                 onChange={e=>set('amount',+e.target.value||0)} disabled={isDisabled}
                 min="1000" step="1000" style={{paddingLeft:36}}/>
+            </div>
+            {/* Quick Amount Buttons */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+              {[10000, 25000, 50000, 100000].map(amt => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => set('amount', amt)}
+                  disabled={isDisabled}
+                  className={`quick-amount-btn ${settings.amount === amt ? 'active' : ''}`}
+                >
+                  {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}K`}
+                </button>
+              ))}
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginTop:6}}>
+              {[250000, 500000, 1000000].map(amt => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => set('amount', amt)}
+                  disabled={isDisabled}
+                  className={`quick-amount-btn ${settings.amount === amt ? 'active' : ''}`}
+                >
+                  {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}K`}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -620,7 +1224,7 @@ const OrderSettingsCard: React.FC<{
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <div>
                 <p style={{fontFamily:'var(--font-exo)',fontSize:13,fontWeight:600,color:C.muted}}>Martingale</p>
-                <p style={{fontFamily:'var(--font-exo)',fontSize:12,color:'rgba(234,247,242,.65)',marginTop:3}}>Gandakan amount setelah loss</p>
+                <p style={{fontFamily:'var(--font-exo)',fontSize:12,color:'rgba(255,255,255,.75)',marginTop:3}}>Gandakan amount setelah loss</p>
               </div>
               <Toggle checked={mg} onChange={toggleMg} disabled={isDisabled}/>
             </div>
@@ -637,13 +1241,13 @@ const OrderSettingsCard: React.FC<{
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div><FL>Stop Loss</FL>
               <div style={{position:'relative'}}>
-                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.68)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
                 <input type="number" className="ds-input" value={settings.stopLossProfit.stopLoss||''} onChange={e=>nest('stopLossProfit','stopLoss',e.target.value?+e.target.value:undefined)} disabled={isDisabled} placeholder="Opsional" style={{paddingLeft:32}}/>
               </div>
             </div>
             <div><FL>Take Profit</FL>
               <div style={{position:'relative'}}>
-                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.68)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
                 <input type="number" className="ds-input" value={settings.stopLossProfit.stopProfit||''} onChange={e=>nest('stopLossProfit','stopProfit',e.target.value?+e.target.value:undefined)} disabled={isDisabled} placeholder="Opsional" style={{paddingLeft:32}}/>
               </div>
             </div>
@@ -667,7 +1271,7 @@ const BotControlCard: React.FC<{
     ?{label:'AKTIF',    col:C.cyan, dim:C.cyand}
     :status.isPaused
     ?{label:'DIJEDA',   col:'#6ee7b7', dim:'rgba(110,231,183,.08)'}
-    :{label:'NONAKTIF', col:'rgba(234,247,242,.65)', dim:C.faint};
+    :{label:'NONAKTIF', col:'rgba(255,255,255,.75)', dim:C.faint};
 
   const BBtn:React.FC<{onClick:()=>void;disabled?:boolean;accent:string;icon:React.ReactNode;label:string;cls:string}>=
   ({onClick,disabled,accent,icon,label,cls})=>(
@@ -719,7 +1323,7 @@ const BotControlCard: React.FC<{
               {l:'PROFIT SESI',v:(status.currentProfit>=0?'+':'')+status.currentProfit.toLocaleString('id-ID'),c:status.currentProfit>=0?C.cyan:C.coral},
             ].map(s=>(
               <div key={s.l} style={{background:C.s2,padding:'10px 12px',clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)'}}>
-                <p style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.16em',textTransform:'uppercase',color:'rgba(234,247,242,.72)'}}>{s.l}</p>
+                <p style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.16em',textTransform:'uppercase',color:'rgba(255,255,255,.85)'}}>{s.l}</p>
                 <p style={{fontFamily:'var(--font-mono)',fontSize:20,fontWeight:600,color:s.c,marginTop:5,lineHeight:1}}>{s.v}</p>
               </div>
             ))}
@@ -727,14 +1331,14 @@ const BotControlCard: React.FC<{
 
           {status.nextExecutionTime&&(
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:C.s2,marginBottom:6,borderLeft:`2px solid rgba(110,231,183,.35)`}}>
-              <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(234,247,242,.72)'}}>BERIKUTNYA</span>
+              <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(255,255,255,.85)'}}>BERIKUTNYA</span>
               <span style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:600,color:'#6ee7b7'}}>{status.nextExecutionTime}</span>
             </div>
           )}
           {status.lastExecutionTime&&(
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:C.s2,marginBottom:10}}>
-              <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(234,247,242,.72)'}}>TERAKHIR</span>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'rgba(234,247,242,.78)'}}>{status.lastExecutionTime}</span>
+              <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(255,255,255,.85)'}}>TERAKHIR</span>
+              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'rgba(255,255,255,.9)'}}>{status.lastExecutionTime}</span>
             </div>
           )}
 
@@ -763,8 +1367,8 @@ const BotControlCard: React.FC<{
 
           {!canStart&&!errorMessage&&(
             <div style={{display:'flex',gap:8,padding:'10px 12px',marginTop:8,background:C.faint,border:`1px solid ${C.bdr}`}}>
-              <Info style={{width:13,height:13,color:'rgba(234,247,242,.55)',flexShrink:0,marginTop:1}}/>
-              <p style={{fontFamily:'var(--font-exo)',fontSize:12,fontWeight:500,color:'rgba(234,247,242,.65)',lineHeight:1.6}}>
+              <Info style={{width:13,height:13,color:'rgba(255,255,255,.65)',flexShrink:0,marginTop:1}}/>
+              <p style={{fontFamily:'var(--font-exo)',fontSize:12,fontWeight:500,color:'rgba(255,255,255,.75)',lineHeight:1.6}}>
                 Lengkapi pengaturan dan tambahkan jadwal untuk memulai bot
               </p>
             </div>
@@ -901,7 +1505,7 @@ export default function DashboardPage() {
                 {settings.assetSymbol&&(
                   <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginTop:8}}>
                     <span style={{width:4,height:4,background:C.cyan,opacity:.5,display:'inline-block',borderRadius:'50%'}}/>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.72)'}}>{settings.assetSymbol} · {settings.assetName}</span>
+                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.85)'}}>{settings.assetSymbol} · {settings.assetName}</span>
                   </div>
                 )}
               </Card>
@@ -939,7 +1543,7 @@ export default function DashboardPage() {
                 <RealtimeClockCompact/>
                 <Card style={{padding:10,flex:1}}>
                   <ChartCard assetSymbol={settings.assetSymbol} height={110}/>
-                  {settings.assetSymbol&&<p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(234,247,242,.58)',textAlign:'center',marginTop:5}}>{settings.assetSymbol}</p>}
+                  {settings.assetSymbol&&<p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.7)',textAlign:'center',marginTop:5}}>{settings.assetSymbol}</p>}
                 </Card>
               </div>
               <SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/>
