@@ -34,8 +34,9 @@ export const BottomNav = () => {
       }}>
         {/* Cyan edge glow line */}
         <div style={{
-          height: 1, marginTop: -1,
-          background: `linear-gradient(to right, transparent 5%, ${CYAN}35 35%, ${CYAN}55 50%, ${CYAN}35 65%, transparent 95%)`,
+          height: 2, marginTop: -2,
+          background: `linear-gradient(to right, transparent 5%, ${CYAN}40 30%, ${CYAN}80 50%, ${CYAN}40 70%, transparent 95%)`,
+          boxShadow: `0 0 6px ${CYAN}50`,
         }}/>
 
         <div style={{ display: 'flex', justifyContent: 'space-around', padding: '5px 8px 7px' }}>

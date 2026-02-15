@@ -1,22 +1,30 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
-// Configure Inter font with fallback and better error handling
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap', // Use swap to show fallback immediately
-  fallback: ['system-ui', 'arial'], // Define fallback fonts
-  // Add these options to handle network issues better
-  adjustFontFallback: true,
-  preload: true,
-});
 
 export const metadata: Metadata = {
   title: 'STC AutoTrade',
   description: 'Platform dengan penarikan kilat, profit hingga 100%, dan keamanan maksimal.',
   keywords: ['binary option', 'trading', 'IDX_STC', 'forex', 'crypto', 'Stouch' ,'STC AutoTrade'],
-};
+  icons: {
+    icon: '/stc.ico',
+    shortcut: '/stc.ico',
+    apple: '/stc.ico',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Stouch',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#0f1419',
+}
+
 
 export default function RootLayout({
   children,
@@ -25,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

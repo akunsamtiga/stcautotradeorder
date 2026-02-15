@@ -15,7 +15,7 @@ import {
 // TOKENS
 // ═══════════════════════════════════════════════════════════════
 const C = {
-  bg:    '#02090a',
+  bg:    '#000000',
   s1:    '#06110e',
   s2:    '#091a14',
   s3:    '#0c2119',
@@ -61,6 +61,7 @@ const G = () => (
     @keyframes shimmer   { 0%{background-position:200% center} 100%{background-position:-200% center} }
     @keyframes shimmer-vertical { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
     @keyframes fade-in   { from{opacity:0} to{opacity:1} }
+    @keyframes skeleton-pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
 
     *{box-sizing:border-box}
     body{
@@ -267,11 +268,28 @@ const G = () => (
 // PRIMITIVES
 // ═══════════════════════════════════════════════════════════════
 
+/* Skeleton Loading Component */
+const Skeleton: React.FC<{
+  width?:string|number; height?:string|number; 
+  style?:React.CSSProperties; variant?:'shimmer'|'pulse';
+}> = ({width='100%',height=20,style,variant='pulse'}) => (
+  <div style={{
+    width,height,
+    background: variant==='shimmer' 
+      ? `linear-gradient(90deg, ${C.faint} 0%, rgba(52,211,153,.08) 50%, ${C.faint} 100%)`
+      : C.faint,
+    backgroundSize: variant==='shimmer' ? '200% 100%' : undefined,
+    animation: variant==='shimmer' ? 'shimmer 2s ease infinite' : 'skeleton-pulse 2s ease infinite',
+    borderRadius:2,
+    ...style,
+  }}/>
+);
+
 /* Clipped corner card */
 const Card: React.FC<{
   children:React.ReactNode; style?:React.CSSProperties;
-  glowColor?:string; clip?:boolean;
-}> = ({children, style, glowColor, clip=true}) => (
+  glowColor?:string; clip?:boolean; noLine?:boolean;
+}> = ({children, style, glowColor, clip=true, noLine=false}) => (
   <div className="ds-card" style={{
     background:`linear-gradient(135deg, ${C.s1} 0%, ${C.s2} 100%)`,
     border:`1px solid ${C.bdr}`,
@@ -285,14 +303,16 @@ const Card: React.FC<{
     transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
     ...style,
   }}>
-    {/* Subtle animated gradient overlay */}
-    <div style={{
-      position:'absolute', inset:0,
-      background:`linear-gradient(135deg, transparent 0%, ${C.cyan}03 50%, transparent 100%)`,
-      opacity:0,
-      transition:'opacity .3s ease',
-      pointerEvents:'none',
-    }} className="card-glow"/>
+    {/* Subtle animated gradient overlay - hide if noLine */}
+    {!noLine && (
+      <div style={{
+        position:'absolute', inset:0,
+        background:`linear-gradient(135deg, transparent 0%, ${C.cyan}03 50%, transparent 100%)`,
+        opacity:0,
+        transition:'opacity .3s ease',
+        pointerEvents:'none',
+      }} className="card-glow"/>
+    )}
     {children}
   </div>
 );
@@ -381,9 +401,9 @@ const RealtimeClock: React.FC = () => {
       
       {/* Top glow line */}
       <div style={{
-        position:'absolute',top:0,left:'20%',right:'20%',height:1,
-        background:`linear-gradient(90deg, transparent, ${C.cyan}40, transparent)`,
-        opacity:.5,
+        position:'absolute',top:0,left:'20%',right:'20%',height:2,
+        background:`linear-gradient(90deg, transparent, ${C.cyan}80, transparent)`,
+        boxShadow:`0 0 6px ${C.cyan}40`,
       }}/>
 
       <div style={{
@@ -491,10 +511,11 @@ const StatCard: React.FC<{
     <Card style={{padding:'14px 16px',position:'relative'}}>
       {/* Animated gradient border on top */}
       <div style={{
-        position:'absolute',top:0,left:0,right:0,height:2,
-        background:`linear-gradient(90deg, transparent, ${col}, transparent)`,
-        opacity:trend==='neutral'?0:.5,
-        transition:'opacity .3s ease',
+        position:'absolute',top:0,left:'15%',right:'15%',height:2,
+        background:`linear-gradient(90deg, transparent, ${col}90 50%, transparent)`,
+        opacity:trend==='neutral'?0:1,
+        boxShadow:trend!=='neutral'?`0 0 8px ${col}50`:undefined,
+        transition:'opacity .3s ease, box-shadow .3s ease',
       }}/>
       
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
@@ -507,21 +528,23 @@ const StatCard: React.FC<{
           }}>
             {title}
           </p>
-          {isLoading
-            ? <div style={{
-                height:26,width:52,
-                background:`linear-gradient(90deg, ${C.faint} 0%, rgba(52,211,153,.08) 50%, ${C.faint} 100%)`,
-                backgroundSize:'200% 100%',
-                animation:'shimmer 2s ease infinite',
-              }}/>
-            : <p style={{
-                fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:col,
-                letterSpacing:'-0.01em',lineHeight:1,
-                textShadow: trend==='up'?`0 0 20px rgba(52,211,153,.4), 0 0 10px rgba(52,211,153,.2)`
-                          : trend==='down'?`0 0 20px rgba(255,71,87,.3), 0 0 10px rgba(255,71,87,.15)`:'none',
-                transition:'all .3s ease',
-              }}>{value}</p>
-          }
+          <div style={{position:'relative',minHeight:26}}>
+            {/* Always render value, control visibility with opacity */}
+            <p style={{
+              fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:col,
+              letterSpacing:'-0.01em',lineHeight:1,
+              textShadow: trend==='up'?`0 0 20px rgba(52,211,153,.4), 0 0 10px rgba(52,211,153,.2)`
+                        : trend==='down'?`0 0 20px rgba(255,71,87,.3), 0 0 10px rgba(255,71,87,.15)`:'none',
+              transition:'all .3s ease',
+              opacity:isLoading?0:1,
+            }}>{value}</p>
+            {/* Skeleton overlay */}
+            {isLoading && (
+              <div style={{position:'absolute',top:0,left:0}}>
+                <Skeleton width={60} height={26} variant="shimmer"/>
+              </div>
+            )}
+          </div>
         </div>
         <div style={{
           color:col,opacity:.4,marginTop:2,
@@ -532,10 +555,11 @@ const StatCard: React.FC<{
       
       {/* bottom glow strip with animation */}
       <div style={{
-        position:'absolute',bottom:0,left:0,right:0,height:1,
-        background:`linear-gradient(to right,transparent,${col}50,transparent)`,
+        position:'absolute',bottom:0,left:'15%',right:'15%',height:2,
+        background:`linear-gradient(to right,transparent,${col}90 50%,transparent)`,
         opacity:trend==='neutral'?0:1,
-        transition:'opacity .3s ease',
+        boxShadow:trend!=='neutral'?`0 0 6px ${col}40`:undefined,
+        transition:'opacity .3s ease, box-shadow .3s ease',
       }}/>
     </Card>
   );
@@ -568,10 +592,9 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
 
       {/* Top glow accent */}
       <div style={{
-        position:'absolute',top:0,left:'20%',right:'20%',height:2,
-        background:`linear-gradient(90deg, transparent, ${col}60, transparent)`,
-        opacity:.5,
-        transition:'opacity .3s ease',
+        position:'absolute',top:0,left:'15%',right:'15%',height:2,
+        background:`linear-gradient(90deg, transparent, ${col}80, transparent)`,
+        boxShadow:`0 0 8px ${col}50`,
       }}/>
 
       <div style={{position:'relative'}}>
@@ -610,61 +633,66 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
           </div>
         </div>
         
-        {isLoading
-          ? <div style={{
-              height:44,width:220,
-              background:`linear-gradient(90deg, ${C.faint} 0%, rgba(52,211,153,.08) 50%, ${C.faint} 100%)`,
-              backgroundSize:'200% 100%',
-              animation:'shimmer 2s ease infinite',
-            }}/>
-          : <>
-              <p style={{
-                fontFamily:'var(--font-mono)',fontWeight:600,
-                fontSize:'clamp(28px,5vw,42px)',
-                color:col,letterSpacing:'-0.02em',lineHeight:1.1,
-                textShadow:`0 0 40px ${col}60, 0 0 20px ${col}40`,
-                transition:'all .4s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform:'scale(1)',
-              }}>
-                {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
-              </p>
-              
-              {/* Animated sub-indicator bar */}
+        <div style={{position:'relative',minHeight:44}}>
+          {/* Always render value, control visibility with opacity */}
+          <p style={{
+            fontFamily:'var(--font-mono)',fontWeight:600,
+            fontSize:'clamp(28px,5vw,42px)',
+            color:col,letterSpacing:'-0.02em',lineHeight:1.1,
+            textShadow:`0 0 40px ${col}60, 0 0 20px ${col}40`,
+            transition:'all .4s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform:'scale(1)',
+            opacity:isLoading?0:1,
+          }}>
+            {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
+          </p>
+          
+          {/* Skeleton overlay */}
+          {isLoading && (
+            <div style={{position:'absolute',top:0,left:0}}>
+              <Skeleton width={240} height={44} variant="shimmer"/>
+            </div>
+          )}
+        </div>
+        
+        {!isLoading && (
+          <>
+            {/* Animated sub-indicator bar */}
+            <div style={{
+              marginTop:14,height:2,width:'100%',position:'relative',
+              background:C.faint,overflow:'hidden',
+            }}>
               <div style={{
-                marginTop:14,height:2,width:'100%',position:'relative',
-                background:C.faint,overflow:'hidden',
+                position:'absolute',left:0,top:0,bottom:0,
+                width:isPos?'70%':'30%',
+                background:`linear-gradient(to right,${col}90,${col}40)`,
+                transition:'width .5s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}/>
+            </div>
+            
+            {/* Profit percentage indicator */}
+            <div style={{
+              marginTop:10,display:'flex',alignItems:'center',gap:6,
+            }}>
+              <span style={{
+                fontFamily:'var(--font-mono)',fontSize:11,
+                color:'rgba(255,255,255,.75)',
               }}>
-                <div style={{
-                  position:'absolute',left:0,top:0,bottom:0,
-                  width:isPos?'70%':'30%',
-                  background:`linear-gradient(to right,${col}90,${col}40)`,
-                  transition:'width .5s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}/>
-              </div>
-              
-              {/* Profit percentage indicator */}
-              <div style={{
-                marginTop:10,display:'flex',alignItems:'center',gap:6,
+                Status:
+              </span>
+              <span style={{
+                fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+                letterSpacing:'0.1em',color:col,
+                padding:'2px 8px',
+                background:`${col}12`,
+                border:`1px solid ${col}25`,
+                transition:'all .3s ease',
               }}>
-                <span style={{
-                  fontFamily:'var(--font-mono)',fontSize:11,
-                  color:'rgba(255,255,255,.75)',
-                }}>
-                  Status:
-                </span>
-                <span style={{
-                  fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
-                  letterSpacing:'0.1em',color:col,
-                  padding:'2px 8px',
-                  background:`${col}12`,
-                  border:`1px solid ${col}25`,
-                  transition:'all .3s ease',
-                }}>
-                  {isPos ? 'PROFIT' : 'LOSS'}
-                </span>
-              </div>
-            </>
-        }
+                {isPos ? 'PROFIT' : 'LOSS'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </Card>
   );
@@ -841,9 +869,9 @@ const BulkScheduleModal: React.FC<{
       }}>
         {/* Top glow accent */}
         <div style={{
-          position:'absolute',top:0,left:'25%',right:'25%',height:2,
-          background:`linear-gradient(90deg, transparent, ${C.cyan}80, transparent)`,
-          opacity:.6,
+          position:'absolute',top:0,left:'20%',right:'20%',height:2,
+          background:`linear-gradient(90deg, transparent, ${C.cyan}90, transparent)`,
+          boxShadow:`0 0 8px ${C.cyan}60`,
         }}/>
         
         {/* Header */}
@@ -1398,6 +1426,7 @@ export default function DashboardPage() {
   });
   const [botStatus,setBotStatus]=useState<BotStatus>({isRunning:false,isPaused:false,activeSchedules:0,currentProfit:0});
   const [todayStats,setTodayStats]=useState({profit:0,executions:0,winRate:0});
+  const [deviceType,setDeviceType]=useState<'mobile'|'tablet'|'desktop'>('desktop');
 
   useEffect(()=>{
     if(!hasHydrated)return;
@@ -1407,6 +1436,19 @@ export default function DashboardPage() {
     const iv=setInterval(loadData,30000);
     return()=>clearInterval(iv);
   },[hasHydrated,isAuthenticated]); // eslint-disable-line
+
+  // Device detection
+  useEffect(()=>{
+    const checkDevice=()=>{
+      const w=window.innerWidth;
+      if(w<768)setDeviceType('mobile');
+      else if(w<1024)setDeviceType('tablet');
+      else setDeviceType('desktop');
+    };
+    checkDevice();
+    window.addEventListener('resize',checkDevice);
+    return()=>window.removeEventListener('resize',checkDevice);
+  },[]);
 
   const getNextExecTime=(schedules:any[])=>{
     if(!schedules?.length)return undefined;
@@ -1459,7 +1501,10 @@ export default function DashboardPage() {
   };
 
   const canStart=!!(settings.assetSymbol&&settings.schedules.length>0);
-  const g=12,px=16;
+  
+  // INCREASED GAP FROM 12 TO 20 FOR BETTER SPACING
+  const g = deviceType === 'desktop' ? 20 : deviceType === 'tablet' ? 18 : 16;
+  const px=16;
 
   if(!hasHydrated)return(
     <div style={{minHeight:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -1476,8 +1521,8 @@ export default function DashboardPage() {
         {/* HEADER */}
         <div style={{position:'relative'}}>
           <img src="/header3.jpg" alt="" style={{width:'100%',height:'auto',display:'block'}}/>
-          <div style={{position:'absolute',bottom:0,left:0,right:0,height:100,background:`linear-gradient(to bottom,transparent,${C.bg})`}}/>
-          <div style={{position:'absolute',bottom:0,left:0,right:0,height:1,background:`linear-gradient(to right,transparent,${C.cyan}50,${C.cyan}80,${C.cyan}50,transparent)`}}/>
+          {/* Fade overlay */}
+          <div style={{position:'absolute',bottom:0,left:0,right:0,height:100,background:`linear-gradient(to bottom,transparent,${C.bg})`,zIndex:1}}/>
         </div>
 
         <div style={{maxWidth:1280,margin:'0 auto',padding:`0 ${px}px`}}>
@@ -1492,56 +1537,61 @@ export default function DashboardPage() {
           )}
 
           {/* ── DESKTOP ── */}
-          <div className="hidden lg:grid" style={{gridTemplateColumns:'1fr 356px',gap:g}}>
-            <div style={{display:'flex',flexDirection:'column',gap:g}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:g}}>
-                <StatCard title="Eksekusi Hari Ini" value={todayStats.executions} icon={<Activity style={{width:15,height:15}}/>} isLoading={isLoading}/>
-                <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:15,height:15}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
-                <div style={{height:'100%'}}><RealtimeClock/></div>
+          {deviceType==='desktop'&&(
+            <div style={{display:'grid',gridTemplateColumns:'1fr 356px',gap:g}}>
+              <div style={{display:'flex',flexDirection:'column',gap:g}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:g}}>
+                  <StatCard title="Eksekusi Hari Ini" value={todayStats.executions} icon={<Activity style={{width:15,height:15}}/>} isLoading={isLoading}/>
+                  <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:15,height:15}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
+                  <div style={{height:'100%'}}><RealtimeClock/></div>
+                </div>
+                <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
+                <Card noLine style={{padding:14}}>
+                  <ChartCard assetSymbol={settings.assetSymbol} height={280}/>
+                  {settings.assetSymbol&&(
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginTop:8}}>
+                      <span style={{width:4,height:4,background:C.cyan,opacity:.5,display:'inline-block',borderRadius:'50%'}}/>
+                      <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.85)'}}>{settings.assetSymbol} · {settings.assetName}</span>
+                    </div>
+                  )}
+                </Card>
               </div>
-              <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
-              <Card style={{padding:14}}>
-                <ChartCard assetSymbol={settings.assetSymbol} height={280}/>
-                {settings.assetSymbol&&(
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginTop:8}}>
-                    <span style={{width:4,height:4,background:C.cyan,opacity:.5,display:'inline-block',borderRadius:'50%'}}/>
-                    <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.85)'}}>{settings.assetSymbol} · {settings.assetName}</span>
-                  </div>
-                )}
-              </Card>
+              <div style={{display:'flex',flexDirection:'column',gap:g}}>
+                <div style={{minHeight:200}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
+                <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
+                <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
+              </div>
             </div>
-            <div style={{display:'flex',flexDirection:'column',gap:g}}>
-              <div style={{minHeight:200}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
-              <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
-              <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
-            </div>
-          </div>
+          )}
 
           {/* ── TABLET ── */}
-          <div className="hidden md:grid lg:hidden" style={{gridTemplateColumns:'1fr 1fr',gap:g}}>
-            <div style={{display:'flex',flexDirection:'column',gap:g}}>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:g}}>
-                <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity style={{width:13,height:13}}/>} isLoading={isLoading}/>
-                <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:13,height:13}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
-                <div style={{height:'100%'}}><RealtimeClock/></div>
+          {deviceType==='tablet'&&(
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:g}}>
+              <div style={{display:'flex',flexDirection:'column',gap:g}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:g}}>
+                  <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity style={{width:13,height:13}}/>} isLoading={isLoading}/>
+                  <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:13,height:13}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
+                  <div style={{height:'100%'}}><RealtimeClock/></div>
+                </div>
+                <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
+                <Card noLine style={{padding:12}}><ChartCard assetSymbol={settings.assetSymbol} height={220}/></Card>
               </div>
-              <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
-              <Card style={{padding:12}}><ChartCard assetSymbol={settings.assetSymbol} height={220}/></Card>
+              <div style={{display:'flex',flexDirection:'column',gap:g}}>
+                <div style={{minHeight:180}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
+                <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
+                <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
+              </div>
             </div>
-            <div style={{display:'flex',flexDirection:'column',gap:g}}>
-              <div style={{minHeight:180}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
-              <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
-              <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
-            </div>
-          </div>
+          )}
 
           {/* ── MOBILE ── */}
-          <div className="md:hidden" style={{display:'flex',flexDirection:'column',gap:g}}>
+          {deviceType==='mobile'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:g}}>
             <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
             <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:g,alignItems:'stretch'}}>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 <RealtimeClockCompact/>
-                <Card style={{padding:10,flex:1}}>
+                <Card noLine style={{padding:10,flex:1}}>
                   <ChartCard assetSymbol={settings.assetSymbol} height={110}/>
                   {settings.assetSymbol&&<p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.7)',textAlign:'center',marginTop:5}}>{settings.assetSymbol}</p>}
                 </Card>
@@ -1554,7 +1604,8 @@ export default function DashboardPage() {
             </div>
             <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
             <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
-          </div>
+            </div>
+          )}
         </div>
 
         <BulkScheduleModal isOpen={isModalOpen} onClose={()=>setIsModalOpen(false)}
