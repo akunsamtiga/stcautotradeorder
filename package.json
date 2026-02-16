@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "axios": "^1.7.2",
     "date-fns": "^3.6.0",
     "firebase": "^12.9.0",
     "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.395.0",
     "next": "14.2.5",
+    "phosphor": "^0.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.2"

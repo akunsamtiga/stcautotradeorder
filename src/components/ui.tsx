@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 
 // ============================================================================
-// BUTTON COMPONENT
+// BUTTON
 // ============================================================================
-
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -12,125 +11,116 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  className = '',
-  disabled,
-  ...props
+  children, variant = 'primary', size = 'md', isLoading = false,
+  className = '', disabled, ...props
 }) => {
-  const baseStyles = 'font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  
-  const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  const base = 'font-medium transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
+
+  const variants: Record<string, string> = {
+    primary:   'bg-[rgba(52,211,153,0.12)] border border-[rgba(52,211,153,0.3)] text-[#34d399] hover:bg-[rgba(52,211,153,0.18)] hover:shadow-[0_0_18px_rgba(52,211,153,0.18)]',
+    secondary: 'bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] text-white/70 hover:text-white hover:border-white/25',
+    danger:    'bg-[rgba(255,82,99,0.10)] border border-[rgba(255,82,99,0.25)] text-[#ff5263] hover:bg-[rgba(255,82,99,0.18)]',
+    ghost:     'bg-transparent border border-[rgba(52,211,153,0.2)] text-white/60 hover:text-white/90 hover:border-white/40',
   };
 
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+  const sizes: Record<string, string> = {
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-6 py-3 text-base',
   };
+
+  const clip = '[clip-path:polygon(0_0,calc(100%-8px)_0,100%_8px,100%_100%,8px_100%,0_calc(100%-8px))]';
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${base} ${variants[variant]} ${sizes[size]} ${clip} ${className}`}
       disabled={disabled || isLoading}
+      style={{ fontFamily: 'var(--font-exo)', letterSpacing: '0.12em', textTransform: 'uppercase' }}
       {...props}
     >
       {isLoading ? (
-        <div className="flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+        <span className="flex items-center justify-center gap-2">
+          <span style={{
+            width: 14, height: 14,
+            border: '2px solid currentColor', borderTopColor: 'transparent',
+            borderRadius: '50%', display: 'inline-block',
+            animation: 'spin 0.8s linear infinite',
+          }} />
           Loading...
-        </div>
-      ) : (
-        children
-      )}
+        </span>
+      ) : children}
     </button>
   );
 };
 
 // ============================================================================
-// INPUT COMPONENT
+// INPUT
 // ============================================================================
-
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
 
-export const Input: React.FC<InputProps> = ({
-  label,
-  error,
-  className = '',
-  ...props
-}) => {
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-        </label>
-      )}
-      <input
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } ${className}`}
-        {...props}
-      />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-    </div>
-  );
-};
+export const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => (
+  <div className="w-full">
+    {label && (
+      <label style={{
+        display: 'block', fontFamily: 'var(--font-exo)', fontSize: 11, fontWeight: 700,
+        letterSpacing: '0.14em', textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.65)', marginBottom: 6,
+      }}>
+        {label}
+      </label>
+    )}
+    <input
+      className={`ds-input ${className}`}
+      style={error ? { borderColor: 'rgba(255,82,99,0.5) !important' } : undefined}
+      {...props}
+    />
+    {error && (
+      <p style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#ff8a94' }}>
+        {error}
+      </p>
+    )}
+  </div>
+);
 
 // ============================================================================
-// SELECT COMPONENT
+// SELECT
 // ============================================================================
-
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   options: { value: string; label: string }[];
 }
 
-export const Select: React.FC<SelectProps> = ({
-  label,
-  error,
-  options,
-  className = '',
-  ...props
-}) => {
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {label}
-        </label>
-      )}
-      <select
-        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } ${className}`}
-        {...props}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-    </div>
-  );
-};
+export const Select: React.FC<SelectProps> = ({ label, error, options, className = '', ...props }) => (
+  <div className="w-full">
+    {label && (
+      <label style={{
+        display: 'block', fontFamily: 'var(--font-exo)', fontSize: 11, fontWeight: 700,
+        letterSpacing: '0.14em', textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.65)', marginBottom: 6,
+      }}>
+        {label}
+      </label>
+    )}
+    <select className={`ds-input ${className}`} {...props}>
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+    {error && (
+      <p style={{ marginTop: 5, fontFamily: 'var(--font-mono)', fontSize: 11, color: '#ff8a94' }}>
+        {error}
+      </p>
+    )}
+  </div>
+);
 
 // ============================================================================
-// MODAL COMPONENT
+// MODAL
 // ============================================================================
-
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -139,58 +129,87 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const Modal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = 'md',
-}) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
+    document.body.style.overflow = isOpen ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-    xl: 'max-w-4xl',
-  };
+  const maxWidths: Record<string, number> = { sm: 480, md: 560, lg: 720, xl: 960 };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
-          onClick={onClose}
-        ></div>
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      animation: 'fade-in 0.2s ease',
+    }}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
+      />
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+      {/* Panel */}
+      <div style={{
+        position: 'relative', width: '100%', maxWidth: maxWidths[size],
+        background: 'linear-gradient(135deg, #06110e 0%, #091a14 100%)',
+        border: '1px solid rgba(52,211,153,0.2)',
+        borderTop: '2px solid #34d399',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(52,211,153,0.08)',
+        clipPath: 'polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%)',
+        animation: 'slide-up 0.3s cubic-bezier(0.4,0,0.2,1)',
+      }}>
+        {/* Top glow */}
+        <div style={{
+          position: 'absolute', top: 0, left: '20%', right: '20%', height: 2,
+          background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.8), transparent)',
+          boxShadow: '0 0 8px rgba(52,211,153,0.5)',
+        }} />
 
-        <div
-          className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ${sizes[size]}`}
-        >
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            {children}
-          </div>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--font-exo)', fontSize: 15, fontWeight: 800,
+            letterSpacing: '0.08em', textTransform: 'uppercase', color: '#ffffff',
+          }}>
+            {title}
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.45)', cursor: 'pointer',
+              clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,82,99,0.12)';
+              (e.currentTarget as HTMLButtonElement).style.color = '#ff5263';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
+              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.45)';
+            }}
+          >
+            <X size={14} weight="bold" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '20px' }}>
+          {children}
         </div>
       </div>
     </div>

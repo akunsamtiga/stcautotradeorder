@@ -64,63 +64,65 @@ const G = () => (
     @keyframes skeleton-pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
 
     *{box-sizing:border-box}
-    body{
-      background:${C.bg};
-      color:${C.text};
-      -webkit-font-smoothing:antialiased;
-      position:relative;
-      overflow-x:hidden;
+    
+    /* Dashboard pattern - lebih kuat dengan !important */
+    html.dashboard-page,
+    html.dashboard-page body {
+      background: #000000 !important;
     }
-
-    /* Emerald shimmer pattern layer */
-    body::before{
-      content:'';
-      position:fixed;
-      inset:0;
+    
+    /* Pattern grid layer - sama seperti globals.css */
+    html.dashboard-page body::before{
+      content:'' !important;
+      position:fixed !important;
+      inset:0 !important;
       background-image:
         repeating-linear-gradient(
           90deg,
           transparent 0px,
-          rgba(52,211,153,0.08) 1px,
+          rgba(52,211,153,0.055) 1px,
           transparent 2px,
-          transparent 30px
+          transparent 32px
         ),
         repeating-linear-gradient(
           0deg,
           transparent 0px,
-          rgba(52,211,153,0.06) 1px,
+          rgba(52,211,153,0.04) 1px,
           transparent 2px,
-          transparent 30px
-        );
-      pointer-events:none;
-      z-index:1;
-      opacity:1;
+          transparent 32px
+        ) !important;
+      pointer-events:none !important;
+      z-index:0 !important;
+      opacity:1 !important;
     }
 
     /* Animated shimmer overlay */
-    body::after{
-      content:'';
-      position:fixed;
-      inset:0;
+    html.dashboard-page body::after{
+      content:'' !important;
+      position:fixed !important;
+      inset:0 !important;
       background:linear-gradient(
         180deg,
-        rgba(52,211,153,0.12) 0%,
-        transparent 15%,
-        transparent 35%,
-        rgba(52,211,153,0.08) 50%,
-        transparent 65%,
-        transparent 85%,
-        rgba(52,211,153,0.1) 100%
-      );
-      background-size:100% 200%;
-      animation:shimmer-vertical 10s ease-in-out infinite;
-      pointer-events:none;
-      z-index:1;
-      opacity:1;
+        rgba(52,211,153,0.07) 0%,
+        transparent 18%,
+        transparent 82%,
+        rgba(52,211,153,0.05) 100%
+      ) !important;
+      background-size:100% 400% !important;
+      animation:shimmer-vertical 12s ease-in-out infinite !important;
+      pointer-events:none !important;
+      z-index:0 !important;
+      opacity:1 !important;
+    }
+    
+    /* Ensure content above pattern */
+    html.dashboard-page body > * {
+      position:relative !important;
+      z-index:1 !important;
     }
 
-    /* Ensure content is above pattern */
-    body > *:not(style){
+    /* Dashboard specific content z-index */
+    html.dashboard-page body > *:not(style){
       position:relative;
       z-index:2;
     }
@@ -1243,7 +1245,7 @@ const OrderSettingsCard: React.FC<{
                   {amt >= 1000000 ? `${amt / 1000000}M` : `${amt / 1000}K`}
                 </button>
               ))}
-            </div>
+                          </div>
           </div>
 
           <Divider/>
@@ -1431,10 +1433,15 @@ export default function DashboardPage() {
   useEffect(()=>{
     if(!hasHydrated)return;
     if(!isAuthenticated){router.push('/');return}
+    // Add dashboard class for pattern
+    document.documentElement.classList.add('dashboard-page');
     loadData();
     api.getActiveAssets().then((d:any)=>setAssets(d||[])).catch(()=>{});
     const iv=setInterval(loadData,30000);
-    return()=>clearInterval(iv);
+    return()=>{
+      clearInterval(iv);
+      document.documentElement.classList.remove('dashboard-page');
+    };
   },[hasHydrated,isAuthenticated]); // eslint-disable-line
 
   // Device detection

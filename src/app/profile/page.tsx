@@ -6,15 +6,28 @@ import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { BottomNav } from '@/components/BottomNav';
 import {
-  User, Mail, Phone, Shield, LogOut, Edit2,
-  Check, X, RefreshCw, AlertCircle,
-  CheckCircle, Lock, ChevronRight, Wallet,
-  Award, Star, Zap,
-} from 'lucide-react';
+  User, EnvelopeSimple, Phone, ShieldCheck, SignOut,
+  PencilSimple, Check, X, ArrowClockwise, WarningCircle,
+  CheckCircle, CaretRight, Medal, Star,
+  Lightning, UserCircle,
+} from '@phosphor-icons/react';
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ────────────────────────────────────────────────────────────
+const C = {
+  bg:   '#000000',
+  s1:   '#06110e',
+  s2:   '#091a14',
+  s3:   '#0c2119',
+  cyan: '#34d399',
+  bdr:  'rgba(52,211,153,0.15)',
+  coral:'#ff5263',
+};
+
+// ────────────────────────────────────────────────────────────
 // TYPES
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 interface UserProfile {
   user: any;
   profileInfo: any;
@@ -26,331 +39,290 @@ interface UserProfile {
     progress?: number;
     depositNeeded?: number;
   };
-  balances: {
-    real: number;
-    demo: number;
-    combined: number;
-  };
+  balances: { real: number; demo: number; combined: number };
 }
 
-// ============================================================================
-// SKELETON LOADER
-// ============================================================================
-const Skeleton = ({ className = '' }: { className?: string }) => (
-  <div className={`animate-pulse bg-white/5 rounded ${className}`} />
+// ────────────────────────────────────────────────────────────
+// SKELETON
+// ────────────────────────────────────────────────────────────
+const Skeleton = ({ w = '100%', h = 16 }: { w?: string | number; h?: number }) => (
+  <div
+    style={{
+      width: w, height: h,
+      background: 'rgba(52,211,153,0.05)',
+      animation: 'skeleton-pulse 2s ease infinite',
+      borderRadius: 2,
+    }}
+  />
 );
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
+// CARD
+// ────────────────────────────────────────────────────────────
+const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({
+  children, style,
+}) => (
+  <div
+    className="ds-card"
+    style={{
+      background: `linear-gradient(135deg, ${C.s1} 0%, ${C.s2} 100%)`,
+      border: `1px solid ${C.bdr}`,
+      clipPath: 'polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))',
+      position: 'relative',
+      overflow: 'hidden',
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+// ────────────────────────────────────────────────────────────
 // AVATAR
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 const Avatar = ({ name, email, avatarUrl }: { name?: string; email: string; avatarUrl?: string }) => {
   const initials = name
     ? name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
     : email[0].toUpperCase();
 
-  if (avatarUrl) {
+  if (avatarUrl)
     return (
-      <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-emerald-500/20 flex-shrink-0">
-        <img src={avatarUrl} alt={name || email} className="w-full h-full object-cover" />
+      <div style={{ width: 72, height: 72, border: `2px solid ${C.bdr}`, overflow: 'hidden', flexShrink: 0 }}>
+        <img src={avatarUrl} alt={name || email} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </div>
     );
-  }
 
   return (
-    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border-2 border-emerald-500/20 flex items-center justify-center flex-shrink-0">
-      <span className="text-2xl font-bold text-emerald-400">{initials}</span>
+    <div style={{
+      width: 72, height: 72, flexShrink: 0,
+      background: `linear-gradient(135deg, ${C.s3}, ${C.s2})`,
+      border: `2px solid ${C.bdr}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      clipPath: 'polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px))',
+    }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 24, fontWeight: 700, color: C.cyan }}>{initials}</span>
     </div>
   );
 };
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // STATUS BADGE
-// ============================================================================
+// ────────────────────────────────────────────────────────────
+const statusCfg = {
+  standard: { label: 'STANDARD', Icon: UserCircle, col: '#9ca3af',  dim: 'rgba(156,163,175,0.12)' },
+  gold:     { label: 'GOLD',     Icon: Medal,       col: '#fcd34d',  dim: 'rgba(252,211,77,0.12)'  },
+  vip:      { label: 'VIP',      Icon: Star,        col: '#c084fc',  dim: 'rgba(192,132,252,0.12)' },
+} as const;
+
 const StatusBadge = ({ status }: { status: 'standard' | 'gold' | 'vip' }) => {
-  const config = {
-    standard: {
-      label: 'STANDARD',
-      icon: <User className="w-3 h-3" />,
-      className: 'bg-slate-500/15 text-slate-300 border-slate-500/25',
-    },
-    gold: {
-      label: 'GOLD',
-      icon: <Award className="w-3 h-3" />,
-      className: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/25',
-    },
-    vip: {
-      label: 'VIP',
-      icon: <Star className="w-3 h-3" />,
-      className: 'bg-purple-500/15 text-purple-300 border-purple-500/25',
-    },
-  };
-
-  const { label, icon, className } = config[status] || config.standard;
-
+  const { label, Icon, col, dim } = statusCfg[status] ?? statusCfg.standard;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-wider ${className}`}>
-      {icon}
-      {label}
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontSize: 10, fontFamily: 'var(--font-exo)', fontWeight: 700,
+      letterSpacing: '0.15em',
+      padding: '3px 10px',
+      background: dim,
+      border: `1px solid ${col}40`,
+      color: col,
+    }}>
+      <Icon size={11} weight="fill" />{label}
     </span>
   );
 };
 
-// ============================================================================
-// STATUS CARD WITH PROGRESS
-// ============================================================================
-const StatusCard = ({ 
-  statusInfo, 
-  isLoading 
-}: { 
-  statusInfo: UserProfile['statusInfo']; 
-  isLoading: boolean;
-}) => {
-  if (isLoading) {
-    return (
-      <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] rounded-2xl border border-white/[0.06] p-5">
-        <Skeleton className="h-5 w-32 mb-4" />
-        <Skeleton className="h-8 w-full mb-4" />
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
-  }
+// ────────────────────────────────────────────────────────────
+// STATUS CARD
+// ────────────────────────────────────────────────────────────
+const StatusCard = ({ statusInfo, isLoading }: { statusInfo: UserProfile['statusInfo']; isLoading: boolean }) => {
+  if (isLoading) return (
+    <Card style={{ padding: '20px' }}>
+      <Skeleton w={120} h={14} />
+      <div style={{ marginTop: 12 }}><Skeleton h={32} /></div>
+      <div style={{ marginTop: 10 }}><Skeleton h={60} /></div>
+    </Card>
+  );
 
-  const statusColors = {
-    standard: { from: 'from-slate-500/20', to: 'to-slate-500/5', border: 'border-slate-500/30', text: 'text-slate-300', glow: 'shadow-slate-500/20' },
-    gold: { from: 'from-yellow-500/20', to: 'to-yellow-500/5', border: 'border-yellow-500/30', text: 'text-yellow-300', glow: 'shadow-yellow-500/20' },
-    vip: { from: 'from-purple-500/20', to: 'to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-300', glow: 'shadow-purple-500/20' },
-  };
-
-  const colors = statusColors[statusInfo.current];
+  const { col } = statusCfg[statusInfo.current] ?? statusCfg.standard;
   const progress = statusInfo.progress || 0;
 
   return (
-    <div className={`bg-gradient-to-br ${colors.from} ${colors.to} rounded-2xl border ${colors.border} p-5 shadow-lg ${colors.glow}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${colors.from} ${colors.to} border ${colors.border} flex items-center justify-center`}>
-            {statusInfo.current === 'standard' && <User className="w-5 h-5 text-slate-300" />}
-            {statusInfo.current === 'gold' && <Award className="w-5 h-5 text-yellow-300" />}
-            {statusInfo.current === 'vip' && <Star className="w-5 h-5 text-purple-300" />}
+    <Card style={{ padding: '20px' }}>
+      <div style={{ position: 'absolute', top: 0, left: '20%', right: '20%', height: 2, background: `linear-gradient(90deg,transparent,${col}80,transparent)`, boxShadow: `0 0 6px ${col}50` }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, background: `${col}15`, border: `1px solid ${col}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))' }}>
+            {statusInfo.current === 'standard' && <UserCircle size={18} weight="regular" style={{ color: col }} />}
+            {statusInfo.current === 'gold'     && <Medal  size={18} weight="fill"    style={{ color: col }} />}
+            {statusInfo.current === 'vip'      && <Star   size={18} weight="fill"    style={{ color: col }} />}
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/40 mb-0.5">Status Akun</p>
+            <p style={{ fontFamily: 'var(--font-exo)', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Status Akun</p>
             <StatusBadge status={statusInfo.current} />
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] uppercase tracking-widest text-white/40 mb-0.5">Profit Bonus</p>
-          <p className={`text-lg font-bold ${colors.text}`}>{statusInfo.profitBonus}</p>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ fontFamily: 'var(--font-exo)', fontSize: 10, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', marginBottom: 4 }}>Profit Bonus</p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: col }}>{statusInfo.profitBonus}</p>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-black/20 rounded-xl p-3 border border-white/5">
-          <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Total Deposit</p>
-          <p className="text-base font-bold text-white font-mono">
-            Rp {statusInfo.totalDeposit.toLocaleString('id-ID')}
-          </p>
-        </div>
-        {statusInfo.nextStatus && (
-          <div className="bg-black/20 rounded-xl p-3 border border-white/5">
-            <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Butuh Lagi</p>
-            <p className="text-base font-bold text-emerald-400 font-mono">
-              Rp {(statusInfo.depositNeeded || 0).toLocaleString('id-ID')}
-            </p>
+      <div style={{ display: 'grid', gridTemplateColumns: statusInfo.nextStatus ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 14 }}>
+        {[
+          { label: 'Total Deposit', val: `Rp ${statusInfo.totalDeposit.toLocaleString('id-ID')}` },
+          ...(statusInfo.nextStatus ? [{ label: 'Dibutuhkan', val: `Rp ${(statusInfo.depositNeeded || 0).toLocaleString('id-ID')}` }] : []),
+        ].map((s) => (
+          <div key={s.label} style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid rgba(255,255,255,0.05)`, padding: '10px 12px' }}>
+            <p style={{ fontFamily: 'var(--font-exo)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>{s.label}</p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: '#ffffff' }}>{s.val}</p>
           </div>
-        )}
+        ))}
       </div>
 
-      {/* Progress Bar */}
       {statusInfo.nextStatus && progress < 100 && (
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-white/60">
-              Progress ke <span className={`font-bold ${colors.text}`}>{statusInfo.nextStatus}</span>
-            </p>
-            <p className="text-xs font-bold text-white/60">{progress.toFixed(1)}%</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <p style={{ fontFamily: 'var(--font-exo)', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Progress ke <span style={{ color: col, fontWeight: 700 }}>{statusInfo.nextStatus}</span></p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{progress.toFixed(1)}%</p>
           </div>
-          <div className="h-2 bg-black/30 rounded-full overflow-hidden">
-            <div 
-              className={`h-full bg-gradient-to-r ${colors.from} ${colors.to} rounded-full transition-all duration-500`}
-              style={{ width: `${progress}%` }}
-            />
+          <div style={{ height: 3, background: 'rgba(0,0,0,0.4)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progress}%`, background: `linear-gradient(to right,${col},${col}80)`, transition: 'width 0.5s ease' }} />
           </div>
         </div>
       )}
 
       {statusInfo.current === 'vip' && (
-        <div className="flex items-center gap-2 text-xs text-purple-300/80 bg-purple-500/10 rounded-lg px-3 py-2 mt-3">
-          <Zap className="w-3.5 h-3.5" />
-          <span>Kamu sudah mencapai status tertinggi! 🎉</span>
+        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(192,132,252,0.08)', border: '1px solid rgba(192,132,252,0.2)' }}>
+          <Lightning size={14} weight="fill" style={{ color: '#c084fc' }} />
+          <span style={{ fontFamily: 'var(--font-exo)', fontSize: 11, color: 'rgba(192,132,252,0.8)' }}>Status tertinggi tercapai! 🎉</span>
         </div>
       )}
-    </div>
+    </Card>
   );
 };
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // INFO ROW
-// ============================================================================
-const InfoRow = ({
-  icon, label, value, verified,
-}: { icon: React.ReactNode; label: string; value?: string; verified?: boolean }) => (
-  <div className="flex items-center gap-3 py-3.5 border-b border-white/[0.04] last:border-0">
-    <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0 text-white/20">
-      {icon}
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[10px] uppercase tracking-widest text-white/20">{label}</p>
-      <p className="text-sm text-white mt-0.5 truncate">{value || '—'}</p>
+// ────────────────────────────────────────────────────────────
+const InfoRow = ({ icon, label, value, verified }: {
+  icon: React.ReactNode; label: string; value?: string; verified?: boolean;
+}) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+    <div style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.06)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'rgba(255,255,255,0.2)' }}>{icon}</div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ fontFamily: 'var(--font-exo)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 2 }}>{label}</p>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value || '—'}</p>
     </div>
     {verified !== undefined && (
-      <span className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border ${
-        verified
-          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/[0.2]'
-          : 'text-yellow-500 bg-yellow-500/10 border-yellow-500/[0.2]'
-      }`}>
-        {verified ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+      <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, fontFamily: 'var(--font-exo)', fontWeight: 700, padding: '3px 8px', color: verified ? C.cyan : '#fcd34d', background: verified ? 'rgba(52,211,153,0.08)' : 'rgba(252,211,77,0.08)', border: `1px solid ${verified ? C.bdr : 'rgba(252,211,77,0.25)'}` }}>
+        {verified ? <CheckCircle size={11} weight="fill" /> : <WarningCircle size={11} weight="fill" />}
         {verified ? 'Verified' : 'Unverified'}
       </span>
     )}
   </div>
 );
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // EDITABLE FIELD
-// ============================================================================
-const EditableField = ({
-  icon, label, value, onSave, placeholder,
-}: {
+// ────────────────────────────────────────────────────────────
+const EditableField = ({ icon, label, value, onSave, placeholder }: {
   icon: React.ReactNode; label: string; value?: string;
   onSave: (v: string) => Promise<void>; placeholder: string;
 }) => {
   const [editing, setEditing] = useState(false);
-  const [val,     setVal]     = useState(value || '');
-  const [saving,  setSaving]  = useState(false);
-  const [err,     setErr]     = useState('');
+  const [val, setVal] = useState(value || '');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
 
   const handleSave = async () => {
-    if (!val.trim()) {
-      setErr('Field tidak boleh kosong');
-      return;
-    }
+    if (!val.trim()) { setErr('Field tidak boleh kosong'); return; }
     setSaving(true); setErr('');
-    try { 
-      await onSave(val); 
-      setEditing(false); 
-    } catch (e: any) { 
-      setErr(e.message || 'Gagal menyimpan. Coba lagi.'); 
-    } finally { 
-      setSaving(false); 
-    }
+    try { await onSave(val); setEditing(false); }
+    catch (e: any) { setErr(e.message || 'Gagal menyimpan.'); }
+    finally { setSaving(false); }
   };
 
   return (
-    <div className="py-3.5 border-b border-white/[0.04] last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-white/[0.04] flex items-center justify-center flex-shrink-0 text-white/20">
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-white/20 mb-1">{label}</p>
+    <div style={{ padding: '13px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 32, height: 32, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.06)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'rgba(255,255,255,0.2)' }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: 'var(--font-exo)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 5 }}>{label}</p>
           {editing ? (
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                value={val}
-                onChange={(e) => setVal(e.target.value)}
-                placeholder={placeholder}
-                className="flex-1 bg-[#0f0f0f] border border-white/[0.1] rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-emerald-500/40 transition-colors"
-              />
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/[0.25] flex items-center justify-center text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-50 transition-colors"
-              >
-                {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input autoFocus value={val} onChange={(e) => setVal(e.target.value)} placeholder={placeholder}
+                style={{ flex: 1, padding: '6px 10px', background: C.s2, border: `1px solid ${C.bdr}`, color: '#fff', fontFamily: 'var(--font-mono)', fontSize: 13, outline: 'none' }} />
+              <button onClick={handleSave} disabled={saving}
+                style={{ width: 28, height: 28, background: 'rgba(52,211,153,0.1)', border: `1px solid ${C.bdr}`, color: C.cyan, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {saving ? <span style={{ width: 10, height: 10, border: `2px solid ${C.cyan}`, borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} /> : <Check size={13} weight="bold" />}
               </button>
-              <button
-                onClick={() => { setEditing(false); setVal(value || ''); setErr(''); }}
-                className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
+              <button onClick={() => { setEditing(false); setVal(value || ''); setErr(''); }}
+                style={{ width: 28, height: 28, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={13} weight="bold" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-white flex-1 truncate">
-                {value || <span className="text-white/20 italic">Belum diisi</span>}
-              </p>
-              <button
-                onClick={() => { setEditing(true); setVal(value || ''); }}
-                className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/20 hover:text-white/60 hover:border-white/[0.12] transition-all"
-              >
-                <Edit2 className="w-3 h-3" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: value ? '#ffffff' : 'rgba(255,255,255,0.25)', fontStyle: value ? 'normal' : 'italic', flex: 1 }}>{value || 'Belum diisi'}</p>
+              <button onClick={() => { setEditing(true); setVal(value || ''); }}
+                style={{ width: 28, height: 28, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PencilSimple size={12} />
               </button>
             </div>
           )}
-          {err && <p className="text-[11px] text-red-400 mt-1">{err}</p>}
+          {err && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#ff8a94', marginTop: 4 }}>{err}</p>}
         </div>
       </div>
     </div>
   );
 };
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // MENU ITEM
-// ============================================================================
-const MenuItem = ({
-  icon, label, sublabel, onClick, danger = false,
-}: { 
-  icon: React.ReactNode; 
-  label: string; 
-  sublabel?: string; 
-  onClick: () => void; 
-  danger?: boolean;
+// ────────────────────────────────────────────────────────────
+const MenuItem = ({ icon, label, sublabel, onClick, danger = false }: {
+  icon: React.ReactNode; label: string; sublabel?: string; onClick: () => void; danger?: boolean;
 }) => (
-  <button
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all text-left ${
-      danger
-        ? 'border-red-500/[0.1] bg-red-500/5 hover:bg-red-500/10 hover:border-red-500/[0.15]'
-        : 'border-white/[0.04] bg-[#141414] hover:bg-[#181818] hover:border-white/[0.06]'
-    }`}
-  >
-    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-      danger ? 'bg-red-500/10 text-red-400' : 'bg-white/[0.04] text-white/25'
-    }`}>
-      {icon}
+  <button onClick={onClick} style={{
+    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+    padding: '13px 16px', cursor: 'pointer', textAlign: 'left',
+    background: danger ? 'rgba(255,82,99,0.04)' : `linear-gradient(135deg,${C.s1},${C.s2})`,
+    border: `1px solid ${danger ? 'rgba(255,82,99,0.12)' : C.bdr}`,
+    clipPath: 'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))',
+    transition: 'all 0.25s ease',
+  }}>
+    <div style={{ width: 32, height: 32, background: danger ? 'rgba(255,82,99,0.1)' : 'rgba(255,255,255,0.04)', border: `1px solid ${danger ? 'rgba(255,82,99,0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: danger ? C.coral : 'rgba(255,255,255,0.25)' }}>{icon}</div>
+    <div style={{ flex: 1 }}>
+      <p style={{ fontFamily: 'var(--font-exo)', fontSize: 13, fontWeight: 600, color: danger ? C.coral : 'rgba(255,255,255,0.85)' }}>{label}</p>
+      {sublabel && <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 2 }}>{sublabel}</p>}
     </div>
-    <div className="flex-1 min-w-0">
-      <p className={`text-sm font-medium ${danger ? 'text-red-400' : 'text-white/80'}`}>{label}</p>
-      {sublabel && <p className="text-[11px] text-white/20 mt-0.5">{sublabel}</p>}
-    </div>
-    <ChevronRight className={`w-4 h-4 flex-shrink-0 ${danger ? 'text-red-400/40' : 'text-white/15'}`} />
+    <CaretRight size={14} style={{ color: danger ? 'rgba(255,82,99,0.4)' : 'rgba(255,255,255,0.15)', flexShrink: 0 }} />
   </button>
 );
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // SECTION LABEL
-// ============================================================================
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] uppercase tracking-widest text-white/20 px-1 mb-2">{children}</p>
+// ────────────────────────────────────────────────────────────
+const SL = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+    <div style={{ width: 3, height: 12, background: C.cyan, opacity: 0.6 }} />
+    <p style={{ fontFamily: 'var(--font-exo)', fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>{children}</p>
+    <div style={{ flex: 1, height: 1, background: 'rgba(52,211,153,0.1)' }} />
+  </div>
 );
 
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 // PAGE
-// ============================================================================
+// ────────────────────────────────────────────────────────────
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isAuthenticated, hasHydrated, setAuth, clearAuth } = useAuthStore();
-
-  const [profile,     setProfile]     = useState<UserProfile | null>(null);
-  const [isLoading,   setIsLoading]   = useState(true);
-  const [error,       setError]       = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [logoutModal, setLogoutModal] = useState(false);
-  const [refreshing,  setRefreshing]  = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -359,274 +331,225 @@ export default function ProfilePage() {
   }, [hasHydrated, isAuthenticated]); // eslint-disable-line
 
   const loadData = async (showRefreshing = false) => {
-    if (showRefreshing) setRefreshing(true);
-    else setIsLoading(true);
+    if (showRefreshing) setRefreshing(true); else setIsLoading(true);
     setError(null);
-    
     try {
-      const profileData = await api.getUserProfile();
-      setProfile(profileData);
-      
-      // Update auth store with latest user data
-      if (profileData.user && user) {
+      const data = await api.getUserProfile();
+      setProfile(data);
+      if (data.user && user) {
         setAuth(
-          {
-            ...user,
-            fullName: profileData.user.fullName,
-            phoneNumber: profileData.user.phoneNumber,
-            isEmailVerified: profileData.user.isEmailVerified,
-          },
+          { ...user, fullName: data.user.fullName, phoneNumber: data.user.phoneNumber, isEmailVerified: data.user.isEmailVerified },
           useAuthStore.getState().token!
         );
       }
     } catch (e: any) {
-      console.error('Failed to load profile:', e);
-      if (e?.response?.status === 401) {
-        clearAuth();
-        router.push('/');
-        return;
-      }
+      if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
       setError('Gagal memuat profil. Silakan coba lagi.');
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
+    } finally { setIsLoading(false); setRefreshing(false); }
   };
 
+  // ✅ FIX: Gunakan api.updateUserProfile() → PUT /user/profile (bukan PATCH /auth/profile yang tidak ada)
   const handleSaveFullName = async (fullName: string) => {
-    const updated = await api.updateProfile({ fullName });
+    const updated = await api.updateUserProfile({ fullName });
     if (user && updated) {
-      setAuth({ ...user, fullName: updated.fullName ?? fullName }, useAuthStore.getState().token!);
+      setAuth(
+        { ...user, fullName: updated.profile?.fullName ?? fullName },
+        useAuthStore.getState().token!
+      );
       await loadData(true);
     }
   };
 
+  // ✅ FIX: Gunakan api.updateUserProfile() → PUT /user/profile (bukan PATCH /auth/profile yang tidak ada)
   const handleSavePhone = async (phoneNumber: string) => {
-    const updated = await api.updateProfile({ phoneNumber });
+    const updated = await api.updateUserProfile({ phoneNumber });
     if (user && updated) {
-      setAuth({ ...user, phoneNumber: updated.phoneNumber ?? phoneNumber }, useAuthStore.getState().token!);
+      setAuth(
+        { ...user, phoneNumber: updated.profile?.phoneNumber ?? phoneNumber },
+        useAuthStore.getState().token!
+      );
       await loadData(true);
     }
   };
-
-  const handleLogout = () => { clearAuth(); router.push('/'); };
-
-  const handleRefresh = () => loadData(true);
 
   const roleBadge = () => {
     if (!user) return null;
-    const map: Record<string, string> = {
-      superadmin: 'bg-purple-500/15 text-purple-300 border-purple-500/[0.25]',
-      admin:      'bg-blue-500/15 text-blue-300 border-blue-500/[0.25]',
-      user:       'bg-emerald-500/10 text-emerald-400 border-emerald-500/[0.2]',
+    const map: Record<string, { col: string; dim: string }> = {
+      superadmin: { col: '#c084fc', dim: 'rgba(192,132,252,0.12)' },
+      admin:      { col: '#60a5fa', dim: 'rgba(96,165,250,0.12)'  },
+      user:       { col: C.cyan,   dim: 'rgba(52,211,153,0.10)'  },
     };
+    const s = map[user.role] ?? map.user;
     return (
-      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${map[user.role] ?? map.user}`}>
-        {user.role}
+      <span style={{ fontFamily: 'var(--font-exo)', fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', padding: '2px 8px', background: s.dim, border: `1px solid ${s.col}40`, color: s.col }}>
+        {user.role.toUpperCase()}
       </span>
     );
   };
 
-  // Guards
   if (!hasHydrated) return (
-    <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-white/10 border-t-white/40 rounded-full animate-spin" />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 24, height: 24, border: `2px solid rgba(52,211,153,0.2)`, borderTopColor: C.cyan, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
     </div>
   );
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c] pb-28">
-
+    <div style={{ minHeight: '100vh', paddingBottom: 96 }}>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#0c0c0c]/90 backdrop-blur-md border-b border-white/[0.04]">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(12px)', borderBottom: `1px solid rgba(52,211,153,0.1)` }}>
+        <div style={{ maxWidth: 640, margin: '0 auto', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 className="text-sm font-semibold text-white">Profil</h1>
-            <p className="text-[11px] text-white/20 mt-0.5">Kelola akun & pengaturan</p>
+            <h1 style={{ fontFamily: 'var(--font-exo)', fontSize: 14, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#ffffff' }}>Profil</h1>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>Kelola akun & pengaturan</p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] text-white/30 hover:text-white hover:border-white/[0.15] transition-colors text-xs disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          <button onClick={() => loadData(true)} disabled={refreshing || isLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.1)`, color: refreshing ? C.cyan : 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-exo)', fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', cursor: 'pointer', clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))' }}>
+            <ArrowClockwise size={13} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
-
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-2.5 p-3.5 bg-red-500/8 border border-red-500/15 rounded-xl text-red-300 text-sm">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'rgba(255,82,99,0.06)', border: '1px solid rgba(255,82,99,0.2)', borderLeft: `2px solid ${C.coral}`, fontFamily: 'var(--font-mono)', fontSize: 12, color: '#ff8a94' }}>
+            <WarningCircle size={14} style={{ flexShrink: 0 }} />
             {error}
           </div>
         )}
 
         {/* Identity Card */}
-        <div className="bg-gradient-to-br from-[#141414] to-[#0f0f0f] rounded-2xl border border-white/[0.06] p-5 shadow-xl">
+        <Card style={{ padding: '20px' }}>
+          <div style={{ position: 'absolute', top: 0, left: '20%', right: '20%', height: 2, background: `linear-gradient(90deg,transparent,${C.cyan}80,transparent)`, boxShadow: `0 0 6px ${C.cyan}40` }} />
           {isLoading ? (
-            <div className="flex items-center gap-4">
-              <Skeleton className="w-20 h-20 rounded-2xl" />
-              <div className="flex-1">
-                <Skeleton className="h-5 w-32 mb-2" />
-                <Skeleton className="h-4 w-48 mb-2" />
-                <Skeleton className="h-3 w-40" />
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div style={{ width: 72, height: 72, background: 'rgba(52,211,153,0.05)', animation: 'skeleton-pulse 2s ease infinite', flexShrink: 0 }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Skeleton w={140} h={18} /><Skeleton w={200} h={14} /><Skeleton w={120} h={12} />
               </div>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-4">
-                <Avatar 
-                  name={profile?.profileInfo?.personal?.fullName} 
-                  email={user?.email ?? ''} 
-                  avatarUrl={profile?.profileInfo?.avatar?.url}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <h2 className="text-base font-semibold text-white truncate">
-                      {profile?.profileInfo?.personal?.fullName || user?.fullName || 'Pengguna'}
-                    </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <Avatar name={profile?.profileInfo?.personal?.fullName} email={user?.email ?? ''} avatarUrl={profile?.profileInfo?.avatar?.url} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <h2 style={{ fontFamily: 'var(--font-exo)', fontSize: 16, fontWeight: 800, color: '#ffffff' }}>{profile?.profileInfo?.personal?.fullName || user?.fullName || 'Pengguna'}</h2>
                     {roleBadge()}
                   </div>
-                  <p className="text-sm text-white/30 truncate mb-1">{user?.email}</p>
-                  <p className="text-[11px] text-white/15 font-mono">ID: {user?.id?.substring(0, 16)}…</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 2 }}>{user?.email}</p>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.15)' }}>ID: {user?.id?.substring(0, 16)}…</p>
                 </div>
               </div>
 
-              {/* Quick Stats */}
-              <div className="mt-4 pt-4 border-t border-white/[0.04] grid grid-cols-2 gap-3">
-                <div className="bg-black/20 rounded-xl p-3 border border-white/5">
-                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Real Balance</p>
-                  <p className="text-base font-bold text-emerald-400 font-mono">
-                    Rp {profile?.balances?.real?.toLocaleString('id-ID') || '0'}
-                  </p>
-                </div>
-                <div className="bg-black/20 rounded-xl p-3 border border-white/5">
-                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Demo Balance</p>
-                  <p className="text-base font-bold text-white font-mono">
-                    Rp {profile?.balances?.demo?.toLocaleString('id-ID') || '0'}
-                  </p>
-                </div>
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {[
+                  { label: 'Real Balance', val: `Rp ${profile?.balances?.real?.toLocaleString('id-ID') || '0'}`, col: C.cyan },
+                  { label: 'Demo Balance', val: `Rp ${profile?.balances?.demo?.toLocaleString('id-ID') || '0'}`, col: 'rgba(255,255,255,0.75)' },
+                ].map((s) => (
+                  <div key={s.label} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', padding: '10px 12px' }}>
+                    <p style={{ fontFamily: 'var(--font-exo)', fontSize: 9, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 4 }}>{s.label}</p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, color: s.col }}>{s.val}</p>
+                  </div>
+                ))}
               </div>
             </>
           )}
-        </div>
+        </Card>
 
-        {/* Status Card */}
-        {profile?.statusInfo && (
-          <StatusCard statusInfo={profile.statusInfo} isLoading={isLoading} />
-        )}
+        {/* Status */}
+        {profile?.statusInfo && <StatusCard statusInfo={profile.statusInfo} isLoading={isLoading} />}
 
         {/* Account Info */}
         <div>
-          <SectionLabel>Informasi Akun</SectionLabel>
-          <div className="bg-[#141414] rounded-xl border border-white/[0.05] px-4 py-1">
+          <SL>Informasi Akun</SL>
+          <Card style={{ padding: '0 16px' }}>
             {isLoading ? (
-              <>
-                <div className="py-3.5 border-b border-white/[0.04]">
-                  <Skeleton className="h-12 w-full" />
-                </div>
-                <div className="py-3.5 border-b border-white/[0.04]">
-                  <Skeleton className="h-12 w-full" />
-                </div>
-                <div className="py-3.5">
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 0' }}>
+                <Skeleton h={40} /><Skeleton h={40} /><Skeleton h={40} />
+              </div>
             ) : (
               <>
                 <InfoRow
-                  icon={<Mail className="w-4 h-4" />}
+                  icon={<EnvelopeSimple size={15} />}
                   label="Email"
                   value={user?.email}
                   verified={profile?.profileInfo?.verification?.emailVerified}
                 />
                 <EditableField
-                  icon={<User className="w-4 h-4" />}
+                  icon={<User size={15} />}
                   label="Nama Lengkap"
                   value={profile?.profileInfo?.personal?.fullName}
-                  placeholder="Masukkan nama lengkap"
+                  placeholder="Contoh: John Doe"
                   onSave={handleSaveFullName}
                 />
                 <EditableField
-                  icon={<Phone className="w-4 h-4" />}
+                  icon={<Phone size={15} />}
                   label="Nomor Telepon"
                   value={profile?.profileInfo?.personal?.phoneNumber}
-                  placeholder="Masukkan nomor HP"
+                  placeholder="+6281234567890 (sertakan kode negara)"
                   onSave={handleSavePhone}
                 />
                 <InfoRow
-                  icon={<Shield className="w-4 h-4" />}
+                  icon={<ShieldCheck size={15} />}
                   label="Role"
                   value={user?.role}
                 />
               </>
             )}
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div>
-          <SectionLabel>Pengaturan</SectionLabel>
-          <div className="space-y-1.5">
-            <MenuItem
-              icon={<Lock className="w-4 h-4" />}
-              label="Ubah Password"
-              sublabel="Perbarui kata sandi akun kamu"
-              onClick={() => router.push('/profile/change-password')}
-            />
-            <MenuItem
-              icon={<Wallet className="w-4 h-4" />}
-              label="Riwayat Saldo"
-              sublabel="Lihat deposit & penarikan"
-              onClick={() => router.push('/balance-history')}
-            />
-          </div>
+          </Card>
         </div>
 
         {/* Logout */}
         <MenuItem
-          icon={<LogOut className="w-4 h-4" />}
+          icon={<SignOut size={15} />}
           label="Keluar"
           sublabel="Logout dari akun ini"
           onClick={() => setLogoutModal(true)}
           danger
         />
 
-        <p className="text-center text-[10px] text-white/10 pt-1">OrderBot v1.0.0</p>
+        <p style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.1)', paddingTop: 4 }}>
+          OrderBot v1.0.0
+        </p>
       </div>
 
       {/* Logout Modal */}
       {logoutModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: 16, paddingBottom: 88 }}>
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }}
             onClick={() => setLogoutModal(false)}
           />
-          <div className="relative w-full max-w-sm bg-[#161616] rounded-2xl border border-white/[0.07] p-6 shadow-2xl">
-            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-              <LogOut className="w-6 h-6 text-red-400" />
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: 400,
+            background: `linear-gradient(135deg,${C.s1},${C.s2})`,
+            border: `1px solid rgba(255,82,99,0.2)`,
+            borderTop: `2px solid ${C.coral}`,
+            padding: 24,
+            clipPath: 'polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)',
+            boxShadow: `0 -20px 60px rgba(0,0,0,0.5)`,
+            animation: 'slide-up 0.25s ease',
+          }}>
+            <div style={{ width: 44, height: 44, background: 'rgba(255,82,99,0.08)', border: `1px solid rgba(255,82,99,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', clipPath: 'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))' }}>
+              <SignOut size={22} style={{ color: C.coral }} weight="duotone" />
             </div>
-            <h3 className="text-base font-semibold text-white text-center mb-2">Keluar dari Akun?</h3>
-            <p className="text-xs text-white/30 text-center mb-5">
-              Kamu harus login ulang untuk mengakses dashboard.
-            </p>
-            <div className="flex gap-2">
+            <h3 style={{ fontFamily: 'var(--font-exo)', fontSize: 16, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#ffffff', textAlign: 'center', marginBottom: 8 }}>Keluar dari Akun?</h3>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginBottom: 20 }}>Kamu harus login ulang untuk mengakses dashboard.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => setLogoutModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-white/40 text-sm hover:text-white/70 hover:border-white/[0.12] transition-colors"
+                style={{ flex: 1, padding: '11px', background: 'transparent', border: `1px solid rgba(255,255,255,0.1)`, color: 'rgba(255,255,255,0.5)', fontFamily: 'var(--font-exo)', fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', cursor: 'pointer', clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))' }}
               >
-                Batal
+                BATAL
               </button>
               <button
-                onClick={handleLogout}
-                className="flex-1 py-2.5 rounded-xl bg-red-500/15 border border-red-500/[0.25] text-red-300 text-sm font-medium hover:bg-red-500/25 transition-colors"
+                onClick={() => { clearAuth(); router.push('/'); }}
+                style={{ flex: 1, padding: '11px', background: 'rgba(255,82,99,0.1)', border: `1px solid rgba(255,82,99,0.35)`, color: C.coral, fontFamily: 'var(--font-exo)', fontSize: 12, fontWeight: 700, letterSpacing: '0.15em', cursor: 'pointer', clipPath: 'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))' }}
               >
-                Keluar
+                KELUAR
               </button>
             </div>
           </div>
