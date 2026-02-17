@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Exo_2 } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 
 const exo2 = Exo_2({
@@ -34,7 +35,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={exo2.variable}>
+    <html lang="en" className={`${exo2.variable} ${GeistSans.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -62,6 +62,10 @@ const G = () => (
     @keyframes shimmer-vertical { 0%{transform:translateY(-100%)} 100%{transform:translateY(100%)} }
     @keyframes fade-in   { from{opacity:0} to{opacity:1} }
     @keyframes skeleton-pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
+    @keyframes active-pulse-buy  { 0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,0)} 50%{box-shadow:0 0 0 3px rgba(52,211,153,0.25)} }
+    @keyframes active-pulse-sell { 0%,100%{box-shadow:0 0 0 0 rgba(255,82,99,0)}  50%{box-shadow:0 0 0 3px rgba(255,82,99,0.25)} }
+    @keyframes glow-border-buy  { 0%,100%{border-color:rgba(52,211,153,0.35)} 50%{border-color:rgba(52,211,153,0.75)} }
+    @keyframes glow-border-sell { 0%,100%{border-color:rgba(255,82,99,0.35)}  50%{border-color:rgba(255,82,99,0.75)} }
 
     *{box-sizing:border-box}
     
@@ -127,6 +131,11 @@ const G = () => (
       z-index:2;
     }
 
+    /* Hide badge text on mobile */
+    @media (max-width: 767px) {
+      .badge-text-hide-mobile { display: none; }
+    }
+
     ::-webkit-scrollbar{width:3px}
     ::-webkit-scrollbar-thumb{background:${C.bdr};transition:background .2s}
     ::-webkit-scrollbar-thumb:hover{background:${C.cyan}80}
@@ -136,7 +145,7 @@ const G = () => (
       width:100%;padding:10px 13px;
       background:${C.s2}!important;color:#ffffff!important;
       border:1px solid ${C.bdr}!important;
-      font-family:var(--font-mono)!important;font-size:13px!important;
+      font-family:var(--font-geist-sans)!important;font-size:13px!important;
       outline:none!important;border-radius:0!important;
       transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
       line-height:1.4;
@@ -243,7 +252,7 @@ const G = () => (
       background:${C.s2};
       border:1px solid ${C.bdr};
       color:rgba(255,255,255,.8);
-      font-family:var(--font-mono);
+      font-family:var(--font-geist-sans);
       font-size:11px;
       font-weight:600;
       cursor:pointer;
@@ -441,7 +450,7 @@ const RealtimeClock: React.FC = () => {
       </div>
 
       <p suppressHydrationWarning style={{
-        fontFamily:'var(--font-mono)',fontSize:28,fontWeight:600,
+        fontFamily:'var(--font-geist-sans)',fontSize:28,fontWeight:600,
         color:C.text,letterSpacing:'0.05em',lineHeight:1,position:'relative',
         textShadow:`0 0 30px rgba(52,211,153,.3), 0 0 15px rgba(52,211,153,.2)`,
         transition:'all .5s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -459,7 +468,7 @@ const RealtimeClock: React.FC = () => {
           {time?fmtD(time):''}
         </span>
         <span suppressHydrationWarning style={{
-          fontFamily:'var(--font-mono)',fontSize:10,
+          fontFamily:'var(--font-geist-sans)',fontSize:10,
           color:`${C.cyan}dd`,
           padding:'2px 6px',
           background:`${C.cyan}08`,
@@ -493,10 +502,10 @@ const RealtimeClockCompact: React.FC = () => {
           <span style={{position:'absolute',inset:0,background:C.coral,borderRadius:'50%',animation:'ping 1.8s cubic-bezier(0,0,.2,1) infinite'}}/>
         </span>
       </div>
-      <p suppressHydrationWarning style={{fontFamily:'var(--font-mono)',fontSize:14,fontWeight:600,color:C.text,letterSpacing:'0.05em',lineHeight:1}}>
+      <p suppressHydrationWarning style={{fontFamily:'var(--font-geist-sans)',fontSize:14,fontWeight:600,color:C.text,letterSpacing:'0.05em',lineHeight:1}}>
         {time?fmt(time):'--:--:--'}
       </p>
-      <p suppressHydrationWarning style={{fontFamily:'var(--font-mono)',fontSize:10,color:`${C.cyan}bb`,marginTop:4}}>{tz()}</p>
+      <p suppressHydrationWarning style={{fontFamily:'var(--font-geist-sans)',fontSize:10,color:`${C.cyan}bb`,marginTop:4}}>{tz()}</p>
     </div>
   );
 };
@@ -533,7 +542,7 @@ const StatCard: React.FC<{
           <div style={{position:'relative',minHeight:26}}>
             {/* Always render value, control visibility with opacity */}
             <p style={{
-              fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:col,
+              fontFamily:'var(--font-geist-sans)',fontSize:22,fontWeight:600,color:col,
               letterSpacing:'-0.01em',lineHeight:1,
               textShadow: trend==='up'?`0 0 20px rgba(52,211,153,.4), 0 0 10px rgba(52,211,153,.2)`
                         : trend==='down'?`0 0 20px rgba(255,71,87,.3), 0 0 10px rgba(255,71,87,.15)`:'none',
@@ -638,7 +647,7 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
         <div style={{position:'relative',minHeight:44}}>
           {/* Always render value, control visibility with opacity */}
           <p style={{
-            fontFamily:'var(--font-mono)',fontWeight:600,
+            fontFamily:'var(--font-geist-sans)',fontWeight:600,
             fontSize:'clamp(28px,5vw,42px)',
             color:col,letterSpacing:'-0.02em',lineHeight:1.1,
             textShadow:`0 0 40px ${col}60, 0 0 20px ${col}40`,
@@ -677,7 +686,7 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
               marginTop:10,display:'flex',alignItems:'center',gap:6,
             }}>
               <span style={{
-                fontFamily:'var(--font-mono)',fontSize:11,
+                fontFamily:'var(--font-geist-sans)',fontSize:11,
                 color:'rgba(255,255,255,.75)',
               }}>
                 Status:
@@ -701,13 +710,63 @@ const ProfitCard: React.FC<{todayProfit:number;isLoading?:boolean}> = ({todayPro
 };
 
 // ═══════════════════════════════════════════════════════════════
-// SCHEDULE PANEL
+// SCHEDULE PANEL — with active highlight + auto-scroll
 // ═══════════════════════════════════════════════════════════════
+
+/** Returns index of the next upcoming schedule from current time */
+function getActiveScheduleIndex(schedules:{time:string;trend:'buy'|'sell'}[]): number {
+  if (!schedules.length) return -1;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  let closestIdx = -1;
+  let closestDiff = Infinity;
+
+  schedules.forEach((s, i) => {
+    const [h, m] = s.time.split(':').map(Number);
+    let diff = (h * 60 + m) - nowMin;
+    if (diff < 0) diff += 24 * 60; // sudah lewat hari ini → wrap ke esok
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closestIdx = i;
+    }
+  });
+
+  return closestIdx;
+}
+
 const SchedulePanel: React.FC<{
   schedules:{time:string;trend:'buy'|'sell'}[];
-  onOpenModal:()=>void; isDisabled?:boolean; maxCount?:number;
-}> = ({schedules,onOpenModal,isDisabled=false,maxCount=50}) => (
-  <Card style={{display:'flex',flexDirection:'column',height:'100%'}}>
+  executions?:{scheduledTime:string;result:'win'|'loss'|'draw'}[];
+  onOpenModal:()=>void; isDisabled?:boolean; maxCount?:number; fillHeight?:boolean; tabletMaxItems?:number;
+}> = ({schedules,executions=[],onOpenModal,isDisabled=false,maxCount=50,fillHeight=false,tabletMaxItems}) => {
+  const listRef = React.useRef<HTMLDivElement>(null);
+  const itemRefs = React.useRef<(HTMLDivElement|null)[]>([]);
+  const [activeIdx, setActiveIdx] = React.useState<number>(-1);
+
+  // Update active index every 10 s
+  React.useEffect(() => {
+    const update = () => setActiveIdx(getActiveScheduleIndex(schedules));
+    update();
+    const t = setInterval(update, 10_000);
+    return () => clearInterval(t);
+  }, [schedules]);
+
+  // Auto-scroll whenever active index changes
+  React.useEffect(() => {
+    if (activeIdx < 0) return;
+    const el = itemRefs.current[activeIdx];
+    const container = listRef.current;
+    if (!el || !container) return;
+    // Scroll item into center of the scrollable container
+    const elTop = el.offsetTop;
+    const elH = el.offsetHeight;
+    const cH = container.clientHeight;
+    container.scrollTo({ top: elTop - cH / 2 + elH / 2, behavior: 'smooth' });
+  }, [activeIdx]);
+
+  return (
+  <Card style={{display:'flex',flexDirection:'column',height: fillHeight ? '100%' : undefined, flex: fillHeight ? 1 : undefined}}>
     <div style={{
       display:'flex',alignItems:'center',justifyContent:'space-between',
       padding:'12px 14px',borderBottom:`1px solid ${C.faint}`,
@@ -720,6 +779,26 @@ const SchedulePanel: React.FC<{
           color:'rgba(255,255,255,.9)',
         }}>JADWAL</span>
       </div>
+      {/* Active badge */}
+      {schedules.length > 0 && activeIdx >= 0 && (
+        <span style={{
+          display:'flex',alignItems:'center',gap:4,
+          fontFamily:'var(--font-exo)',fontSize:9,fontWeight:700,
+          letterSpacing:'0.16em',color:C.cyan,
+          padding:'2px 7px',
+          background:'rgba(52,211,153,0.08)',
+          border:'1px solid rgba(52,211,153,0.25)',
+          flexShrink:0,
+        }}>
+          <span style={{
+            width:5,height:5,borderRadius:'50%',background:C.cyan,
+            boxShadow:`0 0 6px ${C.cyan}`,
+            animation:'pulse 1.5s ease infinite',display:'inline-block',
+            flexShrink:0,
+          }}/>
+          <span className="badge-text-hide-mobile">BERIKUTNYA</span>
+        </span>
+      )}
     </div>
 
     {schedules.length===0 ? (
@@ -734,47 +813,115 @@ const SchedulePanel: React.FC<{
         }}>Belum ada jadwal</p>
       </div>
     ) : (
-      <div style={{flex:1,overflowY:'auto',maxHeight:200}}>
-        {schedules.map((s,i)=>(
-          <div key={i} style={{
-            display:'flex',alignItems:'center',gap:8,
-            padding:'8px 12px',
-            borderBottom:`1px solid ${C.faint}`,
-            background: i%2===0?C.s2:'transparent',
-            transition:'all .25s cubic-bezier(0.4, 0, 0.2, 1)',
-            animation:`slide-up .3s ease both ${i*.05}s`,
-            cursor:'default',
-          }}
-          className="schedule-item">
-            <span style={{
-              fontFamily:'var(--font-mono)',fontSize:10,
-              color:'rgba(255,255,255,.7)',width:18,
-              textAlign:'right',flexShrink:0,
-            }}>
-              {String(i+1).padStart(2,'0')}
-            </span>
-            
-            <span style={{
-              fontFamily:'var(--font-mono)',fontSize:13,fontWeight:500,
-              color:C.text,flex:1,
-              transition:'color .3s ease',
-            }}>
-              {s.time}
-            </span>
-            
-            <span style={{
-              fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
-              letterSpacing:'0.12em',textTransform:'uppercase',
-              color:s.trend==='buy'?C.cyan:C.coral,
-              padding:'3px 8px',
-              background:s.trend==='buy'?C.cyand:C.cord,
-              border:`1px solid ${s.trend==='buy'?`${C.cyan}20`:`${C.coral}20`}`,
-              transition:'all .3s ease',
-            }}>
-              {s.trend}
-            </span>
-          </div>
-        ))}
+      <div ref={listRef} style={{flex:1,overflowY:'auto',maxHeight: tabletMaxItems ? tabletMaxItems * 37 : fillHeight ? 'none' : 200}}>
+        {schedules.map((s,i)=>{
+          const isActive = i === activeIdx;
+          const isBuy = s.trend === 'buy';
+          const col = isBuy ? C.cyan : C.coral;
+          // Find most recent execution result for this time slot (today)
+          const execResult = executions.filter(e=>e.scheduledTime===s.time).slice(-1)[0]?.result;
+          return (
+            <div
+              key={i}
+              ref={el => { itemRefs.current[i] = el; }}
+              style={{
+                display:'flex',alignItems:'center',gap:8,
+                padding: isActive ? '9px 12px' : '8px 12px',
+                borderBottom:`1px solid ${C.faint}`,
+                background: isActive
+                  ? (isBuy ? 'rgba(52,211,153,0.07)' : 'rgba(255,82,99,0.07)')
+                  : (i%2===0 ? C.s2 : 'transparent'),
+                borderLeft: isActive ? `2px solid ${col}` : '2px solid transparent',
+                transition:'all .3s cubic-bezier(0.4, 0, 0.2, 1)',
+                animation: isActive
+                  ? `slide-up .3s ease both ${i*.05}s, ${isBuy ? 'active-pulse-buy' : 'active-pulse-sell'} 2s ease infinite`
+                  : `slide-up .3s ease both ${i*.05}s`,
+                cursor:'default',
+                position:'relative',
+              }}
+              className="schedule-item">
+
+              {/* Active shimmer sweep */}
+              {isActive && (
+                <div style={{
+                  position:'absolute',inset:0,pointerEvents:'none',overflow:'hidden',
+                }}>
+                  <div style={{
+                    position:'absolute',top:0,bottom:0,width:'40%',
+                    background:`linear-gradient(to right, transparent, ${col}10, transparent)`,
+                    animation:'shimmer 2.5s ease infinite',
+                  }}/>
+                </div>
+              )}
+
+              {/* Row number / active arrow */}
+              <span style={{
+                fontFamily:'var(--font-geist-sans)',fontSize:10,
+                color: isActive ? col : 'rgba(255,255,255,.7)',
+                width:18,textAlign:'right',flexShrink:0,
+                fontWeight: isActive ? 700 : 400,
+                textShadow: isActive ? `0 0 8px ${col}80` : 'none',
+              }}>
+                {isActive ? '▶' : String(i+1).padStart(2,'0')}
+              </span>
+
+              <span style={{
+                fontFamily:'var(--font-geist-sans)',fontSize:13,fontWeight: isActive ? 700 : 500,
+                color: isActive ? C.text : 'rgba(255,255,255,0.85)',
+                flex:1,
+                textShadow: isActive ? `0 0 12px ${col}40` : 'none',
+                transition:'all .3s ease',
+              }}>
+                {s.time}
+              </span>
+
+              <span style={{
+                fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,
+                letterSpacing:'0.12em',textTransform:'uppercase',
+                color: col,
+                padding:'3px 8px',
+                background: isActive
+                  ? (isBuy ? 'rgba(52,211,153,0.18)' : 'rgba(255,82,99,0.18)')
+                  : (isBuy ? C.cyand : C.cord),
+                border:`1px solid ${col}${isActive ? '60' : '20'}`,
+                boxShadow: isActive ? `0 0 10px ${col}30` : 'none',
+                transition:'all .3s ease',
+                animation: isActive
+                  ? `${isBuy ? 'glow-border-buy' : 'glow-border-sell'} 1.8s ease infinite`
+                  : undefined,
+                display: execResult && !isActive ? 'none' : undefined,
+              }}>
+                {s.trend}
+              </span>
+
+              {/* Result badge — teks saja, tanpa kotak */}
+              {execResult && !isActive && (
+                <span style={{
+                  fontFamily:'var(--font-exo)',fontSize:10,fontWeight:700,
+                  letterSpacing:'0.12em',textTransform:'uppercase',
+                  color: execResult==='win' ? C.cyan : execResult==='loss' ? C.coral : 'rgba(255,255,255,0.4)',
+                  flexShrink:0,
+                }}>
+                  {execResult==='win' ? 'WIN' : execResult==='loss' ? 'LOSE' : 'DRAW'}
+                </span>
+              )}
+
+              {/* NEXT indicator */}
+              {isActive && (
+                <span style={{
+                  fontFamily:'var(--font-exo)',fontSize:8,fontWeight:800,
+                  letterSpacing:'0.16em',
+                  color:col,padding:'2px 5px',
+                  background:`${col}12`,border:`1px solid ${col}30`,
+                  animation:`${isBuy ? 'glow-border-buy' : 'glow-border-sell'} 1.8s ease infinite`,
+                  whiteSpace:'nowrap',
+                }}>
+                  NEXT
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     )}
 
@@ -797,7 +944,8 @@ const SchedulePanel: React.FC<{
       </button>
     </div>
   </Card>
-);
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 // BULK SCHEDULE MODAL
@@ -897,7 +1045,7 @@ const BulkScheduleModal: React.FC<{
               }}>INPUT JADWAL</h2>
             </div>
             <p style={{
-              fontFamily:'var(--font-mono)',fontSize:10,
+              fontFamily:'var(--font-geist-sans)',fontSize:10,
               color:'rgba(255,255,255,.75)',paddingLeft:11,
             }}>
               Format: <span style={{color:C.cyan,fontWeight:600}}>09:30 buy</span> · satu per baris
@@ -945,7 +1093,7 @@ const BulkScheduleModal: React.FC<{
                   onClick={()=>window.confirm('Hapus semua jadwal?')&&onClearAll()} 
                   style={{
                     display:'flex',alignItems:'center',gap:5,
-                    fontFamily:'var(--font-mono)',fontSize:10,fontWeight:600,
+                    fontFamily:'var(--font-geist-sans)',fontSize:10,fontWeight:600,
                     color:`${C.coral}bb`,
                     background:'transparent',
                     border:`1px solid ${C.coral}25`,
@@ -982,14 +1130,14 @@ const BulkScheduleModal: React.FC<{
                   }}
                   className="schedule-item">
                     <span style={{
-                      fontFamily:'var(--font-mono)',fontSize:10,
+                      fontFamily:'var(--font-geist-sans)',fontSize:10,
                       color:'rgba(255,255,255,.75)',
                       width:20,textAlign:'right',
                     }}>
                       {String(i+1).padStart(2,'0')}
                     </span>
                     <span style={{
-                      fontFamily:'var(--font-mono)',fontSize:13,fontWeight:600,
+                      fontFamily:'var(--font-geist-sans)',fontSize:13,fontWeight:600,
                       color:C.text,flex:1,
                     }}>
                       {s.time}
@@ -1036,7 +1184,7 @@ const BulkScheduleModal: React.FC<{
           )}
           <div style={{marginBottom:10}}>
             <p style={{
-              fontFamily:'var(--font-mono)',fontSize:10,
+              fontFamily:'var(--font-geist-sans)',fontSize:10,
               color:'rgba(255,255,255,.7)',marginBottom:8,
               padding:'6px 10px',
               background:`${C.faint}`,
@@ -1048,7 +1196,7 @@ const BulkScheduleModal: React.FC<{
             </p>
             <textarea className="ds-input" value={input} onChange={e=>setInput(e.target.value)}
               placeholder={"09:00 buy\n09:30 sell\n1000 b\n14:15 buy"} rows={7}
-              style={{fontFamily:'var(--font-mono)',fontSize:12}}/>
+              style={{fontFamily:'var(--font-geist-sans)',fontSize:12}}/>
           </div>
           {error&&(
             <div style={{
@@ -1060,7 +1208,7 @@ const BulkScheduleModal: React.FC<{
             }}>
               <AlertCircle style={{width:14,height:14,color:C.coral,flexShrink:0,marginTop:1}}/>
               <p style={{
-                fontFamily:'var(--font-mono)',fontSize:11,
+                fontFamily:'var(--font-geist-sans)',fontSize:11,
                 color:'#ff8a94',whiteSpace:'pre-line',lineHeight:1.5,
               }}>{error}</p>
             </div>
@@ -1141,7 +1289,7 @@ const OrderSettingsCard: React.FC<{
             PENGATURAN ORDER
           </span>
           {settings.assetSymbol&&(
-            <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:C.cyan,background:C.cyand,border:`1px solid rgba(52,211,153,.2)`,padding:'2px 8px'}}>
+            <span style={{fontFamily:'var(--font-geist-sans)',fontSize:10,color:C.cyan,background:C.cyand,border:`1px solid rgba(52,211,153,.2)`,padding:'2px 8px'}}>
               {settings.assetSymbol}
             </span>
           )}
@@ -1214,7 +1362,7 @@ const OrderSettingsCard: React.FC<{
           <div style={{marginBottom:16}}>
             <FL>Jumlah per Order</FL>
             <div style={{position:'relative',marginBottom:8}}>
-              <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:11,color:'rgba(255,255,255,.75)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+              <span style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-geist-sans)',fontSize:11,color:'rgba(255,255,255,.75)',zIndex:1,pointerEvents:'none'}}>Rp</span>
               <input type="number" className="ds-input" value={settings.amount}
                 onChange={e=>set('amount',+e.target.value||0)} disabled={isDisabled}
                 min="1000" step="1000" style={{paddingLeft:36}}/>
@@ -1271,13 +1419,13 @@ const OrderSettingsCard: React.FC<{
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
             <div><FL>Stop Loss</FL>
               <div style={{position:'relative'}}>
-                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-geist-sans)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
                 <input type="number" className="ds-input" value={settings.stopLossProfit.stopLoss||''} onChange={e=>nest('stopLossProfit','stopLoss',e.target.value?+e.target.value:undefined)} disabled={isDisabled} placeholder="Opsional" style={{paddingLeft:32}}/>
               </div>
             </div>
             <div><FL>Take Profit</FL>
               <div style={{position:'relative'}}>
-                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontFamily:'var(--font-geist-sans)',fontSize:10,color:'rgba(255,255,255,.8)',zIndex:1,pointerEvents:'none'}}>Rp</span>
                 <input type="number" className="ds-input" value={settings.stopLossProfit.stopProfit||''} onChange={e=>nest('stopLossProfit','stopProfit',e.target.value?+e.target.value:undefined)} disabled={isDisabled} placeholder="Opsional" style={{paddingLeft:32}}/>
               </div>
             </div>
@@ -1354,32 +1502,26 @@ const BotControlCard: React.FC<{
             ].map(s=>(
               <div key={s.l} style={{background:C.s2,padding:'10px 12px',clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)'}}>
                 <p style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:700,letterSpacing:'0.16em',textTransform:'uppercase',color:'rgba(255,255,255,.85)'}}>{s.l}</p>
-                <p style={{fontFamily:'var(--font-mono)',fontSize:20,fontWeight:600,color:s.c,marginTop:5,lineHeight:1}}>{s.v}</p>
+                <p style={{fontFamily:'var(--font-geist-sans)',fontSize:20,fontWeight:600,color:s.c,marginTop:5,lineHeight:1}}>{s.v}</p>
               </div>
             ))}
           </div>
 
           {status.nextExecutionTime&&(
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:C.s2,marginBottom:6,borderLeft:`2px solid rgba(110,231,183,.35)`}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:C.s2,marginBottom:10,borderLeft:`2px solid rgba(110,231,183,.35)`}}>
               <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(255,255,255,.85)'}}>BERIKUTNYA</span>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:13,fontWeight:600,color:'#6ee7b7'}}>{status.nextExecutionTime}</span>
-            </div>
-          )}
-          {status.lastExecutionTime&&(
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'7px 10px',background:C.s2,marginBottom:10}}>
-              <span style={{fontFamily:'var(--font-exo)',fontSize:11,fontWeight:600,letterSpacing:'0.15em',color:'rgba(255,255,255,.85)'}}>TERAKHIR</span>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'rgba(255,255,255,.9)'}}>{status.lastExecutionTime}</span>
+              <span style={{fontFamily:'var(--font-geist-sans)',fontSize:13,fontWeight:600,color:'#6ee7b7'}}>{status.nextExecutionTime}</span>
             </div>
           )}
 
           {errorMessage&&(
             <div style={{display:'flex',gap:8,padding:'10px 12px',marginBottom:10,background:C.cord,border:`1px solid rgba(255,71,87,.2)`,borderLeft:`2px solid ${C.coral}`}}>
               <AlertCircle style={{width:12,height:12,color:C.coral,flexShrink:0,marginTop:1}}/>
-              <p style={{fontFamily:'var(--font-mono)',fontSize:11,color:'#ff8a94'}}>{errorMessage}</p>
+              <p style={{fontFamily:'var(--font-geist-sans)',fontSize:11,color:'#ff8a94'}}>{errorMessage}</p>
             </div>
           )}
 
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          <div style={{display:'flex',flexDirection:'row',gap:6}}>
             {!status.isRunning&&(
               <BBtn onClick={onStart} disabled={isLoading||!canStart} accent={C.cyan}
                 icon={<Play style={{width:13,height:13}}/>}
@@ -1428,6 +1570,7 @@ export default function DashboardPage() {
   });
   const [botStatus,setBotStatus]=useState<BotStatus>({isRunning:false,isPaused:false,activeSchedules:0,currentProfit:0});
   const [todayStats,setTodayStats]=useState({profit:0,executions:0,winRate:0});
+  const [executions,setExecutions]=useState<{scheduledTime:string;result:'win'|'loss'|'draw'}[]>([]);
   const [deviceType,setDeviceType]=useState<'mobile'|'tablet'|'desktop'>('desktop');
 
   useEffect(()=>{
@@ -1480,6 +1623,7 @@ export default function DashboardPage() {
         currentProfit:scheds.reduce((s:number,x:any)=>s+(x.currentProfit||0),0),
       });
       const stats=await api.getTodayStats();setTodayStats(stats);
+      if(active){try{const execs=await api.getOrderHistory(active.id,200);setExecutions((execs||[]).filter((e:any)=>e.result).map((e:any)=>({scheduledTime:e.scheduledTime,result:e.result})));}catch{setExecutions([]);}}else{setExecutions([]);}
       if(active)setSettings({assetSymbol:active.assetSymbol,assetName:active.assetName||active.assetSymbol,accountType:active.accountType,duration:active.duration,amount:active.amount,schedules:active.schedules,martingaleSetting:active.martingaleSetting,stopLossProfit:active.stopLossProfit});
     }catch(e:any){
       if(e?.response?.status===401){clearAuth();router.push('/');return}
@@ -1538,7 +1682,7 @@ export default function DashboardPage() {
           {error&&(
             <div style={{display:'flex',alignItems:'flex-start',gap:10,padding:'11px 14px',margin:`0 0 ${g}px`,background:C.cord,border:`1px solid rgba(255,71,87,.2)`,borderLeft:`2px solid ${C.coral}`,animation:'slide-up .2s ease'}}>
               <AlertCircle style={{width:13,height:13,color:C.coral,flexShrink:0,marginTop:2}}/>
-              <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'#ff8a94',flex:1}}>{error}</span>
+              <span style={{fontFamily:'var(--font-geist-sans)',fontSize:12,color:'#ff8a94',flex:1}}>{error}</span>
               <button onClick={()=>setError(null)} style={{background:'none',border:'none',cursor:'pointer',color:`${C.coral}60`}}><X style={{width:13,height:13}}/></button>
             </div>
           )}
@@ -1558,13 +1702,13 @@ export default function DashboardPage() {
                   {settings.assetSymbol&&(
                     <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginTop:8}}>
                       <span style={{width:4,height:4,background:C.cyan,opacity:.5,display:'inline-block',borderRadius:'50%'}}/>
-                      <span style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.85)'}}>{settings.assetSymbol} · {settings.assetName}</span>
+                      <span style={{fontFamily:'var(--font-geist-sans)',fontSize:10,color:'rgba(255,255,255,.85)'}}>{settings.assetSymbol} · {settings.assetName}</span>
                     </div>
                   )}
                 </Card>
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:g}}>
-                <div style={{minHeight:200}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
+                <div style={{minHeight:200}}><SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
                 <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
                 <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
               </div>
@@ -1573,18 +1717,22 @@ export default function DashboardPage() {
 
           {/* ── TABLET ── */}
           {deviceType==='tablet'&&(
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:g}}>
-              <div style={{display:'flex',flexDirection:'column',gap:g}}>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:g}}>
-                  <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity style={{width:13,height:13}}/>} isLoading={isLoading}/>
-                  <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:13,height:13}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
-                  <div style={{height:'100%'}}><RealtimeClock/></div>
-                </div>
-                <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
-                <Card noLine style={{padding:12}}><ChartCard assetSymbol={settings.assetSymbol} height={220}/></Card>
+            <div style={{display:'flex',flexDirection:'column',gap:g}}>
+              {/* Row 1: stat cards */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:g}}>
+                <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity style={{width:13,height:13}}/>} isLoading={isLoading}/>
+                <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 style={{width:13,height:13}}/>} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading}/>
+                <div style={{height:'100%'}}><RealtimeClock/></div>
               </div>
-              <div style={{display:'flex',flexDirection:'column',gap:g}}>
-                <div style={{minHeight:180}}><SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/></div>
+              {/* Row 2: profit */}
+              <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading}/>
+              {/* Row 3: chart + schedule — sejajar */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:g,alignItems:'stretch'}}>
+                <Card noLine style={{padding:12}}><ChartCard assetSymbol={settings.assetSymbol} height={220}/></Card>
+                <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} tabletMaxItems={10}/>
+              </div>
+              {/* Row 4: settings + bot control */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:g}}>
                 <OrderSettingsCard settings={settings} onChange={setSettings} isDisabled={botStatus.isRunning&&!botStatus.isPaused} assets={assets}/>
                 <BotControlCard status={botStatus} onStart={handleStart} onPause={handlePause} onStop={handleStop} isLoading={isActionLoad} canStart={canStart} errorMessage={error||undefined}/>
               </div>
@@ -1598,12 +1746,49 @@ export default function DashboardPage() {
             <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:g,alignItems:'stretch'}}>
               <div style={{display:'flex',flexDirection:'column',gap:8}}>
                 <RealtimeClockCompact/>
-                <Card noLine style={{padding:10,flex:1}}>
+                <Card noLine style={{padding:10,flex:1,display:'flex',flexDirection:'column'}}>
                   <ChartCard assetSymbol={settings.assetSymbol} height={110}/>
-                  {settings.assetSymbol&&<p style={{fontFamily:'var(--font-mono)',fontSize:10,color:'rgba(255,255,255,.7)',textAlign:'center',marginTop:5}}>{settings.assetSymbol}</p>}
+                  {/* Info pengisi ruang kosong */}
+                  <div style={{
+                    flex:1,display:'flex',flexDirection:'column',justifyContent:'flex-end',
+                    gap:6,marginTop:8,
+                  }}>
+                    {settings.assetSymbol ? (
+                      <div style={{
+                        display:'flex',alignItems:'center',justifyContent:'center',gap:5,
+                        padding:'4px 8px',
+                        background:'rgba(52,211,153,0.05)',
+                        border:'1px solid rgba(52,211,153,0.12)',
+                      }}>
+                        <span style={{width:4,height:4,borderRadius:'50%',background:C.cyan,opacity:.6,flexShrink:0}}/>
+                        <span style={{fontFamily:'var(--font-geist-sans)',fontSize:9,color:'rgba(255,255,255,.75)',letterSpacing:'0.04em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                          {settings.assetSymbol}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div style={{
+                      display:'flex',flexDirection:'column',gap:4,
+                    }}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontFamily:'var(--font-exo)',fontSize:8,fontWeight:600,letterSpacing:'0.14em',color:'rgba(255,255,255,.4)',textTransform:'uppercase'}}>Profit</span>
+                        <span style={{fontFamily:'var(--font-geist-sans)',fontSize:10,fontWeight:600,color:botStatus.currentProfit>=0?C.cyan:C.coral}}>
+                          {botStatus.currentProfit>=0?'+':''}{botStatus.currentProfit.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontFamily:'var(--font-exo)',fontSize:8,fontWeight:600,letterSpacing:'0.14em',color:'rgba(255,255,255,.4)',textTransform:'uppercase'}}>Status</span>
+                        <span style={{
+                          fontFamily:'var(--font-exo)',fontSize:8,fontWeight:700,letterSpacing:'0.1em',
+                          color: botStatus.isRunning&&!botStatus.isPaused ? C.cyan : botStatus.isPaused ? '#6ee7b7' : 'rgba(255,255,255,.4)',
+                        }}>
+                          {botStatus.isRunning&&!botStatus.isPaused ? 'AKTIF' : botStatus.isPaused ? 'DIJEDA' : 'OFF'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </Card>
               </div>
-              <SchedulePanel schedules={settings.schedules} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/>
+              <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10}/>
             </div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:g}}>
               <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity style={{width:12,height:12}}/>} isLoading={isLoading}/>
