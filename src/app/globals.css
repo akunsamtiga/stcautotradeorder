@@ -228,7 +228,36 @@ button { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes pulse          { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 @keyframes shimmer-h      { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
 @keyframes shimmer-v      { 0% { background-position: 0 0%; } 100% { background-position: 0 200%; } }
-@keyframes skeleton-pulse { 0%, 100% { opacity: .35; } 50% { opacity: .65; } }
+@keyframes skeleton-pulse { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
 @keyframes float          { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes ticker         { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes blob           { 0%, 100% { border-radius: 60% 40% 30% 70%/60% 30% 70% 40%; } 50% { border-radius: 30% 60% 70% 40%/50% 60% 30% 60%; } }
+/* ============================================================
+   DASHBOARD PAGE OVERRIDES
+   (replaces the old G() injected style component)
+   ============================================================ */
+
+/* Background lock when dashboard is active */
+html.dashboard-page,
+html.dashboard-page body {
+  background: #0a0f0d !important;
+}
+
+/* Hide badge text on mobile (<768px) */
+@media (max-width: 767px) {
+  .badge-text-hide-mobile { display: none; }
+}
+
+/* Dashboard inputs — rounded style (overrides cyberpunk clip-path) */
+.dashboard-page .ds-input,
+.ds-input {
+  border-radius: 6px !important;
+  clip-path: none !important;
+}
+
+/* Dashboard cards — rounded style */
+.dashboard-page .ds-card,
+.ds-card {
+  border-radius: 10px !important;
+  clip-path: none !important;
+}

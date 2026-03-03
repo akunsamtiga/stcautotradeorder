@@ -1023,14 +1023,114 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ background: '#1A1D23' }}>
+    <div className="overflow-x-hidden" style={{ background: '#1A1D23' }}>
       {/* Market Ticker */}
       <MarketTicker btcPrice={btc?.price} btcChange={btc?.changePercent} btcUp={btc?.isUp} />
 
-      {/* Main Content */}
+      {/* ================================================================
+          MOBILE / TABLET LAYOUT (< lg) — fullscreen, clean, centered
+          ================================================================ */}
+      <div className="lg:hidden flex flex-col" style={{ minHeight: 'calc(100svh - 40px)', fontFamily: 'var(--font-geist-sans)' }}>
+
+        {/* Top branding area */}
+        <div style={{
+          padding: '2rem 1.5rem 1.5rem',
+          textAlign: 'center',
+          background: 'linear-gradient(180deg, rgba(16,185,129,0.06) 0%, transparent 100%)',
+          borderBottom: '1px solid rgba(192,192,192,0.08)',
+        }}>
+          <Image
+            src="/logostc.png"
+            alt="STC Logo"
+            width={64}
+            height={64}
+            className="object-contain mx-auto mb-3"
+            style={{ filter: 'drop-shadow(0 0 16px rgba(16,185,129,0.45))' }}
+            priority
+          />
+          <h1 style={{
+            fontSize: '1.4rem',
+            fontWeight: 700,
+            color: '#E5E5E5',
+            letterSpacing: '-0.03em',
+            lineHeight: 1.2,
+          }}>
+            STC AutoTrade
+          </h1>
+          <p style={{
+            fontSize: '12px',
+            color: 'rgba(16,185,129,0.75)',
+            letterSpacing: '0.02em',
+            marginTop: '4px',
+            fontWeight: 500,
+          }}>
+            Trading Automation Platform
+          </p>
+        </div>
+
+        {/* Tab switcher */}
+        <div style={{
+          display: 'flex',
+          margin: '1.25rem 1.5rem 0',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(192,192,192,0.1)',
+          borderRadius: '10px',
+          padding: '3px',
+          gap: '3px',
+        }}>
+          {(['login', 'register'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setView(tab)}
+              style={{
+                flex: 1,
+                padding: '9px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: '14px',
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                textTransform: 'none',
+                transition: 'all 0.2s ease',
+                background: view === tab ? '#10B981' : 'transparent',
+                color: view === tab ? '#0A0D10' : 'rgba(255,255,255,0.4)',
+              }}
+            >
+              {tab === 'login' ? 'Masuk' : 'Daftar'}
+            </button>
+          ))}
+        </div>
+
+        {/* Form area — flex-1 so it fills remaining space */}
+        <div style={{ flex: 1, padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column' }}>
+          <AuthPanel view={view} setView={setView} />
+        </div>
+
+        {/* Bottom trust bar */}
+        <div style={{
+          padding: '0.875rem 1.5rem',
+          borderTop: '1px solid rgba(192,192,192,0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '6px',
+        }}>
+          <Lock className="w-3 h-3" style={{ color: '#10B981' }} />
+          <span style={{ fontSize: '11px', color: '#4B5563' }}>
+            256-bit SSL · Data aman &amp; terenkripsi
+          </span>
+        </div>
+      </div>
+
+      {/* ================================================================
+          DESKTOP LAYOUT (lg+) — original layout preserved
+          ================================================================ */}
+      <div className="hidden lg:block">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         
-        {/* Decorative Blobs — isolated in overflow-hidden wrapper so blur never escapes the container */}
+        {/* Decorative Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <div className="absolute top-20 -left-8 w-64 h-64 rounded-full opacity-15 blur-3xl blob-decoration" style={{
             background: 'radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%)'
@@ -1042,8 +1142,8 @@ export default function LandingPage() {
         </div>
         
         {/* Hero Section */}
-        <div className="hero-section py-8 sm:py-12 lg:py-20 relative" style={{ zIndex: 1 }}>
-          <div className="hero-grid grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+        <div className="hero-section py-20 relative" style={{ zIndex: 1 }}>
+          <div className="hero-grid grid lg:grid-cols-2 gap-12 items-center">
             
             {/* Left Content */}
             <div className="hero-left animate-fade-in">
@@ -1141,13 +1241,12 @@ export default function LandingPage() {
                   borderBottom: '1px solid rgba(192, 192, 192, 0.15)'
                 }}>
                   <div className="flex items-center gap-3">
-                    {/* Logo - Only visible on mobile and tablet */}
                     <Image 
                       src="/logostc.png" 
                       alt="Logo" 
                       width={48}
                       height={48}
-                      className="object-contain lg:hidden"
+                      className="object-contain"
                       style={{
                         filter: 'drop-shadow(0 4px 12px rgba(16, 185, 129, 0.3))'
                       }}
@@ -1162,7 +1261,6 @@ export default function LandingPage() {
                       </p>
                     </div>
                   </div>
-                  <Briefcase className="w-8 h-8 hidden lg:block" style={{ color: '#10B981' }} />
                 </div>
 
                 <AuthPanel view={view} setView={setView} />
@@ -1181,8 +1279,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Chart Section */}
-        <div className="py-12 sm:py-16 animate-slide-up delay-300" style={{
+        {/* Chart Section — Desktop only */}
+        <div className="hidden lg:block py-12 sm:py-16 animate-slide-up delay-300" style={{
           borderTop: '1px solid rgba(192, 192, 192, 0.1)'
         }}>
           <div className="chart-section-header flex items-end justify-between mb-10">
@@ -1279,8 +1377,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Features Section — editorial numbered list */}
-        <div className="py-12 sm:py-16 lg:py-20 animate-slide-up delay-400" style={{
+        {/* Features Section — Desktop only — editorial numbered list */}
+        <div className="hidden lg:block py-12 sm:py-16 lg:py-20 animate-slide-up delay-400" style={{
           borderTop: '1px solid rgba(192, 192, 192, 0.1)'
         }}>
           {/* Section header */}
@@ -1353,8 +1451,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Final CTA — asymmetric raw layout */}
-        <div className="cta-section py-16 sm:py-20 lg:py-24 animate-slide-up delay-500" style={{
+        {/* Final CTA — Desktop only — asymmetric raw layout */}
+        <div className="hidden lg:block cta-section py-16 sm:py-20 lg:py-24 animate-slide-up delay-500" style={{
           borderTop: '1px solid rgba(192, 192, 192, 0.1)'
         }}>
           <div className="relative">
@@ -1411,20 +1509,6 @@ export default function LandingPage() {
                   </span>
                 </h2>
                 
-                {/* Live counter */}
-                <div className="flex items-center gap-3">
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#10B981',
-                    boxShadow: '0 0 10px rgba(16,185,129,0.8)',
-                    animation: 'pulse 2s infinite'
-                  }} />
-                  <span className="text-sm" style={{ color: '#6B7280', fontFamily: 'Courier New, monospace' }}>
-                    1,247 trader aktif saat ini
-                  </span>
-                </div>
               </div>
 
               {/* Right — action block */}
@@ -1503,8 +1587,10 @@ export default function LandingPage() {
 
       </div>
 
-      {/* Footer */}
-      <div className="border-t py-6 sm:py-8" style={{ borderColor: 'rgba(192, 192, 192, 0.15)' }}>
+      </div>{/* end desktop wrapper */}
+
+      {/* Footer — Desktop only */}
+      <div className="hidden lg:block border-t py-6 sm:py-8" style={{ borderColor: 'rgba(192, 192, 192, 0.15)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs sm:text-sm text-center sm:text-left" style={{ color: '#4B5563' }}>
