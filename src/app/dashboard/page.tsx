@@ -1462,16 +1462,24 @@ export default function DashboardPage() {
   const [todayStats,setTodayStats] = useState({ profit:0,executions:0,winRate:0 });
   const [deviceType,setDeviceType] = useState<'mobile'|'tablet'|'desktop'>('desktop');
 
+  // ── Refs: mencegah stale closure & state update setelah unmount ──
+  const tradingModeRef = React.useRef<TradingMode>(tradingMode);
+  const isMountedRef   = React.useRef(true);
+  const isPollingRef   = React.useRef(false);
+  useEffect(()=>{ tradingModeRef.current = tradingMode; },[tradingMode]);
+  useEffect(()=>{ isMountedRef.current=true; return()=>{ isMountedRef.current=false; }; },[]);
+
   useEffect(()=>{
     if(!hasHydrated)return;
     if(!isAuthenticated){router.push('/');return;}
     document.documentElement.classList.add('dashboard-page');
     loadData();
-    api.getActiveAssets().then((d:any)=>setAssets(d||[])).catch(()=>{});
+    api.getActiveAssets().then((d:any)=>{ if(isMountedRef.current)setAssets(d||[]); }).catch(()=>{});
     const iv=setInterval(()=>{
+      // Gunakan ref agar selalu baca tradingMode terkini (fix stale closure)
       loadData(true);
-      if(tradingMode==='fastrade')loadFtSession(true);
-      if(tradingMode==='ctc')loadCtcSession(true);
+      if(tradingModeRef.current==='fastrade')loadFtSession(true);
+      if(tradingModeRef.current==='ctc')loadCtcSession(true);
     },30000);
     return()=>{ clearInterval(iv); document.documentElement.classList.remove('dashboard-page'); };
   },[hasHydrated,isAuthenticated]); // eslint-disable-line
@@ -1509,39 +1517,50 @@ export default function DashboardPage() {
   };
 
   const loadData=async(silent=false)=>{
-    if(!silent)setIsLoading(true);setError(null);
+    // Hindari silent poll yang overlap (skip jika sudah ada poll berjalan)
+    if(silent&&isPollingRef.current)return;
+    isPollingRef.current=true;
+    if(!silent){setIsLoading(true);setError(null);}
     try{
       const scheds=await api.getOrderSchedules().catch(()=>[]);
+      if(!isMountedRef.current)return;
       const active=scheds.find((s:any)=>s.status==='active'&&s.isActive);
       setActiveSchedule(active||null);
       const ac=scheds.filter((s:any)=>s.status==='active').length;
       const pc=scheds.filter((s:any)=>s.status==='paused').length;
       setBotStatus({isRunning:ac>0,isPaused:pc>0&&ac===0,activeSchedules:ac,nextExecutionTime:active?getNextExecTime(active.schedules):undefined,lastExecutionTime:active?.lastExecutedAt?new Date(active.lastExecutedAt).toLocaleTimeString('id-ID'):undefined,currentProfit:scheds.reduce((s:number,x:any)=>s+(x.currentProfit||0),0)});
-      const stats=await api.getTodayStats();setTodayStats(stats);
-      if(active){try{const execs=await api.getOrderHistory(active.id,200);setExecutions((execs||[]).filter((e:any)=>e.result).map((e:any)=>({scheduledTime:e.scheduledTime,result:e.result})));}catch{setExecutions([]);}}else{setExecutions([]);}
-      if(active)setSettings({assetSymbol:active.assetSymbol,assetName:active.assetName||active.assetSymbol,accountType:active.accountType,duration:active.duration,amount:active.amount,schedules:active.schedules,martingaleSetting:active.martingaleSetting,stopLossProfit:active.stopLossProfit});
+      const stats=await api.getTodayStats();
+      if(!isMountedRef.current)return;
+      setTodayStats(stats);
+      if(active){try{const execs=await api.getOrderHistory(active.id,200);if(isMountedRef.current)setExecutions((execs||[]).filter((e:any)=>e.result).map((e:any)=>({scheduledTime:e.scheduledTime,result:e.result})));}catch{if(isMountedRef.current)setExecutions([]);}}else{setExecutions([]);}
+      // Sinkronisasi settings hanya saat tidak silent (first load / action), bukan polling background
+      if(!silent&&active)setSettings({assetSymbol:active.assetSymbol,assetName:active.assetName||active.assetSymbol,accountType:active.accountType,duration:active.duration,amount:active.amount,schedules:active.schedules,martingaleSetting:active.martingaleSetting,stopLossProfit:active.stopLossProfit});
     }catch(e:any){
+      if(!isMountedRef.current)return;
       if(e?.response?.status===401){clearAuth();router.push('/');return;}
-      setError('Gagal memuat data. Silakan refresh.');
-    }finally{setIsLoading(false);}
+      if(!silent)setError('Gagal memuat data. Silakan refresh.');
+    }finally{
+      isPollingRef.current=false;
+      if(!silent&&isMountedRef.current)setIsLoading(false);
+    }
   };
 
   const loadFtSession=async(silent=false)=>{
     if(!silent)setFtLoading(true);
     try{
       const res=await api.getActiveFastTradeSession?.();
-      setFtSession(res||null);
-    }catch{ setFtSession(null); }
-    finally{ if(!silent)setFtLoading(false); }
+      if(isMountedRef.current)setFtSession(res||null);
+    }catch{ if(isMountedRef.current)setFtSession(null); }
+    finally{ if(!silent&&isMountedRef.current)setFtLoading(false); }
   };
 
   const loadCtcSession=async(silent=false)=>{
     if(!silent)setCtcLoading(true);
     try{
       const res=await api.getActiveCtcSession?.();
-      setCtcSession(res||null);
-    }catch{ setCtcSession(null); }
-    finally{ if(!silent)setCtcLoading(false); }
+      if(isMountedRef.current)setCtcSession(res||null);
+    }catch{ if(isMountedRef.current)setCtcSession(null); }
+    finally{ if(!silent&&isMountedRef.current)setCtcLoading(false); }
   };
 
   // ── Schedule handlers ──

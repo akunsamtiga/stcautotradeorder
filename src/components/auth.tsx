@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
@@ -39,6 +40,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,14 +79,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
         <div>
           <label style={S.label}>Password</label>
-          <input
-            type="password"
-            className="ds-input"
-            placeholder="••••••••"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              className="ds-input"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              style={{ paddingRight: 38 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              tabIndex={-1}
+              style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(52,211,153,0.8)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+            >
+              {showPw ? <EyeSlash size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
         </div>
 
         <button
@@ -154,6 +174,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
   const [formData, setFormData] = useState({ email: '', password: '', fullName: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -208,15 +229,33 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
 
         <div>
           <label style={S.label}>Password</label>
-          <input
-            type="password"
-            name="password"
-            className="ds-input"
-            placeholder="Min. 8 karakter, huruf besar, angka"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              name="password"
+              className="ds-input"
+              placeholder="Min. 8 karakter, huruf besar, angka"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              style={{ paddingRight: 38 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              tabIndex={-1}
+              style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center',
+                transition: 'color 0.2s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(52,211,153,0.8)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+            >
+              {showPw ? <EyeSlash size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
         </div>
 
         <button
