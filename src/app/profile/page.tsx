@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
@@ -11,17 +11,24 @@ import {
   CheckCircle, Medal, Star, Lightning, UserCircle,
 } from '@phosphor-icons/react';
 
-// ─── TOKENS ───────────────────────────────────────────────────
+// ─── TOKENS — synced with dashboard ──────────────────────────
 const C = {
   bg:    '#050807',
   card:  '#111915',
   card2: '#141f1a',
-  bdr:   'rgba(255,255,255,0.07)',
+  bdr:   'rgba(52,211,153,0.22)',
   cyan:  '#34d399',
   coral: '#f87171',
   text:  '#f0faf6',
-  muted: 'rgba(255,255,255,0.35)',
+  sub:   '#e8f5f1',
+  muted: 'rgba(255,255,255,0.45)',
   faint: 'rgba(255,255,255,0.05)',
+};
+
+const cardStyle: React.CSSProperties = {
+  background: C.card,
+  border: `1px solid ${C.bdr}`,
+  boxShadow: '0 0 0 1px rgba(52,211,153,0.06), 0 4px 18px rgba(52,211,153,0.07), 0 2px 8px rgba(0,0,0,0.3)',
 };
 
 // ─── TYPES ────────────────────────────────────────────────────
@@ -39,7 +46,6 @@ interface UserProfile {
   balances: { real: number; demo: number; combined: number };
 }
 
-// ─── SKELETON ─────────────────────────────────────────────────
 // ─── SKELETON ─────────────────────────────────────────────────
 const skeletonStyle = {
   background: 'linear-gradient(90deg, #1a2420 25%, #22302a 50%, #1a2420 75%)',
@@ -66,7 +72,7 @@ const Avatar = ({ name, email, avatarUrl }: { name?: string; email: string; avat
   return (
     <div
       className="w-16 h-16 rounded-full flex items-center justify-center shrink-0"
-      style={{ background: C.card2, border: `2px solid rgba(52,211,153,0.2)` }}
+      style={{ background: C.card2, border: `2px solid rgba(52,211,153,0.3)` }}
     >
       <span className="text-[22px] font-semibold" style={{ color: C.cyan }}>{initials}</span>
     </div>
@@ -95,7 +101,7 @@ const StatusBadge = ({ status }: { status: 'standard' | 'gold' | 'vip' }) => {
 // ─── STATUS CARD ──────────────────────────────────────────────
 const StatusCard = ({ statusInfo, isLoading }: { statusInfo: UserProfile['statusInfo']; isLoading: boolean }) => {
   if (isLoading) return (
-    <div className="rounded-xl p-5 flex flex-col gap-4" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
+    <div className="rounded-xl p-5 flex flex-col gap-4" style={cardStyle}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg" style={skeletonStyle} />
@@ -121,8 +127,7 @@ const StatusCard = ({ statusInfo, isLoading }: { statusInfo: UserProfile['status
   const progress = statusInfo.progress || 0;
 
   return (
-    <div className="rounded-xl p-5 relative overflow-hidden" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
-      {/* Top accent line */}
+    <div className="rounded-xl p-5 relative overflow-hidden" style={cardStyle}>
       <div className="absolute top-0 left-1/4 right-1/4 h-px" style={{ background: `linear-gradient(90deg,transparent,${col}70,transparent)` }} />
 
       <div className="flex items-center justify-between mb-4">
@@ -151,7 +156,7 @@ const StatusCard = ({ statusInfo, isLoading }: { statusInfo: UserProfile['status
           { label: 'Total Deposit', val: `Rp ${statusInfo.totalDeposit.toLocaleString('id-ID')}` },
           ...(statusInfo.nextStatus ? [{ label: 'Dibutuhkan', val: `Rp ${(statusInfo.depositNeeded || 0).toLocaleString('id-ID')}` }] : []),
         ].map(s => (
-          <div key={s.label} className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.25)', border: `1px solid rgba(255,255,255,0.05)` }}>
+          <div key={s.label} className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid rgba(52,211,153,0.08)` }}>
             <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: C.muted }}>{s.label}</p>
             <p className="text-[13px] font-semibold" style={{ color: C.text }}>{s.val}</p>
           </div>
@@ -192,10 +197,10 @@ const StatusCard = ({ statusInfo, isLoading }: { statusInfo: UserProfile['status
 const InfoRow = ({ icon, label, value, verified }: {
   icon: React.ReactNode; label: string; value?: string; verified?: boolean;
 }) => (
-  <div className="flex items-center gap-3 py-3" style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+  <div className="flex items-center gap-3 py-3" style={{ borderBottom: `1px solid rgba(52,211,153,0.06)` }}>
     <div
       className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-      style={{ background: C.faint, border: `1px solid rgba(255,255,255,0.06)`, color: C.muted }}
+      style={{ background: C.faint, border: `1px solid rgba(52,211,153,0.1)`, color: C.muted }}
     >
       {icon}
     </div>
@@ -238,11 +243,11 @@ const EditableField = ({ icon, label, value, onSave, placeholder }: {
   };
 
   return (
-    <div className="py-3" style={{ borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+    <div className="py-3" style={{ borderBottom: `1px solid rgba(52,211,153,0.06)` }}>
       <div className="flex items-center gap-3">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ background: C.faint, border: `1px solid rgba(255,255,255,0.06)`, color: C.muted }}
+          style={{ background: C.faint, border: `1px solid rgba(52,211,153,0.1)`, color: C.muted }}
         >
           {icon}
         </div>
@@ -257,10 +262,9 @@ const EditableField = ({ icon, label, value, onSave, placeholder }: {
                 placeholder={placeholder}
                 className="flex-1 px-2.5 py-1.5 rounded-md text-[13px] outline-none"
                 style={{
-                  background: C.card2,
+                  background: 'rgba(0,0,0,0.4)',
                   border: `1px solid rgba(52,211,153,0.3)`,
                   color: C.text,
-                  fontFamily: 'var(--font-geist-sans)',
                 }}
               />
               <button
@@ -293,7 +297,7 @@ const EditableField = ({ icon, label, value, onSave, placeholder }: {
               <button
                 onClick={() => { setEditing(true); setVal(value || ''); }}
                 className="w-7 h-7 flex items-center justify-center rounded-md cursor-pointer"
-                style={{ background: C.faint, border: `1px solid rgba(255,255,255,0.07)`, color: C.muted }}
+                style={{ background: C.faint, border: `1px solid rgba(52,211,153,0.12)`, color: C.muted }}
               >
                 <PencilSimple size={11} />
               </button>
@@ -311,7 +315,7 @@ const SL = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center gap-2 mb-2">
     <div className="w-0.5 h-3 rounded-full opacity-60" style={{ background: C.cyan }} />
     <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: C.muted }}>{children}</p>
-    <div className="flex-1 h-px" style={{ background: 'rgba(52,211,153,0.08)' }} />
+    <div className="flex-1 h-px" style={{ background: 'rgba(52,211,153,0.1)' }} />
   </div>
 );
 
@@ -325,10 +329,16 @@ export default function ProfilePage() {
   const [logoutModal,  setLogoutModal]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
 
+  // Prevent re-fetch on tab switch — only load once on first mount
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
     if (!hasHydrated) return;
     if (!isAuthenticated) { router.push('/'); return; }
-    loadData();
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      loadData();
+    }
   }, [hasHydrated, isAuthenticated]); // eslint-disable-line
 
   const loadData = async (showRefreshing = false) => {
@@ -347,6 +357,11 @@ export default function ProfilePage() {
       if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
       setError('Gagal memuat profil.');
     } finally { setIsLoading(false); setRefreshing(false); }
+  };
+
+  const handleRefresh = () => {
+    hasFetchedRef.current = true;
+    loadData(true);
   };
 
   const handleSaveFullName = async (fullName: string) => {
@@ -400,7 +415,7 @@ export default function ProfilePage() {
           background: 'rgba(5,8,7,0.94)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(52,211,153,0.1)',
         }}
       >
         <div className="max-w-[640px] mx-auto px-4 py-3.5 flex items-center justify-between">
@@ -409,10 +424,10 @@ export default function ProfilePage() {
             <p className="text-[10px] mt-0.5" style={{ color: C.muted }}>Kelola akun & pengaturan</p>
           </div>
           <button
-            onClick={() => loadData(true)}
+            onClick={handleRefresh}
             disabled={refreshing || isLoading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium cursor-pointer disabled:opacity-40"
-            style={{ background: C.faint, border: '1px solid rgba(255,255,255,0.08)', color: refreshing ? C.cyan : C.muted }}
+            style={{ background: C.faint, border: '1px solid rgba(52,211,153,0.15)', color: refreshing ? C.cyan : C.muted }}
           >
             <ArrowClockwise size={12} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
             Refresh
@@ -433,8 +448,8 @@ export default function ProfilePage() {
         )}
 
         {/* Identity card */}
-        <div className="rounded-xl p-5 relative overflow-hidden" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
-          <div className="absolute top-0 left-1/4 right-1/4 h-px" style={{ background: `linear-gradient(90deg,transparent,rgba(52,211,153,0.6),transparent)` }} />
+        <div className="rounded-xl p-5 relative overflow-hidden" style={cardStyle}>
+          <div className="absolute top-0 left-1/4 right-1/4 h-px" style={{ background: `linear-gradient(90deg,transparent,rgba(52,211,153,0.5),transparent)` }} />
 
           {isLoading ? (
             <div className="flex gap-4">
@@ -464,12 +479,12 @@ export default function ProfilePage() {
               </div>
 
               {/* Balance */}
-              <div className="mt-4 pt-4 grid grid-cols-2 gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="mt-4 pt-4 grid grid-cols-2 gap-2" style={{ borderTop: '1px solid rgba(52,211,153,0.08)' }}>
                 {[
                   { label: 'Real Balance', val: `Rp ${profile?.balances?.real?.toLocaleString('id-ID') || '0'}`, col: C.cyan },
                   { label: 'Demo Balance', val: `Rp ${profile?.balances?.demo?.toLocaleString('id-ID') || '0'}`, col: 'rgba(255,255,255,0.6)' },
                 ].map(s => (
-                  <div key={s.label} className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.25)', border: `1px solid rgba(255,255,255,0.05)` }}>
+                  <div key={s.label} className="p-3 rounded-lg" style={{ background: 'rgba(0,0,0,0.3)', border: `1px solid rgba(52,211,153,0.1)` }}>
                     <p className="text-[9px] uppercase tracking-widest mb-1" style={{ color: C.muted }}>{s.label}</p>
                     <p className="text-[14px] font-semibold" style={{ color: s.col }}>{s.val}</p>
                   </div>
@@ -485,11 +500,11 @@ export default function ProfilePage() {
         {/* Account info */}
         <div>
           <SL>Informasi Akun</SL>
-          <div className="rounded-xl px-4 py-1" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
+          <div className="rounded-xl px-4 py-1" style={cardStyle}>
             {isLoading ? (
               <div className="flex flex-col py-1">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 py-3" style={{ borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <div key={i} className="flex items-center gap-3 py-3" style={{ borderBottom: i < 3 ? '1px solid rgba(52,211,153,0.06)' : 'none' }}>
                     <div className="w-8 h-8 rounded-lg shrink-0" style={skeletonStyle} />
                     <div className="flex-1 flex flex-col gap-1.5">
                       <Skeleton w="30%" h={9} />
@@ -530,13 +545,22 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Referral code */}
+        {user?.referralCode && (
+          <div className="rounded-xl px-4 py-3" style={cardStyle}>
+            <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: C.muted }}>Kode Referral</p>
+            <p className="text-[15px] font-bold tracking-widest" style={{ color: C.cyan }}>{user.referralCode}</p>
+          </div>
+        )}
+
         {/* Logout */}
         <button
           onClick={() => setLogoutModal(true)}
           className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left cursor-pointer transition-colors"
           style={{
             background: 'rgba(248,113,113,0.04)',
-            border: '1px solid rgba(248,113,113,0.12)',
+            border: '1px solid rgba(248,113,113,0.18)',
+            boxShadow: '0 0 0 1px rgba(248,113,113,0.04), 0 4px 18px rgba(248,113,113,0.05)',
           }}
         >
           <div
@@ -587,7 +611,7 @@ export default function ProfilePage() {
               <button
                 onClick={() => setLogoutModal(false)}
                 className="flex-1 py-2.5 rounded-xl text-[13px] font-medium cursor-pointer transition-colors"
-                style={{ background: C.faint, border: `1px solid rgba(255,255,255,0.09)`, color: C.muted }}
+                style={{ background: C.faint, border: `1px solid rgba(52,211,153,0.12)`, color: C.muted }}
               >
                 Batal
               </button>

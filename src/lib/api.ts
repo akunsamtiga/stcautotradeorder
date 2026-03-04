@@ -836,6 +836,99 @@ class ApiClient {
       throw error;
     }
   }
+  // ============================================================================
+  // FAST TRADE METHODS
+  // ============================================================================
+
+  async createFastTradeSession(data: {
+    assetId: string;
+    timeframe: string;
+    accountType: string;
+    amount: number;
+    martingale: { enabled: boolean; maxStep: number; multiplier: number };
+    stopProfit?: number;
+    stopLoss?: number;
+  }) {
+    const { data: res } = await this.client.post('/fast-trade', data);
+    return res?.data ?? res;
+  }
+
+  async stopFastTradeSession(sessionId: string) {
+    const { data: res } = await this.client.post(`/fast-trade/${sessionId}/stop`);
+    return res?.data ?? res;
+  }
+
+  async getActiveFastTradeSession() {
+    const { data: res } = await this.client.get('/fast-trade/active');
+    return res?.data ?? res;
+  }
+
+  async getFastTradeSession(sessionId: string) {
+    const { data: res } = await this.client.get(`/fast-trade/${sessionId}`);
+    return res?.data ?? res;
+  }
+
+  async getFastTradeSessions(activeOnly = false) {
+    const { data: res } = await this.client.get(`/fast-trade?activeOnly=${activeOnly}`);
+    return res?.data ?? res;
+  }
+
+  async getFastTradeExecutions(sessionId: string, limit = 50) {
+    const { data: res } = await this.client.get(`/fast-trade/${sessionId}/executions?limit=${limit}`);
+    return res?.data ?? res;
+  }
+
+  async getOhlcData(assetId: string, timeframe = '1m', limit = 10) {
+    const { data: res } = await this.client.get(`/fast-trade/ohlc/${assetId}?timeframe=${timeframe}&limit=${limit}`);
+    return res?.data ?? res;
+  }
+
+  // ============================================================================
+  // CTC (COPY THE CANDLE) METHODS
+  // ============================================================================
+
+  async createCtcSession(data: {
+    assetId: string;
+    accountType: string;
+    amount: number;
+    martingale: { enabled: boolean; maxStep: number; multiplier: number };
+    stopProfit?: number;
+    stopLoss?: number;
+  }) {
+    const { data: res } = await this.client.post('/ctc', data);
+    return res?.data ?? res;
+  }
+
+  async stopCtcSession(sessionId: string) {
+    const { data: res } = await this.client.post(`/ctc/${sessionId}/stop`);
+    return res?.data ?? res;
+  }
+
+  async getActiveCtcSession() {
+    const { data: res } = await this.client.get('/ctc/active');
+    return res?.data ?? res;
+  }
+
+  async getCtcSession(sessionId: string) {
+    const { data: res } = await this.client.get(`/ctc/${sessionId}`);
+    return res?.data ?? res;
+  }
+
+  async getCtcSessions(activeOnly = false) {
+    const { data: res } = await this.client.get(`/ctc?activeOnly=${activeOnly}`);
+    return res?.data ?? res;
+  }
+
+  async getCtcExecutions(sessionId: string, limit = 50) {
+    const { data: res } = await this.client.get(`/ctc/${sessionId}/executions?limit=${limit}`);
+    return res?.data ?? res;
+  }
+
+  async getCtcOhlcData(assetId: string, limit = 20) {
+    const { data: res } = await this.client.get(`/ctc/ohlc/${assetId}?limit=${limit}`);
+    return res?.data ?? res;
+  }
+
 }
 
 export const api = new ApiClient();

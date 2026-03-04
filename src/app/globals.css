@@ -20,8 +20,8 @@
   --muted:      rgba(255, 255, 255, 0.65);
   --faint:      rgba(255, 255, 255, 0.08);
   --bdr:        rgba(52, 211, 153, 0.15);
-  --font-exo:   'Exo 2', sans-serif;
-  --font-mono:  'Courier New', Courier, monospace;
+  --font-exo:   var(--font-geist-sans), 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  var(--font-geist-sans), 'Geist', ui-sans-serif, system-ui, sans-serif;
   --clip-sm:    polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
   --clip-md:    polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   --clip-lg:    polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));

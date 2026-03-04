@@ -3,13 +3,6 @@ import { Exo_2 } from 'next/font/google';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 
-const exo2 = Exo_2({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800', '900'],
-  variable: '--font-exo',
-  display: 'swap',
-});
-
 export const metadata: Metadata = {
   title: 'STC AutoTrade',
   description: 'Platform dengan penarikan kilat, profit hingga 100%, dan keamanan maksimal.',
@@ -35,7 +28,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${exo2.variable} ${GeistSans.variable}`}>
+    <html lang="en" className={GeistSans.variable}>
       <body>{children}</body>
     </html>
   );

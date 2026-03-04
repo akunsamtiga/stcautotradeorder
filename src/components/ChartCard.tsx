@@ -396,36 +396,22 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     const updateSize = () => {
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-
-      // Set canvas display size
       const displayWidth = rect.width;
-      const displayHeight = deviceType === 'mobile' ? 100 : deviceType === 'tablet' ? 300 : height;
+      const displayHeight = rect.height || (deviceType === 'mobile' ? 100 : deviceType === 'tablet' ? 300 : height);
 
-      // Set actual size in memory (scaled to DPR)
       canvas.width = displayWidth * dpr;
       canvas.height = displayHeight * dpr;
-
-      // Set display size
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
 
-      // Scale all drawing operations by DPR
       const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(dpr, dpr);
-      }
-
-      if (data.length > 0) {
-        drawChart();
-      }
+      if (ctx) ctx.scale(dpr, dpr);
+      if (data.length > 0) drawChart();
     };
 
-    // Small delay to ensure container is rendered
     const timeoutId = setTimeout(updateSize, 100);
-    
     window.addEventListener('resize', updateSize);
     window.addEventListener('orientationchange', updateSize);
-
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener('resize', updateSize);
@@ -437,24 +423,16 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const responsiveHeight = deviceType === 'mobile' ? 100 : deviceType === 'tablet' ? 300 : height;
 
   return (
-    <div className="bg-[#0a0a0a] rounded-xl border border-gray-800 overflow-hidden p-0 sm:p-3 lg:p-4">
-      {/* Chart */}
+    <div className="bg-[#0a0a0a] rounded-xl border border-gray-800 overflow-hidden w-full h-full" style={{ minHeight: responsiveHeight }}>
       <div
         ref={containerRef}
-        className="bg-[#0a0a0a] w-full"
-        style={{
-          height: responsiveHeight,
-          minHeight: responsiveHeight,
-        }}
+        className="bg-[#0a0a0a] w-full h-full"
+        style={{ minHeight: responsiveHeight }}
       >
         <canvas
           ref={canvasRef}
           className="w-full h-full"
-          style={{ 
-            display: 'block',
-            touchAction: 'none',
-            maxWidth: '100%',
-          }}
+          style={{ display: 'block', touchAction: 'none', maxWidth: '100%' }}
         />
       </div>
     </div>

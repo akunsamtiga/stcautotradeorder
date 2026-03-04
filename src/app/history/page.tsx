@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
@@ -10,17 +10,24 @@ import {
   Clock, MagnifyingGlass, CaretLeft, CaretRight,
 } from '@phosphor-icons/react';
 
-// ─── TOKENS ───────────────────────────────────────────────────
+// ─── TOKENS — synced with dashboard ──────────────────────────
 const C = {
   bg:    '#050807',
   card:  '#111915',
   card2: '#141f1a',
-  bdr:   'rgba(255,255,255,0.07)',
+  bdr:   'rgba(52,211,153,0.22)',
   cyan:  '#34d399',
   coral: '#f87171',
   text:  '#f0faf6',
-  muted: 'rgba(255,255,255,0.35)',
+  sub:   '#e8f5f1',
+  muted: 'rgba(255,255,255,0.45)',
   faint: 'rgba(255,255,255,0.05)',
+};
+
+const cardStyle: React.CSSProperties = {
+  background: C.card,
+  border: `1px solid ${C.bdr}`,
+  boxShadow: '0 0 0 1px rgba(52,211,153,0.06), 0 4px 18px rgba(52,211,153,0.07), 0 2px 8px rgba(0,0,0,0.3)',
 };
 
 // ─── TYPES ────────────────────────────────────────────────────
@@ -97,7 +104,7 @@ const Pill: React.FC<{ active: boolean; onClick: () => void; children: React.Rea
 
 // ─── STAT CARD ────────────────────────────────────────────────
 const StatCard = ({ label, value, sub, accent = C.text }: { label: string; value: string | number; sub?: string; accent?: string }) => (
-  <div className="rounded-lg p-3" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
+  <div className="rounded-lg p-3" style={cardStyle}>
     <p className="text-[10px] font-medium uppercase tracking-widest mb-2" style={{ color: C.muted }}>{label}</p>
     <p className="text-[20px] font-semibold leading-none" style={{ color: accent }}>{value}</p>
     {sub && <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</p>}
@@ -118,9 +125,8 @@ const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
   return (
     <div
       className="flex items-center gap-3 px-3.5 py-3 rounded-lg transition-colors duration-150"
-      style={{ background: C.card, border: `1px solid ${C.bdr}` }}
+      style={cardStyle}
     >
-      {/* Direction dot */}
       <div
         className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
         style={{
@@ -134,7 +140,6 @@ const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
         }
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[13px] font-semibold" style={{ color: C.text }}>{exec.assetSymbol}</span>
@@ -144,10 +149,7 @@ const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
           >
             {exec.trend.toUpperCase()}
           </span>
-          <span
-            className="text-[10px] px-1.5 py-[2px] rounded"
-            style={{ color: C.muted, background: C.faint }}
-          >
+          <span className="text-[10px] px-1.5 py-[2px] rounded" style={{ color: C.muted, background: C.faint }}>
             {exec.accountType}
           </span>
         </div>
@@ -158,7 +160,6 @@ const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
         </div>
       </div>
 
-      {/* Result */}
       <div className="flex flex-col items-end gap-1 shrink-0">
         {rc && (
           <span
@@ -205,13 +206,22 @@ export default function HistoryPage() {
   const [totalOrders,   setTotalOrders]   = useState(0);
   const PER_PAGE = 25;
 
+  // Prevent re-fetch on tab switch — only load once on first mount
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
     if (!hasHydrated) return;
     if (!isAuthenticated) { router.push('/'); return; }
-    load();
+    if (!hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      load();
+    }
   }, [hasHydrated, isAuthenticated]); // eslint-disable-line
 
-  useEffect(() => { if (hasHydrated && isAuthenticated) load(); }, [filterResult, filterAccount, filterTrend, search, page]); // eslint-disable-line
+  useEffect(() => {
+    if (hasFetchedRef.current && hasHydrated && isAuthenticated) load();
+  }, [filterResult, filterAccount, filterTrend, search, page]); // eslint-disable-line
+
   useEffect(() => { if (page !== 1) setPage(1); }, [filterResult, filterAccount, filterTrend, search]); // eslint-disable-line
 
   const load = useCallback(async () => {
@@ -239,7 +249,12 @@ export default function HistoryPage() {
     } finally { setIsLoading(false); }
   }, [clearAuth, router, page, filterResult, filterAccount, filterTrend, search]);
 
-  const handleRefresh = async () => { setIsRefreshing(true); await load(); setIsRefreshing(false); };
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    hasFetchedRef.current = true;
+    await load();
+    setIsRefreshing(false);
+  };
 
   const stats = allExecs.reduce(
     (acc, e) => {
@@ -277,7 +292,7 @@ export default function HistoryPage() {
           background: 'rgba(5,8,7,0.94)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(52,211,153,0.1)',
         }}
       >
         <div className="max-w-[720px] mx-auto px-4 py-3.5 flex items-center justify-between">
@@ -291,7 +306,7 @@ export default function HistoryPage() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40"
             style={{
               background: C.faint,
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid rgba(52,211,153,0.15)',
               color: isRefreshing ? C.cyan : C.muted,
             }}
           >
@@ -313,11 +328,11 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {/* Stats skeleton OR real stats */}
+        {/* Stats */}
         {isLoading ? (
           <div className="grid grid-cols-4 gap-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-lg p-3" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
+              <div key={i} className="rounded-lg p-3" style={cardStyle}>
                 <Sk w="60%" h={10} className="mb-2" />
                 <Sk w="70%" h={22} className="mb-1.5" />
                 <Sk w="40%" h={9} />
@@ -334,7 +349,7 @@ export default function HistoryPage() {
         )}
 
         {/* Filters */}
-        <div className="rounded-lg p-3.5 flex flex-col gap-3" style={{ background: C.card, border: `1px solid ${C.bdr}` }}>
+        <div className="rounded-lg p-3.5 flex flex-col gap-3" style={cardStyle}>
           {/* Search */}
           <div className="relative">
             <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
@@ -345,13 +360,12 @@ export default function HistoryPage() {
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-8 pr-3 py-2 rounded-md text-[12px] outline-none transition-colors"
               style={{
-                background: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(0,0,0,0.4)',
+                border: '1px solid rgba(52,211,153,0.15)',
                 color: C.text,
-                fontFamily: 'var(--font-geist-sans)',
               }}
-              onFocus={e => e.target.style.borderColor = 'rgba(52,211,153,0.35)'}
-              onBlur={e  => e.target.style.borderColor = 'rgba(255,255,255,0.07)'}
+              onFocus={e => e.target.style.borderColor = 'rgba(52,211,153,0.4)'}
+              onBlur={e  => e.target.style.borderColor = 'rgba(52,211,153,0.15)'}
             />
           </div>
 
@@ -362,13 +376,13 @@ export default function HistoryPage() {
             <Pill active={filterResult==='loss'} onClick={()=>setFilterResult('loss')} accent={C.coral}>Loss</Pill>
             <Pill active={filterResult==='draw'} onClick={()=>setFilterResult('draw')}>Draw</Pill>
 
-            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(255,255,255,0.07)' }} />
+            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(52,211,153,0.12)' }} />
 
             <Pill active={filterTrend==='all'}  onClick={()=>setFilterTrend('all')}>All</Pill>
             <Pill active={filterTrend==='buy'}  onClick={()=>setFilterTrend('buy')}  accent={C.cyan}>Buy</Pill>
             <Pill active={filterTrend==='sell'} onClick={()=>setFilterTrend('sell')} accent={C.coral}>Sell</Pill>
 
-            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(255,255,255,0.07)' }} />
+            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(52,211,153,0.12)' }} />
 
             <Pill active={filterAccount==='all'}  onClick={()=>setFilterAccount('all')}>Semua</Pill>
             <Pill active={filterAccount==='demo'} onClick={()=>setFilterAccount('demo')}>Demo</Pill>
@@ -387,11 +401,9 @@ export default function HistoryPage() {
               <div
                 key={i}
                 className="flex items-center gap-3 px-3.5 py-3 rounded-lg"
-                style={{ background: C.card, border: `1px solid ${C.bdr}`, opacity: 1 - i * 0.1 }}
+                style={{ ...cardStyle, opacity: 1 - i * 0.1 }}
               >
-                {/* Direction icon placeholder */}
                 <div className="w-8 h-8 rounded-md shrink-0" style={skeletonStyle} />
-                {/* Info */}
                 <div className="flex-1 flex flex-col gap-1.5">
                   <div className="flex gap-1.5">
                     <Sk w={80} h={12} />
@@ -400,7 +412,6 @@ export default function HistoryPage() {
                   </div>
                   <Sk w="55%" h={10} />
                 </div>
-                {/* Result */}
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <Sk w={40} h={18} />
                   <Sk w={60} h={13} />
