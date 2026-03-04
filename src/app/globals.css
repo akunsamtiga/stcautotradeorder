@@ -137,21 +137,63 @@ input[type=number] { -moz-appearance: textfield; }
 textarea.ds-input { resize: none; }
 
 /* ============================================================
+   SPINNING BORDER ANIMATION
+   ============================================================ */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes card-border-spin {
+  to { --border-angle: 360deg; }
+}
+
+/* ============================================================
    DS-CARD
    ============================================================ */
 .ds-card {
-  background: linear-gradient(135deg, var(--s1) 0%, var(--s2) 100%);
-  border: 1px solid var(--bdr);
+  --border-angle: 0deg;
+  background:
+    linear-gradient(135deg, #06110e 0%, #091a14 100%) padding-box,
+    conic-gradient(
+      from var(--border-angle),
+      rgba(52, 211, 153, 0.05) 0%,
+      rgba(52, 211, 153, 0.05) 58%,
+      rgba(52, 211, 153, 0.5)  70%,
+      rgba(180, 255, 220, 0.88) 76%,
+      rgba(52, 211, 153, 0.5)  82%,
+      rgba(52, 211, 153, 0.05) 94%,
+      rgba(52, 211, 153, 0.05) 100%
+    ) border-box;
+  border: 1px solid transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   clip-path: var(--clip-md);
   position: relative;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both,
+             card-border-spin 7s linear infinite;
 }
+/* Each card gets a unique speed + offset so they never look in sync */
+.ds-card:nth-child(1)  { animation-duration: 0.4s, 6.1s;  animation-delay: 0s, -0.8s;  }
+.ds-card:nth-child(2)  { animation-duration: 0.4s, 8.3s;  animation-delay: 0s, -3.2s;  }
+.ds-card:nth-child(3)  { animation-duration: 0.4s, 5.7s;  animation-delay: 0s, -1.5s;  }
+.ds-card:nth-child(4)  { animation-duration: 0.4s, 9.4s;  animation-delay: 0s, -4.7s;  }
+.ds-card:nth-child(5)  { animation-duration: 0.4s, 7.1s;  animation-delay: 0s, -2.1s;  }
+.ds-card:nth-child(6)  { animation-duration: 0.4s, 11.2s; animation-delay: 0s, -5.9s;  }
+.ds-card:nth-child(7)  { animation-duration: 0.4s, 6.8s;  animation-delay: 0s, -0.4s;  }
+.ds-card:nth-child(8)  { animation-duration: 0.4s, 8.9s;  animation-delay: 0s, -6.3s;  }
+.ds-card:nth-child(9)  { animation-duration: 0.4s, 5.4s;  animation-delay: 0s, -2.7s;  }
+.ds-card:nth-child(10) { animation-duration: 0.4s, 10.6s; animation-delay: 0s, -3.8s;  }
+.ds-card:nth-child(11) { animation-duration: 0.4s, 7.7s;  animation-delay: 0s, -1.2s;  }
+.ds-card:nth-child(12) { animation-duration: 0.4s, 9.1s;  animation-delay: 0s, -7.0s;  }
+.ds-card:nth-child(odd)  { animation-direction: normal,  normal;  }
+.ds-card:nth-child(even) { animation-direction: normal, reverse; }
+
 .ds-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(52, 211, 153, 0.07), 0 0 1px rgba(52, 211, 153, 0.28);
+  box-shadow: 0 8px 28px rgba(52, 211, 153, 0.08), 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* ============================================================
@@ -178,29 +220,31 @@ button { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
    QUICK AMOUNT BUTTONS
    ============================================================ */
 .quick-amount-btn {
-  padding: 7px 10px;
-  background: var(--s2);
-  border: 1px solid var(--bdr);
-  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.55);
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  clip-path: var(--clip-sm);
-  transition: all 0.2s ease;
+  clip-path: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  text-align: center;
 }
 .quick-amount-btn:hover {
-  background: rgba(52, 211, 153, 0.08);
-  border-color: rgba(52, 211, 153, 0.3);
-  color: var(--cyan);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(52, 211, 153, 0.1);
+  background: rgba(52, 211, 153, 0.07);
+  border-color: rgba(52, 211, 153, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+  transform: none;
+  box-shadow: none;
 }
 .quick-amount-btn.active {
-  background: rgba(52, 211, 153, 0.12);
-  border-color: var(--cyan);
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.4);
   color: var(--cyan);
-  box-shadow: 0 0 12px rgba(52, 211, 153, 0.18);
+  box-shadow: none;
 }
 
 /* ============================================================

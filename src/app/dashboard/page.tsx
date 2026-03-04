@@ -151,7 +151,7 @@ const Card: React.FC<{ children:React.ReactNode; style?:React.CSSProperties; cla
 ({ children, style, className='' }) => (
   <div
     className={`ds-card relative overflow-hidden rounded-[10px] ${className}`}
-    style={{ background: C.card, border: '1px solid rgba(52,211,153,0.28)', boxShadow: '0 0 0 1px rgba(52,211,153,0.06), 0 4px 18px rgba(52,211,153,0.07), 0 2px 8px rgba(0,0,0,0.3)', ...style }}
+    style={{ boxShadow: '0 4px 18px rgba(52,211,153,0.05), 0 2px 8px rgba(0,0,0,0.3)', ...style }}
   >
     {children}
   </div>
@@ -159,15 +159,15 @@ const Card: React.FC<{ children:React.ReactNode; style?:React.CSSProperties; cla
 
 const Divider = () => <div className="h-px my-3" style={{ background: C.bdr }} />;
 
-const SL: React.FC<{ children:React.ReactNode }> = ({ children }) => (
-  <div className="flex items-center gap-2 mb-2.5">
-    <span className="text-[11px] font-medium tracking-[0.05em]" style={{ color: C.muted }}>{children}</span>
-    <div className="flex-1 h-px" style={{ background: C.bdr }} />
+const SL: React.FC<{ children:React.ReactNode; accent?:string }> = ({ children, accent }) => (
+  <div className="flex items-center gap-2 mb-3 mt-1">
+    <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: accent||'rgba(52,211,153,0.6)' }}>{children}</span>
+    <div className="flex-1 h-px" style={{ background:'linear-gradient(to right,rgba(52,211,153,0.18),transparent)' }} />
   </div>
 );
 
 const FL: React.FC<{ children:React.ReactNode }> = ({ children }) => (
-  <label className="block text-[11px] font-medium mb-[5px]" style={{ color: C.muted }}>{children}</label>
+  <label className="block text-[10px] font-semibold mb-[6px] tracking-[0.06em] uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>{children}</label>
 );
 
 const Toggle: React.FC<{ checked:boolean; onChange:(v:boolean)=>void; disabled?:boolean }> =
@@ -245,54 +245,142 @@ const RealtimeClockCompact: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════
 // STAT CARD
 // ═══════════════════════════════════════════════════════════════
+const DOT_WAVE_DELAYS = [0,0.15,0.3,0.45,0.6,0.45,0.3,0.15];
+
 const StatCard: React.FC<{
   title:string; value:string|number; icon:React.ReactNode;
   trend?:'up'|'down'|'neutral'; isLoading?:boolean;
-}> = ({ title, value, icon, trend='neutral', isLoading=false }) => {
+  showDots?:boolean;
+}> = ({ title, value, icon, trend='neutral', isLoading=false, showDots=false }) => {
   const col = trend==='up'?C.cyan:trend==='down'?C.coral:C.text;
+  const dotCol = trend==='up'?C.cyan:trend==='down'?C.coral:'rgba(255,255,255,0.35)';
   return (
-    <Card className="p-[14px_16px]">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <p className="text-[11px] font-medium mb-2" style={{ color: C.muted }}>{title}</p>
-          <div className="relative min-h-[28px]">
-            <p className="text-[24px] font-semibold tracking-[-0.02em] leading-none" style={{ color:col,opacity:isLoading?0:1 }}>{value}</p>
-            {isLoading&&<div className="absolute top-0 left-0"><Skeleton width={60} height={28} variant="shimmer" /></div>}
-          </div>
+    <Card className="px-[14px] py-[11px]">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] mb-[5px]" style={{ color: C.muted }}>{title}</p>
+          {isLoading
+            ? <Skeleton width={52} height={26} variant="shimmer" />
+            : <p className="text-[26px] font-bold tracking-[-0.03em] leading-none" style={{ color:col }}>{value}</p>
+          }
         </div>
-        <div className="mt-0.5 opacity-60" style={{ color: C.muted }}>{icon}</div>
+        <div className="flex flex-col items-center gap-[7px] shrink-0">
+          <div className="opacity-40" style={{ color: C.muted }}>{icon}</div>
+          {showDots&&!isLoading&&(
+            <div className="flex items-center gap-[3px]">
+              {DOT_WAVE_DELAYS.map((d,i)=>(
+                <span key={i} className="inline-block rounded-full"
+                  style={{ width:i===3||i===4?5:i===2||i===5?4:3,
+                    height:i===3||i===4?5:i===2||i===5?4:3,
+                    background:dotCol, opacity:0.5,
+                    animation:`ping 1.6s ease-in-out infinite`, animationDelay:`${d}s` }} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </Card>
   );
 };
 
-const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ todayProfit, isLoading=false }) => {
-  const isPos = todayProfit>=0; const col = isPos?C.cyan:C.coral;
+const BalanceCard: React.FC<{ demoBalance:number; realBalance:number; accountType:'demo'|'real'; isLoading?:boolean }> = ({ demoBalance, realBalance, accountType, isLoading=false }) => {
+  const [hidden, setHidden] = React.useState(false);
+  const isDemo = accountType === 'demo';
+  const amount = isDemo ? demoBalance : realBalance;
+  const accentCol = isDemo ? '#fbbf24' : C.cyan;
+  const accentBg  = isDemo ? 'rgba(251,191,36,0.08)' : 'rgba(52,211,153,0.08)';
+  const accentBdr = isDemo ? 'rgba(251,191,36,0.2)'  : 'rgba(52,211,153,0.2)';
   return (
-    <Card className="p-[18px_20px]">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[11px] font-medium" style={{ color: C.muted }}>Profit Hari Ini</span>
-        <span className="flex items-center gap-[5px]">
-          <span className="inline-block w-1.5 h-1.5 rounded-full opacity-80" style={{ background: col }} />
-          <span className="text-[10px] font-semibold opacity-70" style={{ color: col }}>Live</span>
-        </span>
-      </div>
-      <div className="relative min-h-[42px]">
-        <p className="font-semibold tracking-[-0.02em] leading-[1.1] text-[clamp(26px,5vw,40px)]" style={{ color:col,opacity:isLoading?0:1 }}>
-          {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
-        </p>
-        {isLoading&&<div className="absolute top-0 left-0"><Skeleton width={220} height={42} variant="shimmer" /></div>}
-      </div>
-      {!isLoading&&(
-        <div className="mt-3 flex items-center gap-2.5">
-          <div className="flex-1 h-0.5 rounded-sm overflow-hidden" style={{ background: C.faint }}>
-            <div className="h-full rounded-sm opacity-50 transition-[width] duration-300" style={{ width:isPos?'68%':'32%',background:col }} />
+    <Card className="px-[14px] py-[11px]">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-[5px]">
+            <p className="text-[10px] font-medium uppercase tracking-[0.08em]" style={{ color: C.muted }}>Saldo</p>
+            <span className="text-[9px] font-bold px-1.5 py-[1px] rounded-full" style={{ color:accentCol, background:accentBg, border:`1px solid ${accentBdr}` }}>
+              {isDemo?'Demo':'Real'}
+            </span>
           </div>
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded" style={{ color:col,background:`${col}12` }}>
-            {isPos?'Profit':'Loss'}
+          {isLoading ? <Skeleton width={110} height={26} variant="shimmer" /> :
+            hidden ? (
+              <div className="flex items-center gap-[3px] mt-1">
+                {[...Array(6)].map((_,i)=>(
+                  <span key={i} className="inline-block w-[5px] h-[5px] rounded-full" style={{ background:accentCol, opacity:0.4+(i%2)*0.2 }} />
+                ))}
+              </div>
+            ) : (
+              <p className="font-bold tracking-[-0.02em] leading-none text-[clamp(16px,4vw,24px)]" style={{ color: accentCol }}>
+                {amount.toLocaleString('id-ID')}
+              </p>
+            )
+          }
+        </div>
+        <button onClick={()=>setHidden(h=>!h)}
+          className="flex items-center justify-center w-7 h-7 rounded-lg shrink-0 bg-transparent border-none cursor-pointer transition-all duration-150"
+          style={{ color:'rgba(255,255,255,0.3)', border:'1px solid rgba(255,255,255,0.07)' }}
+          onMouseEnter={e=>{e.currentTarget.style.color=accentCol; e.currentTarget.style.borderColor=accentBdr;}}
+          onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.3)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.07)';}}
+        >
+          {hidden ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          )}
+        </button>
+      </div>
+    </Card>
+  );
+};
+
+
+const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ todayProfit, isLoading=false }) => {
+  const isPos  = todayProfit >= 0;
+  const col    = isPos ? C.cyan : C.coral;
+  const colDim = isPos ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)';
+  const colBdr = isPos ? 'rgba(52,211,153,0.22)'  : 'rgba(248,113,113,0.22)';
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setTick(n => n + 1), 2200);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <Card className="px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-[4px] shrink-0">
+          <span className="text-[10px] font-medium uppercase tracking-[0.1em]" style={{ color: C.muted }}>Profit Hari Ini</span>
+          <span className="flex items-center gap-[5px] self-start px-[7px] py-[2px] rounded-full"
+            style={{ background: colDim, border: `1px solid ${colBdr}` }}>
+            <span className="inline-block w-[5px] h-[5px] rounded-full"
+              style={{ background: col, boxShadow: `0 0 5px ${col}`, animation: 'pulse 1.8s ease-in-out infinite' }} />
+            <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: col }}>Live</span>
           </span>
         </div>
-      )}
+        <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.07)' }} />
+        <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
+          <div className="min-w-0 overflow-hidden">
+            {isLoading ? <Skeleton width={160} height={24} variant="shimmer" /> : (
+              <p className="font-bold tracking-[-0.02em] leading-none whitespace-nowrap text-[clamp(16px,3.2vw,22px)]"
+                style={{ color: col, animation: 'fade-in 0.35s ease both' }} key={tick}>
+                {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
+              </p>
+            )}
+          </div>
+          {!isLoading && (
+            <div className="flex items-end gap-[3px] shrink-0 h-5">
+              {[0.4,0.7,1,0.6,0.85,0.5,0.9].map((h, i) => (
+                <div key={i} className="w-[3px] rounded-sm"
+                  style={{ height:`${h*100}%`, background:col, opacity:0.3+h*0.45,
+                    animation:`pulse ${1.2+i*0.15}s ease-in-out infinite`, animationDelay:`${i*0.1}s` }} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </Card>
   );
 };
@@ -803,6 +891,7 @@ const BulkScheduleModal: React.FC<{
 };
 
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // PICKER MODAL
 // ═══════════════════════════════════════════════════════════════
 interface PickerOption { value:string; label:string; sub?:string; }
@@ -818,44 +907,69 @@ const PickerModal: React.FC<{
   const handleSelect=(v:string)=>{onSelect(v);onClose();};
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 pb-[88px] animate-[fade-in_0.15s_ease]">
-      <div className="absolute inset-0 backdrop-blur-md" style={{ background:'rgba(0,0,0,0.72)' }} onClick={onClose} />
-      <div className="relative w-full max-w-[420px] flex flex-col max-h-[calc(100vh-120px)] rounded-[14px] overflow-hidden animate-[slide-up_0.2s_ease]"
-        style={{ background:C.card,border:`1px solid ${C.bdr}`,boxShadow:'0 -8px 40px rgba(0,0,0,0.35)' }}
+      <div className="absolute inset-0 backdrop-blur-[10px]" style={{ background:'rgba(0,0,0,0.7)' }} onClick={onClose} />
+      <div className="relative w-full max-w-[420px] flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-[slide-up_0.22s_cubic-bezier(0.4,0,0.2,1)]"
+        style={{ background:'linear-gradient(160deg,#0b1812 0%,#081310 100%)', borderRadius:16,
+          border:'1px solid rgba(52,211,153,0.18)',
+          boxShadow:'0 -4px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.06), inset 0 1px 0 rgba(52,211,153,0.08)' }}
       >
-        <div className="w-9 h-1 rounded-sm mx-auto mt-2.5 shrink-0" style={{ background:'rgba(255,255,255,0.12)' }} />
-        <div className="flex items-center justify-between px-[18px] pt-3 pb-2.5 shrink-0">
-          <span className="text-sm font-semibold" style={{ color: C.text }}>{title}</span>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md cursor-pointer" style={{ background:C.faint,border:`1px solid ${C.bdr}`,color:C.sub }}>
+        {/* Top accent line */}
+        <div className="absolute top-0 left-[15%] right-[15%] h-px" style={{ background:'linear-gradient(90deg,transparent,rgba(52,211,153,0.5),transparent)' }} />
+        {/* Drag handle */}
+        <div className="w-8 h-[3px] rounded-full mx-auto mt-3 shrink-0" style={{ background:'rgba(255,255,255,0.1)' }} />
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-3 pb-3 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
+          <span className="text-[14px] font-semibold tracking-[0.01em]" style={{ color: C.text }}>{title}</span>
+          <button onClick={onClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-150"
+            style={{ background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.4)' }}
+            onMouseEnter={e=>{e.currentTarget.style.background='rgba(248,113,113,0.1)';e.currentTarget.style.color=C.coral;}}
+            onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.color='rgba(255,255,255,0.4)';}}
+          >
             <X className="w-3 h-3" />
           </button>
         </div>
         {searchable&&(
-          <div className="px-3.5 pb-2.5 shrink-0">
-            <input autoFocus className="ds-input text-[13px]" placeholder="Cari aset..." value={query} onChange={e=>setQuery(e.target.value)} />
+          <div className="px-4 py-2.5 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color:'rgba(52,211,153,0.5)' }}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input autoFocus className="ds-input text-[13px]" style={{ paddingLeft:30,borderRadius:8,background:'rgba(0,0,0,0.3)' }}
+                placeholder="Cari aset..." value={query} onChange={e=>setQuery(e.target.value)} />
+            </div>
           </div>
         )}
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto flex-1 py-1">
           {filtered.length===0?(
-            <div className="px-[18px] py-6 text-center"><p className="text-xs" style={{ color: C.muted }}>Tidak ditemukan</p></div>
+            <div className="px-5 py-8 text-center flex flex-col items-center gap-2">
+              <svg className="w-8 h-8 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <p className="text-xs" style={{ color: C.muted }}>Tidak ditemukan</p>
+            </div>
           ):(
             filtered.map((opt,i)=>{
               const isSelected=opt.value===value;
               return (
                 <button key={opt.value} onClick={()=>handleSelect(opt.value)}
-                  className="w-full text-left flex items-center justify-between px-[18px] py-[11px] border-none cursor-pointer transition-colors duration-100"
-                  style={{ background:isSelected?'rgba(52,211,153,0.07)':'transparent',borderBottom:i<filtered.length-1?`1px solid ${C.bdr}`:'none' }}
-                  onMouseEnter={e=>{if(!isSelected)e.currentTarget.style.background=C.faint;}}
-                  onMouseLeave={e=>{if(!isSelected)e.currentTarget.style.background='transparent';}}
+                  className="w-full text-left flex items-center justify-between px-5 py-[11px] border-none cursor-pointer transition-all duration-100"
+                  style={{ background:isSelected?'rgba(52,211,153,0.08)'  :'transparent',
+                    borderBottom:i<filtered.length-1?'1px solid rgba(255,255,255,0.04)'  :'none',
+                    borderLeft: isSelected?'2px solid rgba(52,211,153,0.6)'  :'2px solid transparent' }}
+                  onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderLeftColor='rgba(52,211,153,0.2)';}}}
+                  onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background='transparent';e.currentTarget.style.borderLeftColor='transparent';}}}
                 >
-                  <div>
-                    <span className="block text-[13px]" style={{ color:isSelected?C.cyan:C.text,fontWeight:isSelected?600:400 }}>{opt.label}</span>
-                    {opt.sub&&<span className="block text-[11px] mt-[1px]" style={{ color: C.muted }}>{opt.sub}</span>}
+                  <div className="min-w-0">
+                    <span className="block text-[13px] truncate" style={{ color:isSelected?C.cyan:C.text,fontWeight:isSelected?600:400 }}>{opt.label}</span>
+                    {opt.sub&&<span className="block text-[11px] mt-[2px] truncate" style={{ color:C.muted }}>{opt.sub}</span>}
                   </div>
-                  {isSelected&&(
-                    <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0" style={{ background:'rgba(52,211,153,0.15)',border:`1.5px solid ${C.cyan}` }}>
-                      <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </span>
-                  )}
+                  <div className="shrink-0 ml-3">
+                    {isSelected
+                      ? <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background:'rgba(52,211,153,0.15)',border:'1.5px solid '+C.cyan }}>
+                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </span>
+                      : <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border:'1px solid rgba(255,255,255,0.08)' }} />
+                    }
+                  </div>
                 </button>
               );
             })
@@ -866,18 +980,28 @@ const PickerModal: React.FC<{
   );
 };
 
-const PickerButton: React.FC<{ label:string; placeholder?:string; disabled?:boolean; onClick:()=>void; }> =
-({ label,placeholder,disabled,onClick }) => (
-  <button type="button" onClick={onClick} disabled={disabled}
-    className="w-full flex items-center justify-between px-3 py-[9px] rounded-md transition-colors duration-150"
-    style={{ background:'rgba(0,0,0,0.45)',border:`1px solid ${C.bdr}`,cursor:disabled?'not-allowed':'pointer' }}
-    onMouseEnter={e=>{if(!disabled)e.currentTarget.style.borderColor='rgba(255,255,255,0.18)';}}
-    onMouseLeave={e=>{e.currentTarget.style.borderColor=C.bdr;}}
-  >
-    <span className="text-[13px]" style={{ color:label?C.text:C.muted }}>{label||placeholder||'— pilih —'}</span>
-    <ChevronDown className="w-[13px] h-[13px] shrink-0" style={{ color: C.muted }} />
-  </button>
-);
+
+const PickerButton: React.FC<{ label:string; placeholder?:string; disabled?:boolean; onClick:()=>void; accent?:string }> =
+({ label,placeholder,disabled,onClick,accent }) => {
+  const hasVal = !!label;
+  const accentC = accent || C.cyan;
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      className="w-full flex items-center justify-between px-3 py-[9px] rounded-lg group transition-all duration-150"
+      style={{
+        background: hasVal ? `rgba(${accent==='violet'?'167,139,250':'52,211,153'},0.04)` : 'rgba(0,0,0,0.3)',
+        border: `1px solid ${hasVal?(accent==='violet'?'rgba(167,139,250,0.2)':'rgba(52,211,153,0.18)'):C.bdr}`,
+        cursor: disabled?'not-allowed':'pointer',
+        opacity: disabled ? 0.5 : 1,
+      }}
+      onMouseEnter={e=>{if(!disabled){e.currentTarget.style.borderColor=accent==='violet'?'rgba(167,139,250,0.35)':'rgba(52,211,153,0.35)'; e.currentTarget.style.background=`rgba(${accent==='violet'?'167,139,250':'52,211,153'},0.07)`;}}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor=hasVal?(accent==='violet'?'rgba(167,139,250,0.2)':'rgba(52,211,153,0.18)'):C.bdr; e.currentTarget.style.background=hasVal?`rgba(${accent==='violet'?'167,139,250':'52,211,153'},0.04)`:'rgba(0,0,0,0.3)';}}
+    >
+      <span className="text-[13px] font-medium truncate" style={{ color:hasVal?C.text:C.muted }}>{label||placeholder||'— pilih —'}</span>
+      <ChevronDown className="w-[12px] h-[12px] shrink-0 ml-1.5 transition-transform duration-150" style={{ color: hasVal?accentC:C.muted }} />
+    </button>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════
 
@@ -1012,13 +1136,20 @@ const OrderSettingsCard: React.FC<{
                   />
                 </div>
               </div>
-              <p className="text-[10px] mt-1.5" style={{ color: C.muted }}>
-                {mode==='schedule'
-                  ? '📅 Mode Jadwal — eksekusi order di waktu yang ditentukan'
-                  : mode==='fastrade'
-                  ? '⚡ Mode FastTrade — order otomatis per candle berdasarkan arah tren'
-                  : '📋 Mode CTC — copy arah candle 1m, langsung lanjut bila WIN · martingale bila LOSE'}
-              </p>
+              <div className="mt-1.5 px-2.5 py-[5px] rounded-md flex items-center gap-1.5"
+                style={{ background:mode==='ctc'?'rgba(167,139,250,0.06)':mode==='fastrade'?'rgba(52,211,153,0.05)':'rgba(255,255,255,0.03)',
+                  border:`1px solid ${mode==='ctc'?'rgba(167,139,250,0.12)':mode==='fastrade'?'rgba(52,211,153,0.1)':'rgba(255,255,255,0.05)'  }` }}>
+                <span style={{ color: mode==='ctc'?C.violet:mode==='fastrade'?C.cyan:C.muted, fontSize:11 }}>
+                  {mode==='schedule'?'📅':mode==='fastrade'?'⚡':'📋'}
+                </span>
+                <p className="text-[10px] leading-[1.4]" style={{ color: mode==='ctc'?'rgba(167,139,250,0.7)':mode==='fastrade'?'rgba(52,211,153,0.7)':C.muted }}>
+                  {mode==='schedule'
+                    ? 'Order di waktu yang ditentukan'
+                    : mode==='fastrade'
+                    ? 'Order otomatis per candle · arah tren'
+                    : 'Copy candle 1m · WIN lanjut · LOSE martingale'}
+                </p>
+              </div>
             </div>
 
             {/* CTC: info candle 1m fixed */}
@@ -1075,7 +1206,7 @@ const OrderSettingsCard: React.FC<{
                   style={{ paddingLeft:34 }}
                 />
               </div>
-              <div className="grid grid-cols-4 gap-[5px]">
+              <div className="grid grid-cols-4 gap-1.5">
                 {[10000,25000,50000,100000].map(amt=>(
                   <button key={amt} type="button"
                     onClick={()=>setAmount(amt)}
@@ -1086,7 +1217,7 @@ const OrderSettingsCard: React.FC<{
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-[5px] mt-[5px]">
+              <div className="grid grid-cols-3 gap-1.5 mt-1.5">
                 {[250000,500000,1000000].map(amt=>(
                   <button key={amt} type="button"
                     onClick={()=>setAmount(amt)}
@@ -1101,14 +1232,14 @@ const OrderSettingsCard: React.FC<{
 
             <Divider />
             <SL>Martingale</SL>
-            <div className="rounded-lg p-3 mb-[14px]" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-xl p-3 mb-3" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[13px] font-medium" style={{ color: C.sub }}>Martingale</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>
+                  <p className="text-[13px] font-semibold" style={{ color: C.sub }}>Aktifkan Martingale</p>
+                  <p className="text-[10px] mt-[3px]" style={{ color: C.muted }}>
                     {mode==='ctc'
-                      ? 'Gandakan amount + ikuti candle yang kalah'
-                      : 'Gandakan amount setelah loss'}
+                      ? 'Lipat gandakan amount · ikuti arah candle kalah'
+                      : 'Lipat gandakan amount otomatis setelah loss'}
                   </p>
                 </div>
                 {mode==='ctc'
@@ -1143,7 +1274,8 @@ const OrderSettingsCard: React.FC<{
             </div>
 
             <Divider />
-            <SL>Risk Management</SL>
+            <SL accent="rgba(248,113,113,0.55)">Risk Management</SL>
+            <div className="rounded-xl p-3 mb-1" style={{ background:'rgba(0,0,0,0.2)',border:'1px solid rgba(248,113,113,0.08)' }}>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <FL>Stop Loss</FL>
@@ -1170,12 +1302,48 @@ const OrderSettingsCard: React.FC<{
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
       </Card>
     </>
   );
 };
+
+// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// SHARED CONTROL BUTTON
+// ═══════════════════════════════════════════════════════════════
+const CtrlBtn: React.FC<{
+  onClick:()=>void; disabled?:boolean; loading?:boolean;
+  accent:string; label:string; icon?:React.ReactNode; variant?:'solid'|'outline';
+}> = ({ onClick,disabled,loading=false,accent,label,icon,variant='outline' }) => (
+  <button onClick={onClick} disabled={disabled||loading}
+    className="flex-1 flex items-center justify-center gap-2 py-[11px] rounded-xl text-[12px] font-bold tracking-[0.06em] uppercase transition-all duration-200"
+    style={{
+      background: variant==='solid' ? accent : `${accent}12`,
+      border: `1px solid ${accent}${variant==='solid'?'':' 35'}`,
+      color: variant==='solid' ? '#000' : accent,
+      cursor:(disabled||loading)?'not-allowed':'pointer',
+      opacity:disabled?0.3:1,
+      boxShadow: loading||!disabled?`0 0 14px ${accent}20`:'none',
+    }}
+    onMouseEnter={e=>{if(!disabled&&!loading){e.currentTarget.style.background=`${accent}22`; e.currentTarget.style.boxShadow=`0 0 20px ${accent}30`;}}}
+    onMouseLeave={e=>{if(!disabled&&!loading){e.currentTarget.style.background=variant==='solid'?accent:`${accent}12`; e.currentTarget.style.boxShadow=`0 0 14px ${accent}20`;}}}
+  >
+    {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : icon}
+    {loading ? 'Memproses...' : label}
+  </button>
+);
+
+// shared status mini-chip
+const StatusChip: React.FC<{ col:string; label:string; pulse?:boolean }> = ({ col,label,pulse=false }) => (
+  <span className="flex items-center gap-[5px] text-[10px] font-bold tracking-[0.08em] uppercase px-2.5 py-[4px] rounded-full"
+    style={{ color:col, background:`${col}10`, border:`1px solid ${col}28` }}>
+    <span className={`inline-block w-[5px] h-[5px] rounded-full ${pulse?'animate-pulse':''}`} style={{ background:col, boxShadow:`0 0 4px ${col}` }} />
+    {label}
+  </span>
+);
 
 // ═══════════════════════════════════════════════════════════════
 // BOT CONTROL CARD — Schedule mode
@@ -1186,66 +1354,60 @@ const BotControlCard: React.FC<{
 }> = ({ status,onStart,onPause,onStop,isLoading=false,canStart=false,errorMessage }) => {
   const [open,setOpen]=useState(true);
   const running=status.isRunning&&!status.isPaused;
-  const si=running?{label:'Aktif',col:C.cyan}:status.isPaused?{label:'Dijeda',col:'#6ee7b7'}:{label:'Nonaktif',col:C.muted};
-  const BBtn: React.FC<{onClick:()=>void;disabled?:boolean;accent:string;label:string;loadingLabel?:string}> =
-  ({onClick,disabled,accent,label,loadingLabel='Memproses...'})=>(
-    <button onClick={onClick} disabled={disabled||isLoading}
-      className="w-full flex items-center justify-center py-2.5 rounded-md text-[13px] font-semibold tracking-wide transition-opacity"
-      style={{ background:`${accent}10`,border:`1px solid ${accent}30`,color:accent,cursor:(disabled||isLoading)?'not-allowed':'pointer',opacity:disabled?0.35:1,letterSpacing:'0.04em' }}
-    >
-      {isLoading?loadingLabel:label}
-    </button>
-  );
+  const si=running?{label:'Aktif',col:C.cyan,pulse:true}:status.isPaused?{label:'Dijeda',col:'#6ee7b7',pulse:false}:{label:'Nonaktif',col:C.muted,pulse:false};
+  const profitPos = status.currentProfit >= 0;
   return (
-    <Card style={{ borderColor:running?'rgba(52,211,153,0.2)':C.bdr }}>
-      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer" style={{ borderBottom:open?`1px solid ${C.bdr}`:'none' }}>
-        <div className="flex items-center gap-2">
-          <Calendar className="w-[14px] h-[14px]" style={{ color: C.cyan }} />
-          <span className="text-[13px] font-semibold" style={{ color: C.text }}>Kontrol Bot — Jadwal</span>
+    <Card style={{ borderColor:running?'rgba(52,211,153,0.3)':undefined }}>
+      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer"
+        style={{ borderBottom:open?'1px solid rgba(255,255,255,0.05)':'none' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'rgba(52,211,153,0.1)',border:'1px solid rgba(52,211,153,0.2)' }}>
+            <Calendar className="w-[13px] h-[13px]" style={{ color: C.cyan }} />
+          </div>
+          <div>
+            <span className="block text-[13px] font-semibold leading-none mb-[3px]" style={{ color: C.text }}>Bot Jadwal</span>
+            <span className="text-[10px]" style={{ color: C.muted }}>Eksekusi terjadwal</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-[5px] text-[11px] font-medium" style={{ color: si.col }}>
-            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: si.col }} />
-            {si.label}
-          </span>
-          {open?<ChevronUp className="w-[13px] h-[13px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[13px] h-[13px]" style={{ color:C.muted }}/>}
+          <StatusChip col={si.col} label={si.label} pulse={si.pulse} />
+          {open?<ChevronUp className="w-[12px] h-[12px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[12px] h-[12px]" style={{ color:C.muted }}/>}
         </div>
       </button>
       {open&&(
-        <div className="px-4 py-[14px]">
-          <div className="grid grid-cols-2 gap-2 mb-2.5">
-            {[
-              {l:'Jadwal Aktif',v:status.activeSchedules,c:C.sub},
-              {l:'Profit Sesi',v:(status.currentProfit>=0?'+':'')+status.currentProfit.toLocaleString('id-ID'),c:status.currentProfit>=0?C.cyan:C.coral},
-            ].map(s=>(
-              <div key={s.l} className="rounded-[7px] px-3 py-2.5" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-                <p className="text-[11px] font-medium mb-1" style={{ color: C.muted }}>{s.l}</p>
-                <p className="text-[20px] font-semibold leading-none" style={{ color: s.c }}>{s.v}</p>
-              </div>
-            ))}
-          </div>
-          {status.nextExecutionTime&&(
-            <div className="flex items-center justify-between px-[11px] py-[7px] rounded-md mb-2.5" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <span className="text-[11px]" style={{ color: C.muted }}>Berikutnya</span>
-              <span className="text-[13px] font-semibold" style={{ color: '#6ee7b7' }}>{status.nextExecutionTime}</span>
+        <div className="px-4 pb-4 pt-3">
+          {/* Stats row */}
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+              <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Jadwal</span>
+              <span className="text-[22px] font-bold leading-none" style={{ color:C.text }}>{status.activeSchedules}</span>
             </div>
-          )}
+            <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:`1px solid ${profitPos?'rgba(52,211,153,0.12)'  :'rgba(248,113,113,0.12)'}` }}>
+              <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Profit Sesi</span>
+              <span className="text-[16px] font-bold leading-none" style={{ color:profitPos?C.cyan:C.coral }}>
+                {profitPos?'+':''}{status.currentProfit.toLocaleString('id-ID')}
+              </span>
+            </div>
+            {status.nextExecutionTime&&(
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.12)' }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Berikutnya</span>
+                <span className="text-[15px] font-bold leading-none font-mono" style={{ color:'#6ee7b7' }}>{status.nextExecutionTime}</span>
+              </div>
+            )}
+          </div>
           {errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mb-2.5 rounded-md" style={{ background:C.cord,border:`1px solid rgba(248,113,113,0.2)`,borderLeft:`2px solid ${C.coral}` }}>
+            <div className="flex gap-2 px-3 py-2.5 mb-3 rounded-xl" style={{ background:'rgba(248,113,113,0.07)',border:'1px solid rgba(248,113,113,0.18)' }}>
               <AlertCircle className="w-3 h-3 shrink-0 mt-[1px]" style={{ color: C.coral }} />
               <p className="text-[11px]" style={{ color: C.coral }}>{errorMessage}</p>
             </div>
           )}
-          <div className="flex flex-row gap-1.5">
-            {!status.isRunning&&<BBtn onClick={onStart} disabled={isLoading||!canStart} accent={C.cyan} label={status.isPaused?'Lanjutkan Bot':'Mulai Bot'} />}
-            {status.isRunning&&!status.isPaused&&<BBtn onClick={onPause} disabled={isLoading} accent="#6ee7b7" label="Jeda Bot" />}
-            {status.isRunning&&<BBtn onClick={onStop} disabled={isLoading} accent={C.coral} label="Hentikan Bot" />}
+          <div className="flex gap-2">
+            {!status.isRunning&&<CtrlBtn onClick={onStart} disabled={isLoading||!canStart} loading={isLoading&&!status.isRunning} accent={C.cyan} label={status.isPaused?'Lanjutkan':'Mulai Bot'} icon={<PlayCircle className="w-3.5 h-3.5" />} />}
+            {status.isRunning&&!status.isPaused&&<CtrlBtn onClick={onPause} loading={isLoading} accent="#6ee7b7" label="Jeda" icon={<Timer className="w-3.5 h-3.5" />} />}
+            {status.isRunning&&<CtrlBtn onClick={onStop} loading={isLoading} accent={C.coral} label="Stop" icon={<StopCircle className="w-3.5 h-3.5" />} />}
           </div>
           {!canStart&&!errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mt-2 rounded-md" style={{ background:C.faint,border:`1px solid ${C.bdr}` }}>
-              <Info className="w-[13px] h-[13px] shrink-0 mt-[1px]" style={{ color: C.muted }} />
-              <p className="text-xs leading-[1.5]" style={{ color: C.muted }}>Lengkapi pengaturan dan tambahkan jadwal untuk memulai bot</p>
-            </div>
+            <p className="mt-2.5 text-[10px] text-center" style={{ color:C.muted }}>Pilih aset + tambah jadwal untuk memulai</p>
           )}
         </div>
       )}
@@ -1263,70 +1425,66 @@ const FastTradeControlCard: React.FC<{
 }> = ({ session, onStart, onStop, isLoading=false, canStart=false, errorMessage }) => {
   const [open,setOpen]=useState(true);
   const isActive = session?.isActive ?? false;
-  const si = isActive ? { label:'Aktif', col: C.cyan } : { label:'Nonaktif', col: C.muted };
-  const BBtn: React.FC<{onClick:()=>void;disabled?:boolean;accent:string;label:string;icon?:React.ReactNode}> =
-  ({onClick,disabled,accent,label,icon})=>(
-    <button onClick={onClick} disabled={disabled||isLoading}
-      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-[13px] font-semibold tracking-wide transition-opacity"
-      style={{ background:`${accent}10`,border:`1px solid ${accent}30`,color:accent,cursor:(disabled||isLoading)?'not-allowed':'pointer',opacity:disabled?0.35:1 }}
-    >
-      {isLoading?<RefreshCw className="w-3.5 h-3.5 animate-spin" />:icon}
-      {isLoading?'Memproses...':label}
-    </button>
-  );
+  const si = isActive ? { label:'Aktif', col: C.cyan, pulse:true } : { label:'Standby', col: C.muted, pulse:false };
+  const pnl = session?.totalPnL ?? 0;
+  const pnlPos = pnl >= 0;
+  const winRate = (session?.totalOrders??0)>0 ? Math.round(((session?.wins??0)/(session?.totalOrders??1))*100) : null;
   return (
-    <Card style={{ borderColor:isActive?'rgba(52,211,153,0.2)':C.bdr }}>
-      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer" style={{ borderBottom:open?`1px solid ${C.bdr}`:'none' }}>
-        <div className="flex items-center gap-2">
-          <Zap className="w-[14px] h-[14px]" style={{ color: C.cyan }} />
-          <span className="text-[13px] font-semibold" style={{ color: C.text }}>Kontrol Bot — FastTrade</span>
+    <Card style={{ borderColor:isActive?'rgba(52,211,153,0.3)':undefined }}>
+      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer"
+        style={{ borderBottom:open?'1px solid rgba(255,255,255,0.05)':'none' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'rgba(52,211,153,0.1)',border:'1px solid rgba(52,211,153,0.2)' }}>
+            <Zap className="w-[13px] h-[13px]" style={{ color: C.cyan }} />
+          </div>
+          <div>
+            <span className="block text-[13px] font-semibold leading-none mb-[3px]" style={{ color: C.text }}>FastTrade</span>
+            <span className="text-[10px]" style={{ color: C.muted }}>Auto per candle</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-[5px] text-[11px] font-medium" style={{ color: si.col }}>
-            {isActive&&<span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: si.col }} />}
-            {!isActive&&<span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: si.col }} />}
-            {si.label}
-          </span>
-          {open?<ChevronUp className="w-[13px] h-[13px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[13px] h-[13px]" style={{ color:C.muted }}/>}
+          <StatusChip col={si.col} label={si.label} pulse={si.pulse} />
+          {open?<ChevronUp className="w-[12px] h-[12px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[12px] h-[12px]" style={{ color:C.muted }}/>}
         </div>
       </button>
       {open&&(
-        <div className="px-4 py-[14px]">
+        <div className="px-4 pb-4 pt-3">
           {session&&(
-            <div className="grid grid-cols-2 gap-2 mb-2.5">
-              {[
-                {l:'Total P&L',v:((session.totalPnL??0)>=0?'+':'')+(session.totalPnL??0).toLocaleString('id-ID'),c:(session.totalPnL??0)>=0?C.cyan:C.coral},
-                {l:'Win Rate',v:(session.totalOrders??0)>0?`${Math.round(((session.wins??0)/(session.totalOrders??1))*100)}%`:'—',c:C.sub},
-              ].map(s=>(
-                <div key={s.l} className="rounded-[7px] px-3 py-2.5" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-                  <p className="text-[11px] font-medium mb-1" style={{ color: C.muted }}>{s.l}</p>
-                  <p className="text-[18px] font-semibold leading-none" style={{ color: s.c }}>{s.v}</p>
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:`1px solid ${pnlPos?'rgba(52,211,153,0.12)'  :'rgba(248,113,113,0.12)'}` }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>P&L</span>
+                <span className="text-[17px] font-bold leading-none" style={{ color:pnlPos?C.cyan:C.coral }}>
+                  {pnlPos?'+':''}{pnl.toLocaleString('id-ID')}
+                </span>
+              </div>
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>W / L</span>
+                <span className="text-[17px] font-bold leading-none">
+                  <span style={{ color:C.cyan }}>{session.wins??0}</span>
+                  <span className="text-[12px]" style={{ color:C.muted }}> / </span>
+                  <span style={{ color:C.coral }}>{session.losses??0}</span>
+                </span>
+              </div>
+              {winRate!==null&&(
+                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Win%</span>
+                  <span className="text-[17px] font-bold leading-none" style={{ color:winRate>=50?C.cyan:C.coral }}>{winRate}%</span>
                 </div>
-              ))}
+              )}
             </div>
           )}
           {errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mb-2.5 rounded-md" style={{ background:C.cord,border:`1px solid rgba(248,113,113,0.2)`,borderLeft:`2px solid ${C.coral}` }}>
+            <div className="flex gap-2 px-3 py-2.5 mb-3 rounded-xl" style={{ background:'rgba(248,113,113,0.07)',border:'1px solid rgba(248,113,113,0.18)' }}>
               <AlertCircle className="w-3 h-3 shrink-0 mt-[1px]" style={{ color: C.coral }} />
               <p className="text-[11px]" style={{ color: C.coral }}>{errorMessage}</p>
             </div>
           )}
-          <div className="flex flex-row gap-1.5">
-            {!isActive&&<BBtn onClick={onStart} disabled={isLoading||!canStart} accent={C.cyan} label="Mulai FastTrade" icon={<PlayCircle className="w-3.5 h-3.5" />} />}
-            {isActive&&<BBtn onClick={onStop} disabled={isLoading} accent={C.coral} label="Hentikan Sesi" icon={<StopCircle className="w-3.5 h-3.5" />} />}
+          <div className="flex gap-2">
+            {!isActive&&<CtrlBtn onClick={onStart} disabled={isLoading||!canStart} loading={isLoading} accent={C.cyan} label="Mulai FastTrade" icon={<PlayCircle className="w-3.5 h-3.5" />} />}
+            {isActive&&<CtrlBtn onClick={onStop} loading={isLoading} accent={C.coral} label="Stop Sesi" icon={<StopCircle className="w-3.5 h-3.5" />} />}
           </div>
           {!canStart&&!isActive&&!errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mt-2 rounded-md" style={{ background:C.faint,border:`1px solid ${C.bdr}` }}>
-              <Info className="w-[13px] h-[13px] shrink-0 mt-[1px]" style={{ color: C.muted }} />
-              <p className="text-xs leading-[1.5]" style={{ color: C.muted }}>Pilih aset dan timeframe untuk memulai FastTrade</p>
-            </div>
-          )}
-          {!isActive&&(
-            <div className="mt-2.5 px-[11px] py-[9px] rounded-md" style={{ background:C.faint,border:`1px solid ${C.bdr}` }}>
-              <p className="text-[11px] leading-[1.6]" style={{ color: C.muted }}>
-                <span style={{ color: C.cyan }}>⚡ FastTrade</span> secara otomatis memasang order setiap candle selesai berdasarkan arah tren.
-              </p>
-            </div>
+            <p className="mt-2.5 text-[10px] text-center" style={{ color:C.muted }}>Pilih aset & timeframe untuk memulai</p>
           )}
         </div>
       )}
@@ -1344,72 +1502,66 @@ const CtcControlCard: React.FC<{
 }> = ({ session, onStart, onStop, isLoading=false, canStart=false, errorMessage }) => {
   const [open,setOpen]=useState(true);
   const isActive = session?.isActive ?? false;
-  const si = isActive ? { label:'Aktif', col: C.violet } : { label:'Nonaktif', col: C.muted };
-
-  const BBtn: React.FC<{onClick:()=>void;disabled?:boolean;accent:string;label:string;icon?:React.ReactNode}> =
-  ({onClick,disabled,accent,label,icon})=>(
-    <button onClick={onClick} disabled={disabled||isLoading}
-      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-md text-[13px] font-semibold tracking-wide transition-opacity"
-      style={{ background:`${accent}10`,border:`1px solid ${accent}30`,color:accent,cursor:(disabled||isLoading)?'not-allowed':'pointer',opacity:disabled?0.35:1 }}
-    >
-      {isLoading?<RefreshCw className="w-3.5 h-3.5 animate-spin" />:icon}
-      {isLoading?'Memproses...':label}
-    </button>
-  );
-
+  const si = isActive ? { label:'Aktif', col: C.violet, pulse:true } : { label:'Standby', col: C.muted, pulse:false };
+  const pnl = session?.totalPnL ?? 0;
+  const pnlPos = pnl >= 0;
+  const winRate = (session?.totalOrders??0)>0 ? Math.round(((session?.wins??0)/(session?.totalOrders??1))*100) : null;
   return (
-    <Card style={{ borderColor:isActive?'rgba(167,139,250,0.2)':C.bdr }}>
-      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer" style={{ borderBottom:open?`1px solid ${C.bdr}`:'none' }}>
-        <div className="flex items-center gap-2">
-          <Copy className="w-[14px] h-[14px]" style={{ color: C.violet }} />
-          <span className="text-[13px] font-semibold" style={{ color: C.text }}>Kontrol Bot — CTC</span>
+    <Card style={{ borderColor:isActive?'rgba(167,139,250,0.3)':undefined }}>
+      <button onClick={()=>setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3 bg-transparent border-none cursor-pointer"
+        style={{ borderBottom:open?'1px solid rgba(255,255,255,0.05)':'none' }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:'rgba(167,139,250,0.1)',border:'1px solid rgba(167,139,250,0.2)' }}>
+            <Copy className="w-[13px] h-[13px]" style={{ color: C.violet }} />
+          </div>
+          <div>
+            <span className="block text-[13px] font-semibold leading-none mb-[3px]" style={{ color: C.text }}>CTC Bot</span>
+            <span className="text-[10px]" style={{ color: C.muted }}>Copy the Candle · 1m</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-[5px] text-[11px] font-medium" style={{ color: si.col }}>
-            {isActive&&<span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: si.col }} />}
-            {!isActive&&<span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: si.col }} />}
-            {si.label}
-          </span>
-          {open?<ChevronUp className="w-[13px] h-[13px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[13px] h-[13px]" style={{ color:C.muted }}/>}
+          <StatusChip col={si.col} label={si.label} pulse={si.pulse} />
+          {open?<ChevronUp className="w-[12px] h-[12px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[12px] h-[12px]" style={{ color:C.muted }}/>}
         </div>
       </button>
       {open&&(
-        <div className="px-4 py-[14px]">
+        <div className="px-4 pb-4 pt-3">
           {session&&(
-            <div className="grid grid-cols-2 gap-2 mb-2.5">
-              {[
-                {l:'Total P&L',v:((session.totalPnL??0)>=0?'+':'')+(session.totalPnL??0).toLocaleString('id-ID'),c:(session.totalPnL??0)>=0?C.cyan:C.coral},
-                {l:'Win Rate',v:(session.totalOrders??0)>0?`${Math.round(((session.wins??0)/(session.totalOrders??1))*100)}%`:'—',c:C.sub},
-              ].map(s=>(
-                <div key={s.l} className="rounded-[7px] px-3 py-2.5" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-                  <p className="text-[11px] font-medium mb-1" style={{ color: C.muted }}>{s.l}</p>
-                  <p className="text-[18px] font-semibold leading-none" style={{ color: s.c }}>{s.v}</p>
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:`1px solid ${pnlPos?'rgba(52,211,153,0.12)'  :'rgba(248,113,113,0.12)'}` }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>P&L</span>
+                <span className="text-[17px] font-bold leading-none" style={{ color:pnlPos?C.cyan:C.coral }}>
+                  {pnlPos?'+':''}{pnl.toLocaleString('id-ID')}
+                </span>
+              </div>
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>W / L</span>
+                <span className="text-[17px] font-bold leading-none">
+                  <span style={{ color:C.cyan }}>{session.wins??0}</span>
+                  <span className="text-[12px]" style={{ color:C.muted }}> / </span>
+                  <span style={{ color:C.coral }}>{session.losses??0}</span>
+                </span>
+              </div>
+              {winRate!==null&&(
+                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Win%</span>
+                  <span className="text-[17px] font-bold leading-none" style={{ color:winRate>=50?C.cyan:C.coral }}>{winRate}%</span>
                 </div>
-              ))}
+              )}
             </div>
           )}
           {errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mb-2.5 rounded-md" style={{ background:C.cord,border:`1px solid rgba(248,113,113,0.2)`,borderLeft:`2px solid ${C.coral}` }}>
+            <div className="flex gap-2 px-3 py-2.5 mb-3 rounded-xl" style={{ background:'rgba(248,113,113,0.07)',border:'1px solid rgba(248,113,113,0.18)' }}>
               <AlertCircle className="w-3 h-3 shrink-0 mt-[1px]" style={{ color: C.coral }} />
               <p className="text-[11px]" style={{ color: C.coral }}>{errorMessage}</p>
             </div>
           )}
-          <div className="flex flex-row gap-1.5">
-            {!isActive&&<BBtn onClick={onStart} disabled={isLoading||!canStart} accent={C.violet} label="Mulai CTC" icon={<PlayCircle className="w-3.5 h-3.5" />} />}
-            {isActive&&<BBtn onClick={onStop} disabled={isLoading} accent={C.coral} label="Hentikan CTC" icon={<StopCircle className="w-3.5 h-3.5" />} />}
+          <div className="flex gap-2">
+            {!isActive&&<CtrlBtn onClick={onStart} disabled={isLoading||!canStart} loading={isLoading} accent={C.violet} label="Mulai CTC" icon={<PlayCircle className="w-3.5 h-3.5" />} />}
+            {isActive&&<CtrlBtn onClick={onStop} loading={isLoading} accent={C.coral} label="Stop CTC" icon={<StopCircle className="w-3.5 h-3.5" />} />}
           </div>
           {!canStart&&!isActive&&!errorMessage&&(
-            <div className="flex gap-[7px] px-[11px] py-[9px] mt-2 rounded-md" style={{ background:C.faint,border:`1px solid ${C.bdr}` }}>
-              <Info className="w-[13px] h-[13px] shrink-0 mt-[1px]" style={{ color: C.muted }} />
-              <p className="text-xs leading-[1.5]" style={{ color: C.muted }}>Pilih aset untuk memulai CTC</p>
-            </div>
-          )}
-          {!isActive&&(
-            <div className="mt-2.5 px-[11px] py-[9px] rounded-md" style={{ background:'rgba(167,139,250,0.05)',border:`1px solid rgba(167,139,250,0.15)` }}>
-              <p className="text-[11px] leading-[1.6]" style={{ color: C.muted }}>
-                <span style={{ color: C.violet }}>📋 CTC</span> order tiap candle 1m selesai. WIN → lanjut arah sama. LOSE → martingale ikuti candle yang kalah.
-              </p>
-            </div>
+            <p className="mt-2.5 text-[10px] text-center" style={{ color:C.muted }}>Pilih aset untuk memulai CTC</p>
           )}
         </div>
       )}
@@ -1417,7 +1569,6 @@ const CtcControlCard: React.FC<{
   );
 };
 
-// ═══════════════════════════════════════════════════════════════
 // PAGE
 // ═══════════════════════════════════════════════════════════════
 export default function DashboardPage() {
@@ -1460,6 +1611,7 @@ export default function DashboardPage() {
   const [ctcLoading,setCtcLoading] = useState(false);
 
   const [todayStats,setTodayStats] = useState({ profit:0,executions:0,winRate:0 });
+  const [balance,setBalance] = useState({ demo_balance:0, real_balance:0 });
   const [deviceType,setDeviceType] = useState<'mobile'|'tablet'|'desktop'>('desktop');
 
   // ── Refs: mencegah stale closure & state update setelah unmount ──
@@ -1532,6 +1684,8 @@ export default function DashboardPage() {
       const stats=await api.getTodayStats();
       if(!isMountedRef.current)return;
       setTodayStats(stats);
+      const bal=await api.getBalance().catch(()=>({demo_balance:0,real_balance:0}));
+      if(isMountedRef.current)setBalance(bal);
       if(active){try{const execs=await api.getOrderHistory(active.id,200);if(isMountedRef.current)setExecutions((execs||[]).filter((e:any)=>e.result).map((e:any)=>({scheduledTime:e.scheduledTime,result:e.result})));}catch{if(isMountedRef.current)setExecutions([]);}}else{setExecutions([]);}
       // Sinkronisasi settings hanya saat tidak silent (first load / action), bukan polling background
       if(!silent&&active)setSettings({assetSymbol:active.assetSymbol,assetName:active.assetName||active.assetSymbol,accountType:active.accountType,duration:active.duration,amount:active.amount,schedules:active.schedules,martingaleSetting:active.martingaleSetting,stopLossProfit:active.stopLossProfit});
@@ -1652,6 +1806,12 @@ export default function DashboardPage() {
     ? !!(ftSession?.isActive)
     : !!(ctcSession?.isActive);
 
+  const activeAccountType: 'demo'|'real' = tradingMode==='fastrade'
+    ? ftSettings.accountType
+    : tradingMode==='ctc'
+    ? ctcSettings.accountType
+    : settings.accountType;
+
   const g  = deviceType==='desktop'?20:deviceType==='tablet'?18:16;
   const px = 16;
 
@@ -1683,7 +1843,19 @@ export default function DashboardPage() {
     <div className="min-h-screen pb-[88px]" style={{ background: C.bg }}>
       {deviceType!=='desktop'&&(
         <div className="relative mb-5">
-          <img src="/header3.png" alt="" className="w-full h-auto block" />
+          <div className="relative w-full overflow-hidden">
+            <img src="/header3.png" alt="" className="w-full h-auto block" />
+            {/* Slow shimmer sweep overlay */}
+            <div className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(180,255,220,0.12) 50%, rgba(255,255,255,0.07) 60%, transparent 80%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer-h 6s ease-in-out infinite',
+              }} />
+            {/* Soft glow at bottom edge */}
+            <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+              style={{ background: 'linear-gradient(to top, rgba(52,211,153,0.08), transparent)' }} />
+          </div>
         </div>
       )}
 
@@ -1702,8 +1874,8 @@ export default function DashboardPage() {
         {deviceType==='desktop'&&(
           <div className="pt-6 flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-4" style={{ gap: g }}>
-              <StatCard title="Eksekusi Hari Ini" value={todayStats.executions} icon={<Activity className="w-[15px] h-[15px]" />} isLoading={isLoading} />
-              <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 className="w-[15px] h-[15px]" />} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading} />
+              <StatCard title="Eksekusi Hari Ini" value={todayStats.executions} icon={<Activity className="w-[15px] h-[15px]" />} isLoading={isLoading} showDots />
+              <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
@@ -1739,8 +1911,8 @@ export default function DashboardPage() {
         {deviceType==='tablet'&&(
           <div className="flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-3" style={{ gap: g }}>
-              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-[13px] h-[13px]" />} isLoading={isLoading} />
-              <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 className="w-[13px] h-[13px]" />} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading} />
+              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-[13px] h-[13px]" />} isLoading={isLoading} showDots />
+              <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
             <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
@@ -1799,8 +1971,8 @@ export default function DashboardPage() {
               {renderSessionPanel()}
             </div>
             <div className="grid grid-cols-2" style={{ gap: g }}>
-              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-3 h-3" />} isLoading={isLoading} />
-              <StatCard title="Win Rate" value={`${todayStats.winRate.toFixed(1)}%`} icon={<BarChart2 className="w-3 h-3" />} trend={todayStats.winRate>50?'up':'down'} isLoading={isLoading} />
+              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-3 h-3" />} isLoading={isLoading} showDots />
+              <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
             </div>
             <OrderSettingsCard
               settings={settings} onChange={setSettings}

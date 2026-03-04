@@ -21,7 +21,8 @@ import {
   DollarSign,
   Users,
   Zap,
-  Eye
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 // ============================================================================
@@ -684,6 +685,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -730,7 +732,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             style={{
               background: '#22252B',
               borderColor: 'rgba(192, 192, 192, 0.2)',
-              color: '#E5E5E5'
+              color: '#E5E5E5',
+              WebkitBoxShadow: '0 0 0px 1000px #22252B inset',
+              WebkitTextFillColor: '#E5E5E5',
             }}
             onFocus={(e) => e.target.style.borderColor = '#10B981'}
             onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
@@ -742,21 +746,43 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           <label className="block text-sm font-medium mb-2" style={{ color: '#E5E5E5' }}>
             Password
           </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-            style={{
-              background: '#22252B',
-              borderColor: 'rgba(192, 192, 192, 0.2)',
-              color: '#E5E5E5'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#10B981'}
-            onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
-            placeholder="••••••••"
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+              style={{
+                background: '#22252B',
+                borderColor: 'rgba(192, 192, 192, 0.2)',
+                color: '#E5E5E5',
+                paddingRight: '44px',
+                WebkitBoxShadow: '0 0 0px 1000px #22252B inset',
+                WebkitTextFillColor: '#E5E5E5',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#10B981'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              tabIndex={-1}
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none !important' as any, border: 'none !important' as any,
+                cursor: 'pointer', padding: 4,
+                color: showPw ? '#10B981' : 'rgba(192,192,192,0.5)',
+                display: 'flex !important' as any, alignItems: 'center',
+                transition: 'color 0.2s',
+                opacity: '1 !important' as any,
+                zIndex: 10, lineHeight: 1,
+              }}
+            >
+              {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
         </div>
 
         <button
@@ -803,6 +829,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const [formData, setFormData] = useState({ email: '', password: '', fullName: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -853,7 +880,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             style={{
               background: '#22252B',
               borderColor: 'rgba(192, 192, 192, 0.2)',
-              color: '#E5E5E5'
+              color: '#E5E5E5',
+              WebkitBoxShadow: '0 0 0px 1000px #22252B inset',
+              WebkitTextFillColor: '#E5E5E5',
             }}
             onFocus={(e) => e.target.style.borderColor = '#10B981'}
             onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
@@ -874,7 +903,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
             style={{
               background: '#22252B',
               borderColor: 'rgba(192, 192, 192, 0.2)',
-              color: '#E5E5E5'
+              color: '#E5E5E5',
+              WebkitBoxShadow: '0 0 0px 1000px #22252B inset',
+              WebkitTextFillColor: '#E5E5E5',
             }}
             onFocus={(e) => e.target.style.borderColor = '#10B981'}
             onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
@@ -885,21 +916,43 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           <label className="block text-sm font-medium mb-2" style={{ color: '#E5E5E5' }}>
             Password
           </label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 rounded-xl border outline-none transition-all"
-            style={{
-              background: '#22252B',
-              borderColor: 'rgba(192, 192, 192, 0.2)',
-              color: '#E5E5E5'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#10B981'}
-            onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 rounded-xl border outline-none transition-all"
+              style={{
+                background: '#22252B',
+                borderColor: 'rgba(192, 192, 192, 0.2)',
+                color: '#E5E5E5',
+                paddingRight: '44px',
+                WebkitBoxShadow: '0 0 0px 1000px #22252B inset',
+                WebkitTextFillColor: '#E5E5E5',
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#10B981'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(192, 192, 192, 0.2)'}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(v => !v)}
+              tabIndex={-1}
+              style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none !important' as any, border: 'none !important' as any,
+                cursor: 'pointer', padding: 4,
+                color: showPw ? '#10B981' : 'rgba(192,192,192,0.5)',
+                display: 'flex !important' as any, alignItems: 'center',
+                transition: 'color 0.2s',
+                opacity: '1 !important' as any,
+                zIndex: 10, lineHeight: 1,
+              }}
+            >
+              {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          </div>
         </div>
 
         <button
