@@ -388,6 +388,158 @@ const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ toda
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE PANEL
 // ═══════════════════════════════════════════════════════════════
+// SCHEDULE VIEW MODAL — tampil saat bot running, klik View
+// ═══════════════════════════════════════════════════════════════
+const ScheduleViewModal: React.FC<{
+  isOpen: boolean;
+  onClose: ()=>void;
+  schedules: {time:string; trend:'buy'|'sell'}[];
+  executions: {scheduledTime:string; result:'win'|'loss'|'draw'}[];
+}> = ({ isOpen, onClose, schedules, executions }) => {
+  if (!isOpen) return null;
+  const activeIdx = getActiveScheduleIndex(schedules);
+
+  // Hitung ringkasan
+  const wins   = executions.filter(e=>e.result==='win').length;
+  const losses = executions.filter(e=>e.result==='loss').length;
+  const draws  = executions.filter(e=>e.result==='draw').length;
+  const done   = wins + losses + draws;
+  const winRate = done > 0 ? Math.round((wins / done) * 100) : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-[88px] animate-[fade-in_0.15s_ease]">
+      <div className="absolute inset-0 backdrop-blur-md" style={{ background:'rgba(0,0,0,0.75)' }} onClick={onClose} />
+      <div className="relative w-full max-w-[500px] flex flex-col max-h-[calc(100vh-104px)] rounded-xl animate-[slide-up_0.2s_ease]"
+        style={{ background:C.card, border:`1px solid ${C.bdr}`, boxShadow:'0 -8px 40px rgba(0,0,0,0.35)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-[18px] py-[14px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
+          <div>
+            <h2 className="text-[15px] font-semibold mb-[2px]" style={{ color: C.text }}>Jadwal Hari Ini</h2>
+            <p className="text-[11px]" style={{ color: C.muted }}>{schedules.length} jadwal · {done} sudah eksekusi</p>
+          </div>
+          <button onClick={onClose} className="w-[30px] h-[30px] flex items-center justify-center rounded-md cursor-pointer"
+            style={{ background:C.faint, border:`1px solid ${C.bdr}`, color:C.sub }}>
+            <X className="w-[13px] h-[13px]" />
+          </button>
+        </div>
+
+        {/* Summary bar */}
+        {done > 0 && (
+          <div className="flex items-center gap-3 px-[18px] py-[10px]" style={{ borderBottom:`1px solid ${C.bdr}`, background:'rgba(0,0,0,0.2)' }}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold" style={{ color: C.cyan }}>{wins} Win</span>
+            </div>
+            <div className="w-px h-3" style={{ background: C.bdr }} />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-semibold" style={{ color: C.coral }}>{losses} Loss</span>
+            </div>
+            {draws > 0 && <>
+              <div className="w-px h-3" style={{ background: C.bdr }} />
+              <span className="text-[11px] font-semibold" style={{ color: C.muted }}>{draws} Draw</span>
+            </>}
+            {winRate !== null && <>
+              <div className="w-px h-3" style={{ background: C.bdr }} />
+              <span className="text-[11px] font-semibold" style={{ color: winRate >= 50 ? C.cyan : C.coral }}>{winRate}% WR</span>
+            </>}
+            {/* Progress bar */}
+            <div className="flex-1 ml-1 h-[5px] rounded-full overflow-hidden" style={{ background:'rgba(255,255,255,0.06)' }}>
+              {done > 0 && (
+                <div className="h-full rounded-full transition-all duration-500"
+                  style={{ width:`${(wins/done)*100}%`, background: `linear-gradient(90deg, ${C.cyan}, rgba(52,211,153,0.6))` }} />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto">
+          {schedules.map((s, i) => {
+            const isActive  = i === activeIdx;
+            const isBuy     = s.trend === 'buy';
+            const col       = isBuy ? C.cyan : C.coral;
+            // Ambil semua hasil untuk jam ini (support martingale multi-step)
+            const execs     = executions.filter(e => e.scheduledTime === s.time);
+            const lastResult = execs.slice(-1)[0]?.result;
+            const hasDone   = execs.length > 0;
+
+            return (
+              <div key={i}
+                className="flex items-center gap-3 px-[18px] py-[11px]"
+                style={{
+                  borderBottom: `1px solid ${C.bdr}`,
+                  background: isActive ? (isBuy ? 'rgba(52,211,153,0.04)' : 'rgba(248,113,113,0.04)') : 'transparent',
+                  borderLeft: isActive ? `2px solid ${col}` : '2px solid transparent',
+                }}
+              >
+                {/* Nomor / aktif indikator */}
+                <span className="text-[11px] w-5 text-right shrink-0 font-mono"
+                  style={{ color: isActive ? col : C.muted, fontWeight: isActive ? 700 : 400 }}>
+                  {isActive ? '▶' : String(i+1).padStart(2,'0')}
+                </span>
+
+                {/* Waktu */}
+                <span className="text-[15px] font-semibold w-[52px] shrink-0 font-mono"
+                  style={{ color: isActive ? C.text : C.sub }}>
+                  {s.time}
+                </span>
+
+                {/* Arah */}
+                <span className="text-[10px] font-bold px-2 py-[3px] rounded shrink-0"
+                  style={{ color: col, background: isBuy ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)' }}>
+                  {isBuy ? 'BUY' : 'SELL'}
+                </span>
+
+                <div className="flex-1" />
+
+                {/* Hasil eksekusi */}
+                {!hasDone && !isActive && (
+                  <span className="text-[10px]" style={{ color: C.muted }}>—</span>
+                )}
+                {isActive && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-[3px] rounded-full"
+                    style={{ color:C.cyan, background:'rgba(52,211,153,0.1)', border:'1px solid rgba(52,211,153,0.2)' }}>
+                    <span className="inline-block w-[5px] h-[5px] rounded-full animate-pulse" style={{ background:C.cyan }} />
+                    Running
+                  </span>
+                )}
+                {hasDone && !isActive && (
+                  <div className="flex items-center gap-1.5">
+                    {/* Tunjukkan semua step martingale kalau ada lebih dari 1 */}
+                    {execs.length > 1 && (
+                      <span className="text-[9px] px-1.5 py-[2px] rounded font-medium"
+                        style={{ color:C.amber, background:'rgba(251,191,36,0.1)', border:'1px solid rgba(251,191,36,0.2)' }}>
+                        M×{execs.length}
+                      </span>
+                    )}
+                    <span className="text-[11px] font-bold px-2.5 py-[4px] rounded-md"
+                      style={{
+                        color:     lastResult==='win' ? C.cyan : lastResult==='loss' ? C.coral : C.muted,
+                        background:lastResult==='win' ? 'rgba(52,211,153,0.1)' : lastResult==='loss' ? 'rgba(248,113,113,0.1)' : 'rgba(255,255,255,0.05)',
+                        border:    `1px solid ${lastResult==='win'?'rgba(52,211,153,0.25)':lastResult==='loss'?'rgba(248,113,113,0.25)':'rgba(255,255,255,0.08)'}`,
+                      }}>
+                      {lastResult==='win' ? 'WIN' : lastResult==='loss' ? 'LOSS' : 'DRAW'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="px-[18px] py-3" style={{ borderTop:`1px solid ${C.bdr}` }}>
+          <button onClick={onClose}
+            className="w-full py-2.5 rounded-md text-[13px] font-medium cursor-pointer"
+            style={{ background:C.faint, border:`1px solid ${C.bdr}`, color:C.sub }}>
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function getActiveScheduleIndex(schedules:{time:string;trend:'buy'|'sell'}[]): number {
   if(!schedules.length)return -1;
   const now=new Date(); const nowMin=now.getHours()*60+now.getMinutes();
@@ -402,12 +554,15 @@ function getActiveScheduleIndex(schedules:{time:string;trend:'buy'|'sell'}[]): n
 const SchedulePanel: React.FC<{
   schedules:{time:string;trend:'buy'|'sell'}[];
   executions?:{scheduledTime:string;result:'win'|'loss'|'draw'}[];
-  onOpenModal:()=>void; isDisabled?:boolean; maxCount?:number;
-  fillHeight?:boolean; tabletMaxItems?:number;
-}> = ({ schedules, executions=[], onOpenModal, isDisabled=false, maxCount=50, fillHeight=false, tabletMaxItems }) => {
+  onOpenModal:()=>void;
+  isDisabled?:boolean; isRunning?:boolean;
+  maxCount?:number; fillHeight?:boolean; tabletMaxItems?:number;
+}> = ({ schedules, executions=[], onOpenModal, isDisabled=false, isRunning=false, maxCount=50, fillHeight=false, tabletMaxItems }) => {
   const listRef  = React.useRef<HTMLDivElement>(null);
   const itemRefs = React.useRef<(HTMLDivElement|null)[]>([]);
   const [activeIdx,setActiveIdx] = React.useState<number>(-1);
+  const [viewOpen, setViewOpen]  = React.useState(false);
+
   React.useEffect(()=>{
     const update=()=>setActiveIdx(getActiveScheduleIndex(schedules));
     update(); const t=setInterval(update,10_000); return()=>clearInterval(t);
@@ -418,61 +573,80 @@ const SchedulePanel: React.FC<{
     if(!el||!container)return;
     container.scrollTo({top:el.offsetTop-container.clientHeight/2+el.offsetHeight/2,behavior:'smooth'});
   },[activeIdx]);
+
   return (
-    <Card className={`flex flex-col ${fillHeight?'h-full flex-1':''}`}>
-      <div className="flex items-center justify-between px-3.5 py-[11px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
-        <span className="text-xs font-semibold" style={{ color: C.sub }}>Jadwal</span>
-        {schedules.length>0&&activeIdx>=0&&(
-          <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border" style={{ color:C.cyan,background:'rgba(52,211,153,0.08)',borderColor:'rgba(52,211,153,0.2)' }}>
-            <span className="inline-block w-[5px] h-[5px] rounded-full" style={{ background: C.cyan }} />
-            <span className="hidden sm:inline">Berikutnya</span>
-          </span>
+    <>
+      <ScheduleViewModal
+        isOpen={viewOpen} onClose={()=>setViewOpen(false)}
+        schedules={schedules} executions={executions}
+      />
+      <Card className={`flex flex-col ${fillHeight?'h-full flex-1':''}`}>
+        <div className="flex items-center justify-between px-3.5 py-[11px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
+          <span className="text-xs font-semibold" style={{ color: C.sub }}>Jadwal</span>
+          {schedules.length>0&&activeIdx>=0&&(
+            <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border" style={{ color:C.cyan,background:'rgba(52,211,153,0.08)',borderColor:'rgba(52,211,153,0.2)' }}>
+              <span className="inline-block w-[5px] h-[5px] rounded-full" style={{ background: C.cyan }} />
+              <span className="hidden sm:inline">Berikutnya</span>
+            </span>
+          )}
+        </div>
+        {schedules.length===0?(
+          <div className="flex-1 flex flex-col items-center justify-center p-5 gap-2">
+            <Calendar className="w-7 h-7" strokeWidth={1.5} style={{ color: C.muted }} />
+            <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada jadwal</p>
+          </div>
+        ):(
+          <div ref={listRef} className="flex-1 overflow-y-auto" style={{ maxHeight:tabletMaxItems?tabletMaxItems*36:fillHeight?'none':200 }}>
+            {schedules.map((s,i)=>{
+              const isActive=i===activeIdx; const isBuy=s.trend==='buy'; const col=isBuy?C.cyan:C.coral;
+              const execResult=executions.filter(e=>e.scheduledTime===s.time).slice(-1)[0]?.result;
+              return (
+                <div key={i} ref={el=>{itemRefs.current[i]=el;}}
+                  className="schedule-item flex items-center gap-2 px-3 py-2 cursor-default transition-colors duration-150"
+                  style={{ borderBottom:`1px solid ${C.bdr}`,background:isActive?(isBuy?'rgba(52,211,153,0.05)':'rgba(248,113,113,0.05)'):'transparent',borderLeft:isActive?`2px solid ${col}`:'2px solid transparent' }}
+                >
+                  <span className="text-[10px] w-[18px] text-right shrink-0" style={{ color:isActive?col:C.muted,fontWeight:isActive?600:400 }}>
+                    {isActive?'▶':String(i+1).padStart(2,'0')}
+                  </span>
+                  <span className="text-[13px] flex-1" style={{ color:isActive?C.text:C.sub,fontWeight:isActive?600:400 }}>{s.time}</span>
+                  {(!execResult||isActive)&&(
+                    <span className="text-[10px] font-semibold px-[7px] py-0.5 rounded" style={{ color:col,background:isBuy?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)' }}>
+                      {s.trend==='buy'?'Buy':'Sell'}
+                    </span>
+                  )}
+                  {execResult&&!isActive&&(
+                    <span className="text-[10px] font-semibold" style={{ color:execResult==='win'?C.cyan:execResult==='loss'?C.coral:C.muted }}>
+                      {execResult==='win'?'Win':execResult==='loss'?'Lose':'Draw'}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
-      </div>
-      {schedules.length===0?(
-        <div className="flex-1 flex flex-col items-center justify-center p-5 gap-2">
-          <Calendar className="w-7 h-7" strokeWidth={1.5} style={{ color: C.muted }} />
-          <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada jadwal</p>
+        <div className="p-[8px_10px]" style={{ borderTop:`1px solid ${C.bdr}` }}>
+          {isRunning ? (
+            // Bot aktif → tombol View
+            <button onClick={()=>setViewOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium"
+              style={{ background:'rgba(52,211,153,0.07)', border:'1px solid rgba(52,211,153,0.25)', color:C.cyan, cursor:'pointer' }}
+            >
+              <BarChart2 className="w-3 h-3" />
+              View
+            </button>
+          ) : (
+            // Bot tidak aktif → tombol Tambah / Kelola
+            <button onClick={onOpenModal} disabled={isDisabled}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-opacity"
+              style={{ background:'rgba(52,211,153,0.07)',border:'1px solid rgba(52,211,153,0.18)',color:C.cyan,cursor:isDisabled?'not-allowed':'pointer',opacity:isDisabled?0.4:1 }}
+            >
+              <Plus className="w-3 h-3" />
+              {schedules.length===0?'Tambah':'Kelola'}
+            </button>
+          )}
         </div>
-      ):(
-        <div ref={listRef} className="flex-1 overflow-y-auto" style={{ maxHeight:tabletMaxItems?tabletMaxItems*36:fillHeight?'none':200 }}>
-          {schedules.map((s,i)=>{
-            const isActive=i===activeIdx; const isBuy=s.trend==='buy'; const col=isBuy?C.cyan:C.coral;
-            const execResult=executions.filter(e=>e.scheduledTime===s.time).slice(-1)[0]?.result;
-            return (
-              <div key={i} ref={el=>{itemRefs.current[i]=el;}}
-                className="schedule-item flex items-center gap-2 px-3 py-2 cursor-default transition-colors duration-150"
-                style={{ borderBottom:`1px solid ${C.bdr}`,background:isActive?(isBuy?'rgba(52,211,153,0.05)':'rgba(248,113,113,0.05)'):'transparent',borderLeft:isActive?`2px solid ${col}`:'2px solid transparent' }}
-              >
-                <span className="text-[10px] w-[18px] text-right shrink-0" style={{ color:isActive?col:C.muted,fontWeight:isActive?600:400 }}>
-                  {isActive?'▶':String(i+1).padStart(2,'0')}
-                </span>
-                <span className="text-[13px] flex-1" style={{ color:isActive?C.text:C.sub,fontWeight:isActive?600:400 }}>{s.time}</span>
-                {(!execResult||isActive)&&(
-                  <span className="text-[10px] font-semibold px-[7px] py-0.5 rounded" style={{ color:col,background:isBuy?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)' }}>
-                    {s.trend==='buy'?'Buy':'Sell'}
-                  </span>
-                )}
-                {execResult&&!isActive&&(
-                  <span className="text-[10px] font-semibold" style={{ color:execResult==='win'?C.cyan:execResult==='loss'?C.coral:C.muted }}>
-                    {execResult==='win'?'Win':execResult==='loss'?'Lose':'Draw'}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <div className="p-[8px_10px]" style={{ borderTop:`1px solid ${C.bdr}` }}>
-        <button onClick={onOpenModal} disabled={isDisabled}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-opacity"
-          style={{ background:'rgba(52,211,153,0.07)',border:'1px solid rgba(52,211,153,0.18)',color:C.cyan,cursor:isDisabled?'not-allowed':'pointer',opacity:isDisabled?0.4:1 }}
-        >
-          <Plus className="w-3 h-3" />
-          {schedules.length===0?'Tambah':'Kelola'}
-        </button>
-      </div>
-    </Card>
+      </Card>
+    </>
   );
 };
 
@@ -1865,12 +2039,12 @@ export default function DashboardPage() {
   const renderSessionPanel = (fillHeight=false) => {
     if(tradingMode==='ctc') return <CtcSessionPanel session={ctcSession} isLoading={ctcLoading} fillHeight={fillHeight} />;
     if(tradingMode==='fastrade') return <FastTradeSessionPanel session={ftSession} isLoading={ftLoading} fillHeight={fillHeight} />;
-    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} fillHeight={fillHeight} />;
+    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} isRunning={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} fillHeight={fillHeight} />;
   };
   const renderSessionPanelTablet = () => {
     if(tradingMode==='ctc') return <CtcSessionPanel session={ctcSession} isLoading={ctcLoading} />;
     if(tradingMode==='fastrade') return <FastTradeSessionPanel session={ftSession} isLoading={ftLoading} />;
-    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} tabletMaxItems={10} />;
+    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} isRunning={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} tabletMaxItems={10} />;
   };
   const renderControlCard = () => {
     if(tradingMode==='ctc') return <CtcControlCard session={ctcSession} onStart={handleCtcStart} onStop={handleCtcStop} isLoading={isActionLoad} canStart={canStartCtc} errorMessage={error||undefined} />;
