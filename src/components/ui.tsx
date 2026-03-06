@@ -142,7 +142,9 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+      overflowY: 'auto',
+      padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
       animation: 'fade-in 0.2s ease',
     }}>
       {/* Backdrop */}
@@ -161,6 +163,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         position: 'relative', width: '100%', maxWidth: maxWidths[size],
         maxHeight: 'calc(100dvh - 32px)',
         display: 'flex', flexDirection: 'column',
+        margin: 'auto',
         background: 'linear-gradient(135deg, #06110e 0%, #091a14 100%)',
         border: '1px solid rgba(52,211,153,0.2)',
         borderTop: '2px solid #34d399',
