@@ -662,17 +662,17 @@ const CtcSessionPanel: React.FC<{
   })();
 
   return (
-    <Card className={`flex flex-col ${fillHeight ? 'h-full flex-1' : ''}`}>
+    <Card className={`flex flex-col ${fillHeight ? 'h-full flex-1' : ''}`} style={{ minWidth:0, overflow:'hidden' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-[11px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
-        <div className="flex items-center gap-2">
-          <Copy className="w-3.5 h-3.5" style={{ color: C.violet }} />
-          <span className="text-xs font-semibold" style={{ color: C.sub }}>Sesi CTC</span>
-          <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ color:C.violet,background:'rgba(167,139,250,0.1)',border:'1px solid rgba(167,139,250,0.2)' }}>1m</span>
+      <div className="flex items-center justify-between px-3 py-[10px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Copy className="w-3 h-3 shrink-0" style={{ color: C.violet }} />
+          <span className="text-[11px] font-semibold truncate" style={{ color: C.sub }}>Sesi CTC</span>
+          <span className="text-[9px] px-1 py-[1px] rounded font-medium shrink-0" style={{ color:C.violet,background:'rgba(167,139,250,0.1)',border:'1px solid rgba(167,139,250,0.2)' }}>1m</span>
         </div>
         {session?.isActive && (
-          <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border" style={{ color:C.violet,background:'rgba(167,139,250,0.08)',borderColor:'rgba(167,139,250,0.2)' }}>
-            <span className="inline-block w-[5px] h-[5px] rounded-full animate-pulse" style={{ background: C.violet }} />
+          <span className="flex items-center gap-[4px] text-[9px] font-semibold px-1.5 py-[3px] rounded-full shrink-0 ml-1" style={{ color:C.violet,background:'rgba(167,139,250,0.1)',border:'1px solid rgba(167,139,250,0.2)' }}>
+            <span className="inline-block w-[4px] h-[4px] rounded-full animate-pulse shrink-0" style={{ background: C.violet }} />
             Aktif
           </span>
         )}
@@ -681,99 +681,102 @@ const CtcSessionPanel: React.FC<{
       {/* Body */}
       {isLoading ? (
         <div className="flex-1 flex flex-col gap-2 p-3">
-          {[80,60,60].map((w,i) => <Skeleton key={i} width={`${w}%`} height={18} variant="shimmer" />)}
+          {[80,60,60].map((w,i) => <Skeleton key={i} width={`${w}%`} height={16} variant="shimmer" />)}
         </div>
       ) : !session ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-5 gap-2">
-          <Copy className="w-7 h-7" strokeWidth={1.5} style={{ color: C.muted }} />
-          <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada sesi CTC aktif</p>
-          <p className="text-[10px] text-center" style={{ color: C.muted }}>Order otomatis setiap candle 1m selesai</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 gap-1.5">
+          <Copy className="w-6 h-6" strokeWidth={1.5} style={{ color: C.muted }} />
+          <p className="text-[11px] text-center" style={{ color: C.muted }}>Belum ada sesi CTC</p>
+          <p className="text-[9px] text-center leading-[1.4]" style={{ color: C.muted }}>Order tiap candle 1m selesai</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {/* Countdown */}
           {session.isActive && (
-            <div className="mx-3 mt-3 px-3 py-2.5 rounded-lg flex items-center justify-between" style={{ background:'rgba(167,139,250,0.06)',border:`1px solid rgba(167,139,250,0.15)` }}>
-              <div className="flex items-center gap-2">
-                <Timer className="w-3.5 h-3.5" style={{ color: C.violet }} />
-                <span className="text-[11px]" style={{ color: C.sub }}>Candle 1m berikutnya</span>
+            <div className="mx-2 mt-2 px-2.5 py-2 rounded-lg" style={{ background:'rgba(167,139,250,0.06)',border:`1px solid rgba(167,139,250,0.15)` }}>
+              <div className="flex items-center justify-between gap-1 min-w-0">
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                  <Timer className="w-3 h-3 shrink-0" style={{ color: C.violet }} />
+                  <span className="text-[10px] truncate" style={{ color: C.sub }}>Candle berikutnya</span>
+                </div>
+                <span className="text-[14px] font-bold tracking-widest font-mono shrink-0 ml-1" style={{ color: C.violet }}>{countdown || '--:--'}</span>
               </div>
-              <span className="text-[15px] font-bold tracking-widest font-mono" style={{ color: C.violet }}>{countdown || '--:--'}</span>
             </div>
           )}
 
           {/* Next order context */}
           {nextOrderContext && (
-            <div className="mx-3 mt-2 flex items-center justify-between px-3 py-2 rounded-lg" style={{ background:`${nextOrderContext.col}08`, border:`1px solid ${nextOrderContext.col}30` }}>
-              <span className="text-[10px]" style={{ color: C.muted }}>Order Berikutnya</span>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: nextOrderContext.col }}>
-                {nextOrderContext.dir && <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background:`${nextOrderContext.col}15` }}>{nextOrderContext.dir}</span>}
-                {nextOrderContext.label}
-              </span>
+            <div className="mx-2 mt-1.5 px-2.5 py-2 rounded-lg" style={{ background:`${nextOrderContext.col}08`, border:`1px solid ${nextOrderContext.col}30` }}>
+              <p className="text-[9px] mb-1" style={{ color: C.muted }}>Order Berikutnya</p>
+              <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                {nextOrderContext.dir && (
+                  <span className="text-[10px] px-1.5 py-[2px] rounded font-bold shrink-0" style={{ color:nextOrderContext.col, background:`${nextOrderContext.col}18` }}>
+                    {nextOrderContext.dir}
+                  </span>
+                )}
+                <span className="text-[10px] font-semibold truncate" style={{ color: nextOrderContext.col }}>
+                  {nextOrderContext.label}
+                </span>
+              </div>
             </div>
           )}
 
           {/* Status */}
           {statusInfo && (
-            <div className="mx-3 mt-2 flex items-center justify-between px-3 py-2 rounded-md" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <span className="text-[11px]" style={{ color: C.muted }}>Status</span>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: statusInfo.col }}>
-                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: statusInfo.col }} />
-                {statusInfo.label}
+            <div className="mx-2 mt-1.5 flex items-center justify-between px-2.5 py-1.5 rounded-md gap-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+              <span className="text-[10px] shrink-0" style={{ color: C.muted }}>Status</span>
+              <span className="flex items-center gap-1 text-[10px] font-semibold min-w-0 overflow-hidden" style={{ color: statusInfo.col }}>
+                <span className="inline-block w-[5px] h-[5px] rounded-full shrink-0" style={{ background: statusInfo.col }} />
+                <span className="truncate">{statusInfo.label}</span>
               </span>
             </div>
           )}
 
           {/* P&L + Win/Loss */}
-          <div className="grid grid-cols-2 gap-2 mx-3 mt-2">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Total P&L</p>
-              <p className="text-[15px] font-semibold leading-none" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
+          <div className="grid grid-cols-2 gap-1.5 mx-2 mt-1.5">
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+              <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>Total P&L</p>
+              <p className="text-[12px] font-semibold leading-none truncate" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
                 {(session.totalPnL??0)>=0?'+':''}{(session.totalPnL??0).toLocaleString('id-ID')}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Win / Loss</p>
-              <p className="text-[15px] font-semibold leading-none">
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+              <p className="text-[9px] mb-1" style={{ color: C.muted }}>Win / Loss</p>
+              <p className="text-[13px] font-semibold leading-none">
                 <span style={{ color: C.cyan }}>{session.wins??0}</span>
-                <span className="text-[11px]" style={{ color: C.muted }}> / </span>
+                <span className="text-[10px]" style={{ color: C.muted }}>/</span>
                 <span style={{ color: C.coral }}>{session.losses??0}</span>
               </p>
             </div>
           </div>
 
           {/* Martingale step + amount */}
-          <div className="grid grid-cols-2 gap-2 mx-3 mt-2 mb-3">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Martingale Step</p>
-              <p className="text-[15px] font-semibold leading-none" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
+          <div className="grid grid-cols-2 gap-1.5 mx-2 mt-1.5 mb-2">
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+              <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>M. Step</p>
+              <p className="text-[12px] font-semibold leading-none truncate" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
                 {(session.currentStep??0) > 0 ? `Step ${session.currentStep}` : 'Reset'}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Amount Saat Ini</p>
-              <p className="text-[13px] font-semibold leading-none" style={{ color: C.text }}>
-                Rp {(session.currentAmount??0).toLocaleString('id-ID')}
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+              <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>Amount</p>
+              <p className="text-[11px] font-semibold leading-none truncate" style={{ color: C.text }}>
+                {(session.currentAmount??0).toLocaleString('id-ID')}
               </p>
             </div>
           </div>
 
-          {/* Info row */}
-          <div className="mx-3 pb-3">
+          {/* Info row: Akun + Total Order (2 kolom, lebih ringkas) */}
+          <div className="mx-2 pb-2">
             <div className="flex items-center rounded-lg overflow-hidden" style={{ background:C.card2, border:`1px solid ${C.bdr}` }}>
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Timeframe</span>
-                <span className="text-[12px] font-bold mt-0.5" style={{ color:C.violet }}>1m</span>
+              <div className="flex-1 flex flex-col items-center justify-center py-1.5 text-center min-w-0 overflow-hidden">
+                <span className="text-[8px] uppercase tracking-wide" style={{ color:C.muted }}>Akun</span>
+                <span className="text-[11px] font-bold mt-0.5 capitalize truncate w-full px-1" style={{ color:C.text }}>{session.accountType??'—'}</span>
               </div>
               <div className="w-[1px] self-stretch" style={{ background:C.bdr }} />
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Akun</span>
-                <span className="text-[12px] font-bold mt-0.5 capitalize" style={{ color:C.text }}>{session.accountType??'—'}</span>
-              </div>
-              <div className="w-[1px] self-stretch" style={{ background:C.bdr }} />
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Total Order</span>
-                <span className="text-[12px] font-bold mt-0.5" style={{ color:C.text }}>{session.totalOrders??0}</span>
+              <div className="flex-1 flex flex-col items-center justify-center py-1.5 text-center min-w-0 overflow-hidden">
+                <span className="text-[8px] uppercase tracking-wide" style={{ color:C.muted }}>Orders</span>
+                <span className="text-[11px] font-bold mt-0.5" style={{ color:C.text }}>{session.totalOrders??0}</span>
               </div>
             </div>
           </div>
@@ -807,18 +810,26 @@ const BulkScheduleModal: React.FC<{
     if(n==='buy'||n==='b')return'buy'; if(n==='sell'||n==='s')return'sell'; return null;
   };
   const handleAdd=()=>{
-    setError(''); if(!input.trim()){setError('Input kosong');return;}
-    const result:{time:string;trend:'buy'|'sell'}[]=[],errs:string[]=[];
-    input.trim().split('\n').forEach((line,i)=>{
-      const parts=line.trim().split(/[\s,\t\-]+/).filter(Boolean); if(!parts.length)return;
-      if(parts.length<2){errs.push(`Baris ${i+1}: format tidak lengkap`);return;}
-      const time=parseTime(parts[0]);if(!time){errs.push(`Baris ${i+1}: waktu salah "${parts[0]}"`);return;}
-      const trend=parseTrend(parts[1]);if(!trend){errs.push(`Baris ${i+1}: trend salah "${parts[1]}"`);return;}
-      if(result.some(r=>r.time===time)||schedules.some(r=>r.time===time)){errs.push(`Baris ${i+1}: ${time} sudah ada`);return;}
-      result.push({time,trend});
+    setError('');
+    if(!input.trim())return;
+    const result:{time:string;trend:'buy'|'sell'}[]=[];
+    input.trim().split('\n').forEach((line)=>{
+      // Scan semua token di baris, cari pasangan waktu+trend di mana saja
+      // Teks/kata lain di baris yang sama diabaikan saja
+      const tokens=line.trim().split(/[\s,\t\-]+/).filter(Boolean);
+      for(let i=0;i<tokens.length-1;i++){
+        const time=parseTime(tokens[i]);
+        if(!time)continue;
+        const trend=parseTrend(tokens[i+1]);
+        if(!trend)continue;
+        // Skip duplikat diam-diam
+        if(result.some(r=>r.time===time)||schedules.some(r=>r.time===time))break;
+        result.push({time,trend});
+        break;
+      }
+      // Baris tidak valid / tidak ada pasangan → diabaikan tanpa error
     });
-    if(errs.length){setError(errs.join('\n'));return;}
-    if(!result.length){setError('Tidak ada jadwal valid');return;}
+    if(!result.length)return;
     onAddSchedules(result);setInput('');
   };
   return (
