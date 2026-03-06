@@ -159,6 +159,8 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       {/* Panel */}
       <div style={{
         position: 'relative', width: '100%', maxWidth: maxWidths[size],
+        maxHeight: 'calc(100dvh - 32px)',
+        display: 'flex', flexDirection: 'column',
         background: 'linear-gradient(135deg, #06110e 0%, #091a14 100%)',
         border: '1px solid rgba(52,211,153,0.2)',
         borderTop: '2px solid #34d399',
@@ -178,6 +180,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
         }}>
           <h3 style={{
             fontFamily: 'var(--font-exo)', fontSize: 15, fontWeight: 800,
@@ -208,7 +211,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px' }}>
+        <div style={{
+          padding: '20px',
+          overflowY: 'auto',
+          flexGrow: 1,
+          WebkitOverflowScrolling: 'touch',
+        }}>
           {children}
         </div>
       </div>

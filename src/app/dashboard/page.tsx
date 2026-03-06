@@ -596,7 +596,7 @@ const SchedulePanel: React.FC<{
             <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada jadwal</p>
           </div>
         ):(
-          <div ref={listRef} className="flex-1 overflow-y-auto" style={{ maxHeight:tabletMaxItems?tabletMaxItems*36:fillHeight?'none':200 }}>
+          <div ref={listRef} className="overflow-y-auto" style={{ maxHeight:tabletMaxItems?tabletMaxItems*36:fillHeight?'none':200 }}>
             {schedules.map((s,i)=>{
               const isActive=i===activeIdx; const isBuy=s.trend==='buy'; const col=isBuy?C.cyan:C.coral;
               const execResult=executions.filter(e=>e.scheduledTime===s.time).slice(-1)[0]?.result;
@@ -624,7 +624,7 @@ const SchedulePanel: React.FC<{
             })}
           </div>
         )}
-        <div className="p-[8px_10px]" style={{ borderTop:`1px solid ${C.bdr}` }}>
+        <div className="p-[8px_10px] mt-auto" style={{ borderTop:`1px solid ${C.bdr}` }}>
           {isRunning ? (
             // Bot aktif → tombol View
             <button onClick={()=>setViewOpen(true)}
