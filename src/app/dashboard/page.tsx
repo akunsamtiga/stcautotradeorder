@@ -1047,6 +1047,15 @@ const OrderSettingsCard: React.FC<{
   const [pickerOpen,setPickerOpen] = useState<'asset'|'accountType'|'duration'|'ftTimeframe'|'ftAccountType'|'ctcAccountType'|'mode'|null>(null);
   const modeDisabled = isDisabled;
 
+  // ── Local string states untuk martingale inputs ──────────────
+  // Supaya bisa dikosongkan dan diketik bebas tanpa reset ke 0
+  const [scMaxStep,   setScMaxStep]   = useState(String(settings.martingaleSetting.maxStep));
+  const [scMult,      setScMult]      = useState(String(settings.martingaleSetting.multiplier));
+  const [ftMaxStep,   setFtMaxStep]   = useState(String(ftSettings.martingale.maxStep));
+  const [ftMult,      setFtMult]      = useState(String(ftSettings.martingale.multiplier));
+  const [ctcMaxStep,  setCtcMaxStep]  = useState(String(ctcSettings.martingale.maxStep));
+  const [ctcMult,     setCtcMult]     = useState(String(ctcSettings.martingale.multiplier));
+
   useEffect(()=>setMg(settings.martingaleSetting.maxStep>0),[settings.martingaleSetting.maxStep]);
   useEffect(()=>setFtMg(ftSettings.martingale.enabled),[ftSettings.martingale.enabled]);
   useEffect(()=>setCtcMg(ctcSettings.martingale.enabled),[ctcSettings.martingale.enabled]);
@@ -1264,21 +1273,47 @@ const OrderSettingsCard: React.FC<{
                 <div className="mt-2.5 pt-2.5 grid grid-cols-2 gap-2.5" style={{ borderTop:`1px solid ${C.bdr}` }}>
                   <div>
                     <FL>Max Step</FL>
-                    {mode==='ctc'
-                      ? <input type="number" className="ds-input" min="1" max="10" value={ctcSettings.martingale.maxStep} onChange={e=>nestCtc('maxStep',+e.target.value||0)} disabled={isDisabled} />
-                      : mode==='fastrade'
-                      ? <input type="number" className="ds-input" min="1" max="10" value={ftSettings.martingale.maxStep} onChange={e=>nestFt('maxStep',+e.target.value||0)} disabled={isDisabled} />
-                      : <input type="number" className="ds-input" min="1" max="10" value={settings.martingaleSetting.maxStep} onChange={e=>nest('martingaleSetting','maxStep',+e.target.value||0)} disabled={isDisabled} />
-                    }
+                    {mode==='ctc' ? (
+                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
+                        value={ctcMaxStep}
+                        onChange={e=>setCtcMaxStep(e.target.value.replace(/[^0-9]/g,''))}
+                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(ctcMaxStep)||1)); setCtcMaxStep(String(n)); nestCtc('maxStep',n); }}
+                      />
+                    ) : mode==='fastrade' ? (
+                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
+                        value={ftMaxStep}
+                        onChange={e=>setFtMaxStep(e.target.value.replace(/[^0-9]/g,''))}
+                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(ftMaxStep)||1)); setFtMaxStep(String(n)); nestFt('maxStep',n); }}
+                      />
+                    ) : (
+                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
+                        value={scMaxStep}
+                        onChange={e=>setScMaxStep(e.target.value.replace(/[^0-9]/g,''))}
+                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(scMaxStep)||1)); setScMaxStep(String(n)); nest('martingaleSetting','maxStep',n); }}
+                      />
+                    )}
                   </div>
                   <div>
                     <FL>Multiplier</FL>
-                    {mode==='ctc'
-                      ? <input type="number" className="ds-input" min="1" max="5" step="0.1" value={ctcSettings.martingale.multiplier} onChange={e=>nestCtc('multiplier',+e.target.value||1)} disabled={isDisabled} />
-                      : mode==='fastrade'
-                      ? <input type="number" className="ds-input" min="1" max="5" step="0.1" value={ftSettings.martingale.multiplier} onChange={e=>nestFt('multiplier',+e.target.value||1)} disabled={isDisabled} />
-                      : <input type="number" className="ds-input" min="1" max="5" step="0.1" value={settings.martingaleSetting.multiplier} onChange={e=>nest('martingaleSetting','multiplier',+e.target.value||1)} disabled={isDisabled} />
-                    }
+                    {mode==='ctc' ? (
+                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
+                        value={ctcMult}
+                        onChange={e=>setCtcMult(e.target.value.replace(/[^0-9.]/g,''))}
+                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(ctcMult)||1)); const s=String(Math.round(n*10)/10); setCtcMult(s); nestCtc('multiplier',parseFloat(s)); }}
+                      />
+                    ) : mode==='fastrade' ? (
+                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
+                        value={ftMult}
+                        onChange={e=>setFtMult(e.target.value.replace(/[^0-9.]/g,''))}
+                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(ftMult)||1)); const s=String(Math.round(n*10)/10); setFtMult(s); nestFt('multiplier',parseFloat(s)); }}
+                      />
+                    ) : (
+                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
+                        value={scMult}
+                        onChange={e=>setScMult(e.target.value.replace(/[^0-9.]/g,''))}
+                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(scMult)||1)); const s=String(Math.round(n*10)/10); setScMult(s); nest('martingaleSetting','multiplier',parseFloat(s)); }}
+                      />
+                    )}
                   </div>
                 </div>
               )}
