@@ -60,9 +60,9 @@ export default function WebViewPage() {
         </div>
       )}
 
-      {/* No sandbox attr — proxy strips X-Frame-Options/CSP server-side */}
+      {/* iframe load dari /stouch → next.config rewrite → /api/proxy?path=/ */}
       <iframe
-        src="/api/proxy?path=/"
+        src="/stouch"
         onLoad={() => setLoading(false)}
         allow="fullscreen; payment; camera; microphone"
         style={{

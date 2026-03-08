@@ -2,55 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const TARGET = 'https://www.stouch.id';
 
+// Minimal script — hanya block SW, sisanya handled by next.config.js rewrite
 const INJECTED_SCRIPT = `<script>
 (function(){
-  // 1. Block Service Worker registration → prevents sw.js NetworkError in iframe
+  // Stub SW lengkap agar tidak ada error registration
   if ('serviceWorker' in navigator) {
+    var reg = {
+      scope: '/', active: null, installing: null, waiting: null,
+      update:              function() { return Promise.resolve(); },
+      unregister:          function() { return Promise.resolve(true); },
+      addEventListener:    function() {},
+      removeEventListener: function() {},
+      pushManager:         { subscribe: function() { return Promise.reject(); } },
+      navigationPreload:   { enable: function() { return Promise.resolve(); } },
+    };
     Object.defineProperty(navigator, 'serviceWorker', {
       get: function() {
         return {
-          register:            function() { return Promise.resolve({ scope: '/' }); },
-          getRegistration:     function() { return Promise.resolve(undefined); },
-          getRegistrations:    function() { return Promise.resolve([]); },
+          register:            function() { return Promise.resolve(reg); },
+          getRegistration:     function() { return Promise.resolve(reg); },
+          getRegistrations:    function() { return Promise.resolve([reg]); },
           addEventListener:    function() {},
           removeEventListener: function() {},
-          ready:               new Promise(function(){}),
+          ready:               Promise.resolve(reg),
           controller:          null,
         };
-      }
+      },
+      configurable: true,
     });
   }
-
-  // 2. Override history.pushState / replaceState
-  //    stouch.id calls replaceState with 'https://www.stouch.id/...' which throws
-  //    SecurityError because document origin is localhost. We strip to path only.
-  var _push    = history.pushState.bind(history);
-  var _replace = history.replaceState.bind(history);
-
-  function safeUrl(url) {
-    if (!url) return url;
-    try {
-      var u = new URL(String(url));
-      // If it's a stouch.id absolute URL, keep only path+query+hash
-      if (u.hostname.includes('stouch.id')) {
-        return u.pathname + u.search + u.hash;
-      }
-    } catch(e) {}
-    return url;
-  }
-
-  history.pushState = function(state, title, url) {
-    try { _push(state, title, safeUrl(url)); } catch(e) {}
-  };
-  history.replaceState = function(state, title, url) {
-    try { _replace(state, title, safeUrl(url)); } catch(e) {}
-  };
 })();
 <\/script>`;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const path = searchParams.get('path') || '/';
+  const path = decodeURIComponent(searchParams.get('path') || '/');
   const targetUrl = `${TARGET}${path}`;
 
   try {
@@ -58,8 +44,9 @@ export async function GET(request: NextRequest) {
       headers: {
         'User-Agent':      request.headers.get('user-agent') || 'Mozilla/5.0',
         'Accept':          request.headers.get('accept')     || '*/*',
-        'Accept-Language': request.headers.get('accept-language') || 'id-ID,id;q=0.9,en;q=0.8',
+        'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8',
         'Referer':         TARGET,
+        'x-nextjs-data':   '1',
       },
       redirect: 'follow',
     });
@@ -69,16 +56,18 @@ export async function GET(request: NextRequest) {
 
     if (contentType.includes('text/html')) {
       let html = await res.text();
-
       html = html
-        .replace(/src=["'](https?:\/\/(?:www\.)?stouch\.id)(\/[^"']*)?["']/gi,
-          (_, _o, p) => `src="/api/proxy?path=${encodeURIComponent(p || '/')}"`)
-        .replace(/href=["'](https?:\/\/(?:www\.)?stouch\.id)(\/[^"']*)?["']/gi,
-          (_, _o, p) => `href="/api/proxy?path=${encodeURIComponent(p || '/')}"`)
-        .replace(/action=["'](https?:\/\/(?:www\.)?stouch\.id)(\/[^"']*)?["']/gi,
-          (_, _o, p) => `action="/api/proxy?path=${encodeURIComponent(p || '/')}"`)
+        // Rewrite absolute stouch.id URLs → /stouch/<path>
+        // next.config.js rewrite: /stouch/:path* → /api/proxy?path=/:path*
+        .replace(/src=["'](https?:\/\/(?:www\.)?(?:stouch|stcautotrade)\.id)(\/[^"']*)?["']/gi,
+          (_, _o, p) => `src="/stouch${p || '/'}"`)
+        .replace(/href=["'](https?:\/\/(?:www\.)?(?:stouch|stcautotrade)\.id)(\/[^"']*)?["']/gi,
+          (_, _o, p) => `href="/stouch${p || '/'}"`)
+        .replace(/action=["'](https?:\/\/(?:www\.)?(?:stouch|stcautotrade)\.id)(\/[^"']*)?["']/gi,
+          (_, _o, p) => `action="/stouch${p || '/'}"`)
+        // base href → /stouch/ sehingga semua relative URL otomatis lewat rewrite
         .replace(/<head([^>]*)>/i,
-          `<head$1><base href="${TARGET}/">${INJECTED_SCRIPT}`);
+          `<head$1><base href="/stouch/">${INJECTED_SCRIPT}`);
 
       body = html;
     } else {
