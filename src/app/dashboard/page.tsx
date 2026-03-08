@@ -243,6 +243,53 @@ const RealtimeClockCompact: React.FC = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// ASSET CARD — replaces execution count card
+// ═══════════════════════════════════════════════════════════════
+const AssetCard: React.FC<{
+  assetSymbol:string; assetName:string; mode:TradingMode; isLoading?:boolean;
+}> = ({ assetSymbol, assetName, mode, isLoading=false }) => {
+  const modeCol = mode==='ctc' ? '#a78bfa' : mode==='fastrade' ? '#34d399' : '#34d399';
+  const modeBg  = mode==='ctc' ? 'rgba(167,139,250,0.1)' : 'rgba(52,211,153,0.1)';
+  const modeBdr = mode==='ctc' ? 'rgba(167,139,250,0.25)' : 'rgba(52,211,153,0.25)';
+  const modeLabel = mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Jadwal';
+  // Derive 2-letter abbreviation for icon
+  const abbr = assetSymbol ? assetSymbol.slice(0,2).toUpperCase() : '—';
+  return (
+    <Card className="px-[14px] py-[11px]">
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] mb-[5px]" style={{ color:'rgba(255,255,255,0.35)' }}>Aset</p>
+          {isLoading ? <Skeleton width={80} height={26} variant="shimmer" /> : (
+            assetSymbol ? (
+              <div>
+                <p className="text-[18px] font-bold leading-none tracking-tight" style={{ color:'#f0faf6' }}>{assetSymbol}</p>
+                <p className="text-[10px] mt-[3px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color:'rgba(255,255,255,0.45)' }}>{assetName}</p>
+              </div>
+            ) : (
+              <p className="text-[15px] font-medium" style={{ color:'rgba(255,255,255,0.2)' }}>—</p>
+            )
+          )}
+        </div>
+        <div className="flex flex-col items-center gap-2 shrink-0">
+          {/* Asset icon circle */}
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] tracking-tight"
+            style={{ background: modeBg, border:`1.5px solid ${modeBdr}`, color: modeCol }}>
+            {abbr}
+          </div>
+          {!isLoading && (
+            <span className="text-[9px] font-bold px-1.5 py-[2px] rounded-full"
+              style={{ color:modeCol, background:modeBg, border:`1px solid ${modeBdr}` }}>
+              {modeLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+
+// ═══════════════════════════════════════════════════════════════
 // STAT CARD
 // ═══════════════════════════════════════════════════════════════
 const DOT_WAVE_DELAYS = [0,0.15,0.3,0.45,0.6,0.45,0.3,0.15];
@@ -343,11 +390,6 @@ const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ toda
   const col    = isPos ? C.cyan : C.coral;
   const colDim = isPos ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)';
   const colBdr = isPos ? 'rgba(52,211,153,0.22)'  : 'rgba(248,113,113,0.22)';
-  const [tick, setTick] = React.useState(0);
-  React.useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 2200);
-    return () => clearInterval(t);
-  }, []);
   return (
     <Card className="px-4 py-3">
       <div className="flex items-center gap-3">
@@ -363,9 +405,9 @@ const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ toda
         <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.07)' }} />
         <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
           <div className="min-w-0 overflow-hidden">
-            {isLoading ? <Skeleton width={160} height={24} variant="shimmer" /> : (
-              <p className="font-bold tracking-[-0.02em] leading-none whitespace-nowrap text-[clamp(16px,3.2vw,22px)]"
-                style={{ color: col, animation: 'fade-in 0.35s ease both' }} key={tick}>
+            {isLoading ? <Skeleton width="85%" height={24} variant="shimmer" /> : (
+              <p className="font-bold tracking-[-0.02em] leading-none overflow-hidden"
+                style={{ color: col, fontSize: 'clamp(13px,1.6vw,20px)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                 {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
               </p>
             )}
@@ -472,11 +514,10 @@ const ScheduleViewModal: React.FC<{
                   borderLeft: isActive ? `2px solid ${col}` : '2px solid transparent',
                 }}
               >
-                {/* Nomor / aktif indikator */}
-                <span className="text-[11px] w-5 text-right shrink-0 font-mono"
-                  style={{ color: isActive ? col : C.muted, fontWeight: isActive ? 700 : 400 }}>
-                  {isActive ? '▶' : String(i+1).padStart(2,'0')}
-                </span>
+                {/* Aktif indikator */}
+                {isActive && (
+                  <span className="text-[11px] w-4 text-center shrink-0 font-mono" style={{ color: col }}>▶</span>
+                )}
 
                 {/* Waktu */}
                 <span className="text-[15px] font-semibold w-[52px] shrink-0 font-mono"
@@ -605,9 +646,9 @@ const SchedulePanel: React.FC<{
                   className="schedule-item flex items-center gap-2 px-3 py-2 cursor-default transition-colors duration-150"
                   style={{ borderBottom:`1px solid ${C.bdr}`,background:isActive?(isBuy?'rgba(52,211,153,0.05)':'rgba(248,113,113,0.05)'):'transparent',borderLeft:isActive?`2px solid ${col}`:'2px solid transparent' }}
                 >
-                  <span className="text-[10px] w-[18px] text-right shrink-0" style={{ color:isActive?col:C.muted,fontWeight:isActive?600:400 }}>
-                    {isActive?'▶':String(i+1).padStart(2,'0')}
-                  </span>
+                  {isActive && (
+                    <span className="text-[10px] w-[14px] text-center shrink-0" style={{ color:col }}> ▶ </span>
+                  )}
                   <span className="text-[13px] flex-1" style={{ color:isActive?C.text:C.sub,fontWeight:isActive?600:400 }}>{s.time}</span>
                   {(!execResult||isActive)&&(
                     <span className="text-[10px] font-semibold px-[7px] py-0.5 rounded" style={{ color:col,background:isBuy?'rgba(52,211,153,0.1)':'rgba(248,113,113,0.1)' }}>
@@ -1216,6 +1257,7 @@ const OrderSettingsCard: React.FC<{
 }> = ({ settings, onChange, isDisabled=false, assets=[], onAssetSelect, mode, onModeChange, ftSettings, onFtChange, ctcSettings, onCtcChange }) => {
   const [open,setOpen]     = useState(true);
   const [mg,setMg]         = useState(settings.martingaleSetting.maxStep>0);
+  const [amtDrop,setAmtDrop] = useState(false);
   const [ftMg,setFtMg]     = useState(ftSettings.martingale.enabled);
   const [ctcMg,setCtcMg]   = useState(ctcSettings.martingale.enabled);
   const [pickerOpen,setPickerOpen] = useState<'asset'|'accountType'|'duration'|'ftTimeframe'|'ftAccountType'|'ctcAccountType'|'mode'|null>(null);
@@ -1313,36 +1355,14 @@ const OrderSettingsCard: React.FC<{
 
         {open&&(
           <div className="px-4 py-[14px]" style={{ pointerEvents:isDisabled?'none':undefined }}>
-            <SL>Pengaturan Dasar</SL>
 
-            {/* Asset + Mode Toggle */}
+            {/* Asset picker */}
             <div className="mb-2.5">
               <FL>Aset Trading</FL>
               <div className="flex gap-2 items-stretch">
                 <div className="flex-1 min-w-0">
                   <PickerButton label={assetLabel} placeholder="Pilih aset trading" disabled={isDisabled} onClick={()=>setPickerOpen('asset')} />
                 </div>
-                <div className="shrink-0 w-[100px]">
-                  <PickerButton
-                    label={mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Jadwal'}
-                    disabled={modeDisabled}
-                    onClick={()=>setPickerOpen('mode')}
-                  />
-                </div>
-              </div>
-              <div className="mt-1.5 px-2.5 py-[5px] rounded-md flex items-center gap-1.5"
-                style={{ background:mode==='ctc'?'rgba(167,139,250,0.06)':mode==='fastrade'?'rgba(52,211,153,0.05)':'rgba(255,255,255,0.03)',
-                  border:`1px solid ${mode==='ctc'?'rgba(167,139,250,0.12)':mode==='fastrade'?'rgba(52,211,153,0.1)':'rgba(255,255,255,0.05)'  }` }}>
-                <span style={{ color: mode==='ctc'?C.violet:mode==='fastrade'?C.cyan:C.muted, fontSize:11 }}>
-                  {mode==='schedule'?'📅':mode==='fastrade'?'⚡':'📋'}
-                </span>
-                <p className="text-[10px] leading-[1.4]" style={{ color: mode==='ctc'?'rgba(167,139,250,0.7)':mode==='fastrade'?'rgba(52,211,153,0.7)':C.muted }}>
-                  {mode==='schedule'
-                    ? 'Order di waktu yang ditentukan'
-                    : mode==='fastrade'
-                    ? 'Order otomatis per candle · arah tren'
-                    : 'Copy candle 1m · WIN lanjut · LOSE martingale'}
-                </p>
               </div>
             </div>
 
@@ -1390,37 +1410,70 @@ const OrderSettingsCard: React.FC<{
             {/* Amount */}
             <div className="mb-4">
               <FL>Jumlah per Order</FL>
-              <div className="relative mb-2">
-                <span className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] z-[1] pointer-events-none" style={{ color: C.muted }}>Rp</span>
-                <input
-                  type="number" className="ds-input"
-                  value={activeAmount}
-                  onChange={e=>setAmount(+e.target.value||0)}
-                  disabled={isDisabled} min="10000" step="1000"
-                  style={{ paddingLeft:34 }}
-                />
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[10000,25000,50000,100000].map(amt=>(
-                  <button key={amt} type="button"
-                    onClick={()=>setAmount(amt)}
-                    disabled={isDisabled}
-                    className={`quick-amount-btn ${activeAmount===amt?'active':''}`}
-                  >
-                    {amt>=1000000?`${amt/1000000}M`:`${amt/1000}K`}
+              <div className="relative flex gap-1.5">
+                <div className="relative flex-1">
+                  <span className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[11px] z-[1] pointer-events-none" style={{ color: C.muted }}>Rp</span>
+                  <input
+                    type="number" className="ds-input"
+                    value={activeAmount}
+                    onChange={e=>setAmount(+e.target.value||0)}
+                    disabled={isDisabled} min="10000" step="1000"
+                    style={{ paddingLeft:34 }}
+                  />
+                </div>
+                {/* Quick amount dropdown trigger */}
+                <div className="relative shrink-0">
+                  <button type="button" disabled={isDisabled}
+                    onClick={()=>setAmtDrop(v=>!v)}
+                    className="h-full px-2.5 flex items-center gap-1 rounded-md text-[11px] font-semibold transition-all duration-150"
+                    style={{
+                      background: amtDrop?'rgba(52,211,153,0.12)':'rgba(255,255,255,0.04)',
+                      border:`1px solid ${amtDrop?'rgba(52,211,153,0.4)':'rgba(255,255,255,0.1)'}`,
+                      color: amtDrop?C.cyan:C.muted,
+                      cursor:isDisabled?'not-allowed':'pointer',
+                    }}>
+                    <span>Quick</span>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ transition:'transform 0.15s', transform:amtDrop?'rotate(180deg)':'none' }}>
+                      <path d="M5 7L1 3h8z"/>
+                    </svg>
                   </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 mt-1.5">
-                {[250000,500000,1000000].map(amt=>(
-                  <button key={amt} type="button"
-                    onClick={()=>setAmount(amt)}
-                    disabled={isDisabled}
-                    className={`quick-amount-btn ${activeAmount===amt?'active':''}`}
-                  >
-                    {amt>=1000000?`${amt/1000000}M`:`${amt/1000}K`}
-                  </button>
-                ))}
+                  {amtDrop && !isDisabled && (
+                    <>
+                      <div className="fixed inset-0 z-[5]" onClick={()=>setAmtDrop(false)} />
+                      <div className="absolute right-0 mt-1 z-[10] rounded-xl overflow-hidden"
+                        style={{ background:'linear-gradient(160deg,#0d1f18 0%,#091510 100%)', border:'1px solid rgba(52,211,153,0.2)',
+                          boxShadow:'0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.06)',
+                          minWidth:160, animation:'slide-up 0.15s ease' }}>
+                        {[10000,25000,50000,100000,250000,500000,1000000].map((amt,idx)=>{
+                          const isActive = activeAmount===amt;
+                          const label = amt>=1000000?`Rp ${amt/1000000}M`:amt>=1000?`Rp ${amt/1000}K`:`Rp ${amt}`;
+                          return (
+                            <button key={amt} type="button"
+                              onClick={()=>{setAmount(amt);setAmtDrop(false);}}
+                              className="w-full flex items-center justify-between px-3 py-[9px] text-[12px] transition-colors duration-100"
+                              style={{
+                                background:isActive?'rgba(52,211,153,0.1)':'transparent',
+                                borderBottom:idx<6?'1px solid rgba(255,255,255,0.04)':'none',
+                                borderLeft:isActive?'2px solid rgba(52,211,153,0.6)':'2px solid transparent',
+                                color:isActive?C.cyan:C.sub,
+                                fontWeight:isActive?700:400,
+                                cursor:'pointer',
+                              }}
+                              onMouseEnter={e=>{if(!isActive){e.currentTarget.style.background='rgba(255,255,255,0.04)';}}}
+                              onMouseLeave={e=>{if(!isActive){e.currentTarget.style.background='transparent';}}}>
+                              <span>{label}</span>
+                              {isActive && (
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                  <path d="M1 4L4 7L9 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1444,51 +1497,103 @@ const OrderSettingsCard: React.FC<{
                 }
               </div>
               {(mode==='ctc'?ctcMg:mode==='fastrade'?ftMg:mg)&&(
-                <div className="mt-2.5 pt-2.5 grid grid-cols-2 gap-2.5" style={{ borderTop:`1px solid ${C.bdr}` }}>
-                  <div>
-                    <FL>Max Step</FL>
-                    {mode==='ctc' ? (
-                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
-                        value={ctcMaxStep}
-                        onChange={e=>setCtcMaxStep(e.target.value.replace(/[^0-9]/g,''))}
-                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(ctcMaxStep)||1)); setCtcMaxStep(String(n)); nestCtc('maxStep',n); }}
-                      />
-                    ) : mode==='fastrade' ? (
-                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
-                        value={ftMaxStep}
-                        onChange={e=>setFtMaxStep(e.target.value.replace(/[^0-9]/g,''))}
-                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(ftMaxStep)||1)); setFtMaxStep(String(n)); nestFt('maxStep',n); }}
-                      />
-                    ) : (
-                      <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
-                        value={scMaxStep}
-                        onChange={e=>setScMaxStep(e.target.value.replace(/[^0-9]/g,''))}
-                        onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(scMaxStep)||1)); setScMaxStep(String(n)); nest('martingaleSetting','maxStep',n); }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <FL>Multiplier</FL>
-                    {mode==='ctc' ? (
-                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
-                        value={ctcMult}
-                        onChange={e=>setCtcMult(e.target.value.replace(/[^0-9.]/g,''))}
-                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(ctcMult)||1)); const s=String(Math.round(n*10)/10); setCtcMult(s); nestCtc('multiplier',parseFloat(s)); }}
-                      />
-                    ) : mode==='fastrade' ? (
-                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
-                        value={ftMult}
-                        onChange={e=>setFtMult(e.target.value.replace(/[^0-9.]/g,''))}
-                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(ftMult)||1)); const s=String(Math.round(n*10)/10); setFtMult(s); nestFt('multiplier',parseFloat(s)); }}
-                      />
-                    ) : (
-                      <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
-                        value={scMult}
-                        onChange={e=>setScMult(e.target.value.replace(/[^0-9.]/g,''))}
-                        onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(scMult)||1)); const s=String(Math.round(n*10)/10); setScMult(s); nest('martingaleSetting','multiplier',parseFloat(s)); }}
-                      />
-                    )}
-                  </div>
+                <div className="mt-2.5 pt-2.5" style={{ borderTop:`1px solid ${C.bdr}` }}>
+                  {/* Max Step quick-select */}
+                  <FL>Max Step</FL>
+                  {(() => {
+                    const curStep = mode==='ctc'?parseInt(ctcMaxStep)||1:mode==='fastrade'?parseInt(ftMaxStep)||1:parseInt(scMaxStep)||1;
+                    const setStep = (n:number) => {
+                      if(mode==='ctc'){setCtcMaxStep(String(n));nestCtc('maxStep',n);}
+                      else if(mode==='fastrade'){setFtMaxStep(String(n));nestFt('maxStep',n);}
+                      else{setScMaxStep(String(n));nest('martingaleSetting','maxStep',n);}
+                    };
+                    const customStepVal = mode==='ctc'?ctcMaxStep:mode==='fastrade'?ftMaxStep:scMaxStep;
+                    const setCustomStep = mode==='ctc'?setCtcMaxStep:mode==='fastrade'?setFtMaxStep:setScMaxStep;
+                    const isCustom = ![1,2,3,4,5].includes(curStep);
+                    return (
+                      <div className="mb-2.5">
+                        <div className="flex gap-1 mb-1.5 flex-wrap">
+                          {[1,2,3,4,5].map(k=>(
+                            <button key={k} type="button" disabled={isDisabled}
+                              onClick={()=>setStep(k)}
+                              className="flex-1 py-[5px] text-[11px] font-bold rounded-lg transition-all duration-100"
+                              style={{
+                                background: curStep===k?'rgba(52,211,153,0.15)':'rgba(255,255,255,0.04)',
+                                border:`1px solid ${curStep===k?'rgba(52,211,153,0.5)':'rgba(255,255,255,0.08)'}`,
+                                color: curStep===k?C.cyan:'rgba(255,255,255,0.5)',
+                                cursor:isDisabled?'not-allowed':'pointer',
+                              }}>K{k}</button>
+                          ))}
+                          <button type="button" disabled={isDisabled}
+                            onClick={()=>setStep(isCustom?curStep:6)}
+                            className="flex-1 py-[5px] text-[11px] font-bold rounded-lg transition-all duration-100"
+                            style={{
+                              background: isCustom?'rgba(251,191,36,0.12)':'rgba(255,255,255,0.04)',
+                              border:`1px solid ${isCustom?'rgba(251,191,36,0.4)':'rgba(255,255,255,0.08)'}`,
+                              color: isCustom?C.amber:'rgba(255,255,255,0.5)',
+                              cursor:isDisabled?'not-allowed':'pointer',
+                            }}>Custom</button>
+                        </div>
+                        {isCustom && (
+                          <input type="text" inputMode="numeric" className="ds-input" disabled={isDisabled}
+                            placeholder="Masukkan step (1-10)"
+                            value={customStepVal}
+                            onChange={e=>setCustomStep(e.target.value.replace(/[^0-9]/g,''))}
+                            onBlur={()=>{ const n=Math.min(10,Math.max(1,parseInt(customStepVal)||1)); setCustomStep(String(n)); setStep(n); }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {/* Multiplier quick-select */}
+                  <FL>Multiplier</FL>
+                  {(() => {
+                    const curMult = mode==='ctc'?parseFloat(ctcMult)||2:mode==='fastrade'?parseFloat(ftMult)||2:parseFloat(scMult)||2;
+                    const setMult = (n:number) => {
+                      const s=String(n);
+                      if(mode==='ctc'){setCtcMult(s);nestCtc('multiplier',n);}
+                      else if(mode==='fastrade'){setFtMult(s);nestFt('multiplier',n);}
+                      else{setScMult(s);nest('martingaleSetting','multiplier',n);}
+                    };
+                    const customMultVal = mode==='ctc'?ctcMult:mode==='fastrade'?ftMult:scMult;
+                    const setCustomMult = mode==='ctc'?setCtcMult:mode==='fastrade'?setFtMult:setScMult;
+                    const quickMultipliers = [1.5,2,2.5,3,5];
+                    const isCustomMult = !quickMultipliers.includes(curMult);
+                    return (
+                      <div>
+                        <div className="flex gap-1 mb-1.5 flex-wrap">
+                          {quickMultipliers.map(m=>(
+                            <button key={m} type="button" disabled={isDisabled}
+                              onClick={()=>setMult(m)}
+                              className="flex-1 py-[5px] text-[11px] font-bold rounded-lg transition-all duration-100"
+                              style={{
+                                background: curMult===m?'rgba(52,211,153,0.15)':'rgba(255,255,255,0.04)',
+                                border:`1px solid ${curMult===m?'rgba(52,211,153,0.5)':'rgba(255,255,255,0.08)'}`,
+                                color: curMult===m?C.cyan:'rgba(255,255,255,0.5)',
+                                cursor:isDisabled?'not-allowed':'pointer',
+                              }}>{m}x</button>
+                          ))}
+                          <button type="button" disabled={isDisabled}
+                            onClick={()=>isCustomMult||setCustomMult(String(curMult||2))}
+                            className="flex-1 py-[5px] text-[11px] font-bold rounded-lg transition-all duration-100"
+                            style={{
+                              background: isCustomMult?'rgba(251,191,36,0.12)':'rgba(255,255,255,0.04)',
+                              border:`1px solid ${isCustomMult?'rgba(251,191,36,0.4)':'rgba(255,255,255,0.08)'}`,
+                              color: isCustomMult?C.amber:'rgba(255,255,255,0.5)',
+                              cursor:isDisabled?'not-allowed':'pointer',
+                            }}>Custom</button>
+                        </div>
+                        {isCustomMult && (
+                          <input type="text" inputMode="decimal" className="ds-input" disabled={isDisabled}
+                            placeholder="Multiplier (1-5)"
+                            value={customMultVal}
+                            onChange={e=>setCustomMult(e.target.value.replace(/[^0-9.]/g,''))}
+                            onBlur={()=>{ const n=Math.min(5,Math.max(1,parseFloat(customMultVal)||1)); const s=String(Math.round(n*10)/10); setCustomMult(s); setMult(parseFloat(s)); }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -2035,17 +2140,174 @@ export default function DashboardPage() {
   const g  = deviceType==='desktop'?20:deviceType==='tablet'?18:16;
   const px = 16;
 
-  // Render current session panel based on mode
-  const renderSessionPanel = (fillHeight=false) => {
-    if(tradingMode==='ctc') return <CtcSessionPanel session={ctcSession} isLoading={ctcLoading} fillHeight={fillHeight} />;
-    if(tradingMode==='fastrade') return <FastTradeSessionPanel session={ftSession} isLoading={ftLoading} fillHeight={fillHeight} />;
-    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} isRunning={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} fillHeight={fillHeight} />;
-  };
-  const renderSessionPanelTablet = () => {
-    if(tradingMode==='ctc') return <CtcSessionPanel session={ctcSession} isLoading={ctcLoading} />;
-    if(tradingMode==='fastrade') return <FastTradeSessionPanel session={ftSession} isLoading={ftLoading} />;
-    return <SchedulePanel schedules={settings.schedules} executions={executions} onOpenModal={()=>setIsModalOpen(true)} isDisabled={botStatus.isRunning&&!botStatus.isPaused} isRunning={botStatus.isRunning&&!botStatus.isPaused} maxCount={10} tabletMaxItems={10} />;
-  };
+
+// ═══════════════════════════════════════════════════════════════
+// MODE SESSION PANEL — mode tabs + session content in one box
+// ═══════════════════════════════════════════════════════════════
+const ModeSessionPanel: React.FC<{
+  mode: TradingMode;
+  onModeChange: (m: TradingMode) => void;
+  modeDisabled: boolean;
+  // schedule props
+  schedules: {time:string;trend:'buy'|'sell'}[];
+  executions: {scheduledTime:string;result:'win'|'loss'|'draw'}[];
+  onOpenModal: () => void;
+  botRunning: boolean;
+  // fastrade props
+  ftSession: FastTradeSession|null;
+  ftLoading: boolean;
+  // ctc props
+  ctcSession: CtcSession|null;
+  ctcLoading: boolean;
+  // layout
+  fillHeight?: boolean;
+  tabletMaxItems?: number;
+}> = ({
+  mode, onModeChange, modeDisabled,
+  schedules, executions, onOpenModal, botRunning,
+  ftSession, ftLoading, ctcSession, ctcLoading,
+  fillHeight=false, tabletMaxItems,
+}) => {
+  const modeAccent = mode==='ctc' ? C.violet : C.cyan;
+
+  const MODES: {v: TradingMode; label: string; icon: React.ReactNode; accent: string; desc: string}[] = [
+    {
+      v: 'schedule',
+      label: 'Jadwal',
+      icon: <Calendar className="w-3 h-3" />,
+      accent: C.cyan,
+      desc: 'Order di waktu terjadwal',
+    },
+    {
+      v: 'fastrade',
+      label: 'FastTrade',
+      icon: <Zap className="w-3 h-3" />,
+      accent: C.cyan,
+      desc: 'Auto per candle · arah tren',
+    },
+    {
+      v: 'ctc',
+      label: 'CTC',
+      icon: <Copy className="w-3 h-3" />,
+      accent: C.violet,
+      desc: 'Copy candle 1m · martingale',
+    },
+  ];
+
+  const [modeDropOpen, setModeDropOpen] = React.useState(false);
+  const activeMode = MODES.find(m => m.v === mode)!;
+  const modeAccentColor = mode === 'ctc' ? C.violet : C.cyan;
+
+  return (
+    <div className={`flex flex-col ${fillHeight ? 'h-full flex-1' : ''}`} style={{ gap: 6 }}>
+      {/* Mode Dropdown */}
+      <div className="shrink-0 relative">
+        <button
+          type="button"
+          disabled={modeDisabled}
+          onClick={() => !modeDisabled && setModeDropOpen(v => !v)}
+          className="w-full flex items-center justify-between px-3 py-[8px] rounded-xl transition-all duration-150 select-none"
+          style={{
+            background: modeDropOpen ? `${modeAccentColor}14` : 'rgba(0,0,0,0.4)',
+            border: `1px solid ${modeDropOpen ? modeAccentColor + '40' : 'rgba(255,255,255,0.08)'}`,
+            cursor: modeDisabled ? 'not-allowed' : 'pointer',
+            opacity: modeDisabled ? 0.7 : 1,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="flex items-center justify-center w-5 h-5 rounded-md"
+              style={{ background: `${modeAccentColor}18`, color: modeAccentColor }}>
+              {activeMode.icon}
+            </span>
+            <span className="text-[12px] font-semibold" style={{ color: modeAccentColor }}>
+              {activeMode.label}
+            </span>
+
+          </div>
+          <div className="flex items-center gap-1.5">
+            {modeDisabled && (
+              <span className="text-[9px] px-1.5 py-[1px] rounded-full font-semibold"
+                style={{ color: modeAccentColor, background: `${modeAccentColor}14`, border: `1px solid ${modeAccentColor}30` }}>
+                Aktif
+              </span>
+            )}
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor"
+              style={{ color: C.muted, transition: 'transform 0.2s', transform: modeDropOpen ? 'rotate(180deg)' : 'none' }}>
+              <path d="M5.5 7.5L1.5 3.5h8z"/>
+            </svg>
+          </div>
+        </button>
+
+        {/* Dropdown menu */}
+        {modeDropOpen && !modeDisabled && (
+          <>
+            <div className="fixed inset-0 z-[9]" onClick={() => setModeDropOpen(false)} />
+            <div className="absolute left-0 right-0 mt-1 z-[10] rounded-xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(160deg, #0d1f18 0%, #091510 100%)',
+                border: '1px solid rgba(52,211,153,0.18)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(52,211,153,0.05)',
+                animation: 'slide-up 0.15s ease',
+              }}>
+              {MODES.map(({ v, label, icon, accent, desc }, idx) => {
+                const isActive = mode === v;
+                return (
+                  <button key={v} type="button"
+                    onClick={() => { onModeChange(v); setModeDropOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-[11px] transition-colors duration-100"
+                    style={{
+                      background: isActive ? `${accent}10` : 'transparent',
+                      borderBottom: idx < MODES.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                      borderLeft: isActive ? `2px solid ${accent}` : '2px solid transparent',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg shrink-0"
+                      style={{ background: `${accent}15`, color: accent }}>
+                      {icon}
+                    </span>
+                    <span className="flex-1 text-[12px] font-semibold text-left"
+                      style={{ color: isActive ? accent : C.sub }}>{label}</span>
+                    {isActive && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none" className="shrink-0">
+                        <path d="M1 4L4 7L9 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Session content — all 3 always mounted, toggled via display:none to prevent remount flicker */}
+      <div className={`flex-1 flex flex-col min-h-0 ${fillHeight ? 'overflow-hidden' : ''}`}>
+        <div style={{ display: mode === 'schedule' ? 'flex' : 'none', flexDirection:'column', flex:1, minHeight:0 }}>
+          <SchedulePanel
+            schedules={schedules}
+            executions={executions}
+            onOpenModal={onOpenModal}
+            isDisabled={botRunning}
+            isRunning={botRunning}
+            maxCount={10}
+            fillHeight={fillHeight}
+            tabletMaxItems={tabletMaxItems}
+          />
+        </div>
+        <div style={{ display: mode === 'fastrade' ? 'flex' : 'none', flexDirection:'column', flex:1, minHeight:0 }}>
+          <FastTradeSessionPanel session={ftSession} isLoading={ftLoading} fillHeight={fillHeight} />
+        </div>
+        <div style={{ display: mode === 'ctc' ? 'flex' : 'none', flexDirection:'column', flex:1, minHeight:0 }}>
+          <CtcSessionPanel session={ctcSession} isLoading={ctcLoading} fillHeight={fillHeight} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
   const renderControlCard = () => {
     if(tradingMode==='ctc') return <CtcControlCard session={ctcSession} onStart={handleCtcStart} onStop={handleCtcStop} isLoading={isActionLoad} canStart={canStartCtc} errorMessage={error||undefined} />;
     if(tradingMode==='fastrade') return <FastTradeControlCard session={ftSession} onStart={handleFtStart} onStop={handleFtStop} isLoading={isActionLoad} canStart={canStartFt} errorMessage={error||undefined} />;
@@ -2094,7 +2356,7 @@ export default function DashboardPage() {
         {deviceType==='desktop'&&(
           <div className="pt-6 flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-4" style={{ gap: g }}>
-              <StatCard title="Eksekusi Hari Ini" value={todayStats.executions} icon={<Activity className="w-[15px] h-[15px]" />} isLoading={isLoading} showDots />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
@@ -2112,7 +2374,13 @@ export default function DashboardPage() {
                 )}
               </Card>
               <div className="flex flex-col" style={{ gap: g }}>
-                {renderSessionPanel()}
+                <ModeSessionPanel
+                  mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                  schedules={settings.schedules} executions={executions}
+                  onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
+                  ftSession={ftSession} ftLoading={ftLoading}
+                  ctcSession={ctcSession} ctcLoading={ctcLoading}
+                />
                 <OrderSettingsCard
                   settings={settings} onChange={setSettings}
                   isDisabled={isBotLocked}
@@ -2131,14 +2399,21 @@ export default function DashboardPage() {
         {deviceType==='tablet'&&(
           <div className="flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-3" style={{ gap: g }}>
-              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-[13px] h-[13px]" />} isLoading={isLoading} showDots />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
             <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
             <div className="grid grid-cols-2 items-stretch" style={{ gap: g }}>
               <Card className="p-3"><ChartCard assetSymbol={settings.assetSymbol} height={220} /></Card>
-              {renderSessionPanelTablet()}
+              <ModeSessionPanel
+                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                schedules={settings.schedules} executions={executions}
+                onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
+                ftSession={ftSession} ftLoading={ftLoading}
+                ctcSession={ctcSession} ctcLoading={ctcLoading}
+                tabletMaxItems={10}
+              />
             </div>
             <div className="grid grid-cols-2" style={{ gap: g }}>
               <OrderSettingsCard
@@ -2170,28 +2445,28 @@ export default function DashboardPage() {
                         <span className="text-[9px] whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: C.muted }}>{settings.assetSymbol}</span>
                       </div>
                     )}
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px]" style={{ color: C.muted }}>Mode</span>
-                        <span className="flex items-center gap-1 text-[9px] font-semibold" style={{ color: tradingMode==='ctc'?C.violet:tradingMode==='fastrade'?C.cyan:C.sub }}>
-                          {tradingMode==='ctc'?<Copy className="w-2.5 h-2.5"/>:tradingMode==='fastrade'?<Zap className="w-2.5 h-2.5"/>:<Calendar className="w-2.5 h-2.5"/>}
-                          {tradingMode==='ctc'?'CTC':tradingMode==='fastrade'?'FastTrade':'Jadwal'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-[9px]" style={{ color: C.muted }}>Status</span>
-                        <span className="text-[9px] font-semibold" style={{ color:isBotLocked?(tradingMode==='ctc'?C.violet:C.cyan):C.muted }}>
-                          {isBotLocked?'Aktif':'Off'}
-                        </span>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px]" style={{ color: C.muted }}>Status</span>
+                      <span className="flex items-center gap-1 text-[9px] font-semibold"
+                        style={{ color: isBotLocked?(tradingMode==='ctc'?C.violet:C.cyan):C.muted }}>
+                        <span className="inline-block w-[5px] h-[5px] rounded-full"
+                          style={{ background: isBotLocked?(tradingMode==='ctc'?C.violet:C.cyan):'rgba(255,255,255,0.2)' }} />
+                        {isBotLocked ? 'Aktif' : 'Off'}
+                      </span>
                     </div>
                   </div>
                 </Card>
               </div>
-              {renderSessionPanel()}
+              <ModeSessionPanel
+                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                schedules={settings.schedules} executions={executions}
+                onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
+                ftSession={ftSession} ftLoading={ftLoading}
+                ctcSession={ctcSession} ctcLoading={ctcLoading}
+              />
             </div>
             <div className="grid grid-cols-2" style={{ gap: g }}>
-              <StatCard title="Eksekusi" value={todayStats.executions} icon={<Activity className="w-3 h-3" />} isLoading={isLoading} showDots />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
             </div>
             <OrderSettingsCard

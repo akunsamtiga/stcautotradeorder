@@ -38,6 +38,7 @@ const injectProfessionalStyles = () => {
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
+    @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -686,6 +687,37 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const { auth: fbAuth } = await import('@/lib/firebase');
+      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+      if (!fbAuth) throw new Error('Firebase not initialized');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(fbAuth, provider);
+      const idToken = await result.user.getIdToken();
+      const response = await api.googleLogin({
+        idToken,
+        displayName: result.user.displayName ?? '',
+        photoURL: result.user.photoURL ?? '',
+      });
+      if (!response.data) throw new Error('Invalid response from server');
+      const { user, token } = response.data;
+      if (!user || !token) throw new Error('Invalid credentials received');
+      setAuth(user, token);
+      router.push('/dashboard');
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        setError(err.response?.data?.message || err.message || 'Google Sign-In failed');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -717,6 +749,48 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
           {error}
         </div>
       )}
+
+      {/* Google Sign-In */}
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={googleLoading || isLoading}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.03)',
+          borderColor: 'rgba(192,192,192,0.18)',
+          color: '#E5E5E5',
+          fontSize: '14px',
+          fontWeight: 500,
+          cursor: (googleLoading || isLoading) ? 'wait' : 'pointer',
+          opacity: isLoading ? 0.5 : 1,
+        }}
+        onMouseEnter={e => { if (!googleLoading && !isLoading) (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.05)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(192,192,192,0.18)'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'; }}
+      >
+        {googleLoading ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{ animation: 'spin 0.8s linear infinite' }}>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" fillRule="evenodd">
+              <path d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+              <path d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1023-1.17.2822-1.71V4.9582H.9574C.3477 6.1732 0 7.5482 0 9s.3477 2.8268.9574 4.0418L3.964 10.71z" fill="#FBBC05"/>
+              <path d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4636.8918 11.4264 0 9 0 5.4818 0 2.4382 2.0168.9574 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z" fill="#EA4335"/>
+            </g>
+          </svg>
+        )}
+        <span>Masuk dengan Google</span>
+      </button>
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(192,192,192,0.1)' }} />
+        <span style={{ fontSize: '11px', color: '#4B5563', letterSpacing: '0.08em' }}>ATAU</span>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(192,192,192,0.1)' }} />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -830,9 +904,40 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleGoogle = async () => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const { auth: fbAuth } = await import('@/lib/firebase');
+      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+      if (!fbAuth) throw new Error('Firebase not initialized');
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(fbAuth, provider);
+      const idToken = await result.user.getIdToken();
+      const response = await api.googleLogin({
+        idToken,
+        displayName: result.user.displayName ?? '',
+        photoURL: result.user.photoURL ?? '',
+      });
+      if (!response.data) throw new Error('Invalid response from server');
+      const { user, token } = response.data;
+      if (!user || !token) throw new Error('Invalid credentials received');
+      setAuth(user, token);
+      router.push('/dashboard');
+    } catch (err: any) {
+      if (err?.code !== 'auth/popup-closed-by-user' && err?.code !== 'auth/cancelled-popup-request') {
+        setError(err.response?.data?.message || err.message || 'Google Sign-In failed');
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -865,6 +970,48 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           {error}
         </div>
       )}
+
+      {/* Google Sign-In */}
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={googleLoading || isLoading}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.03)',
+          borderColor: 'rgba(192,192,192,0.18)',
+          color: '#E5E5E5',
+          fontSize: '14px',
+          fontWeight: 500,
+          cursor: (googleLoading || isLoading) ? 'wait' : 'pointer',
+          opacity: isLoading ? 0.5 : 1,
+        }}
+        onMouseEnter={e => { if (!googleLoading && !isLoading) (e.currentTarget as HTMLButtonElement).style.borderColor = '#10B981'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(16,185,129,0.05)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(192,192,192,0.18)'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.03)'; }}
+      >
+        {googleLoading ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" style={{ animation: 'spin 0.8s linear infinite' }}>
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        ) : (
+          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none" fillRule="evenodd">
+              <path d="M17.64 9.2045c0-.6381-.0573-1.2518-.1636-1.8409H9v3.4814h4.8436c-.2086 1.125-.8427 2.0782-1.7959 2.7164v2.2581h2.9087c1.7018-1.5668 2.6836-3.874 2.6836-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.4673-.806 5.9564-2.1805l-2.9087-2.2581c-.8059.54-1.8368.859-3.0477.859-2.344 0-4.3282-1.5831-5.036-3.7104H.9574v2.3318C2.4382 15.9832 5.4818 18 9 18z" fill="#34A853"/>
+              <path d="M3.964 10.71c-.18-.54-.2822-1.1168-.2822-1.71s.1023-1.17.2822-1.71V4.9582H.9574C.3477 6.1732 0 7.5482 0 9s.3477 2.8268.9574 4.0418L3.964 10.71z" fill="#FBBC05"/>
+              <path d="M9 3.5795c1.3214 0 2.5077.4541 3.4405 1.346l2.5813-2.5814C13.4636.8918 11.4264 0 9 0 5.4818 0 2.4382 2.0168.9574 4.9582L3.964 7.29C4.6718 5.1627 6.656 3.5795 9 3.5795z" fill="#EA4335"/>
+            </g>
+          </svg>
+        )}
+        <span>Daftar dengan Google</span>
+      </button>
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(192,192,192,0.1)' }} />
+        <span style={{ fontSize: '11px', color: '#4B5563', letterSpacing: '0.08em' }}>ATAU</span>
+        <div style={{ flex: 1, height: '1px', background: 'rgba(192,192,192,0.1)' }} />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

@@ -81,6 +81,17 @@ class ApiClient {
     return data;
   }
 
+  async googleLogin(payload: {
+    idToken: string;
+    displayName?: string;
+    photoURL?: string;
+    referralCode?: string;
+    affiliateCode?: string;
+  }) {
+    const { data } = await this.client.post('/auth/google', payload);
+    return data;
+  }
+
   async verifyEmail(token: string) {
     const { data } = await this.client.post('/auth/verify-email', { token });
     return data;
