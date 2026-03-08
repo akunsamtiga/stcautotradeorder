@@ -1,18 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 
 export default function WebViewPage() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Add dashboard-page class so global styles apply correctly
     document.documentElement.classList.add('dashboard-page');
-    return () => {
-      document.documentElement.classList.remove('dashboard-page');
-    };
+    return () => document.documentElement.classList.remove('dashboard-page');
   }, []);
 
   return (
@@ -26,7 +22,6 @@ export default function WebViewPage() {
         paddingBottom: 'calc(64px + env(safe-area-inset-bottom))',
       }}
     >
-      {/* Loading overlay */}
       {loading && (
         <div
           style={{
@@ -41,7 +36,6 @@ export default function WebViewPage() {
             gap: 16,
           }}
         >
-          {/* Spinning ring */}
           <div
             style={{
               width: 44,
@@ -66,11 +60,11 @@ export default function WebViewPage() {
         </div>
       )}
 
-      {/* WebView iframe */}
+      {/* No sandbox attr — proxy strips X-Frame-Options/CSP server-side */}
       <iframe
-        ref={iframeRef}
         src="/api/proxy?path=/"
         onLoad={() => setLoading(false)}
+        allow="fullscreen; payment; camera; microphone"
         style={{
           flex: 1,
           width: '100%',
@@ -78,8 +72,6 @@ export default function WebViewPage() {
           background: '#000',
           display: 'block',
         }}
-        allow="fullscreen; payment; camera; microphone"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
       />
 
       <BottomNav />
