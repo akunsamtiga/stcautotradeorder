@@ -2,12 +2,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SquaresFour, ClockCounterClockwise, User, Globe } from '@phosphor-icons/react';
+import { SquaresFour, ClockCounterClockwise, User } from '@phosphor-icons/react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', Icon: SquaresFour },
   { href: '/history',   label: 'History',   Icon: ClockCounterClockwise },
-  { href: '/webview',   label: 'Trade',     Icon: Globe },
   { href: '/profile',   label: 'Profil',    Icon: User },
 ];
 
@@ -88,6 +87,8 @@ export const BottomNav = () => {
               >
                 {label}
               </span>
+
+
             </Link>
           );
         })}
