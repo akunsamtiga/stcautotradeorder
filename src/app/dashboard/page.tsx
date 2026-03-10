@@ -251,7 +251,7 @@ const AssetCard: React.FC<{
   const modeCol = mode==='ctc' ? '#a78bfa' : mode==='fastrade' ? '#34d399' : '#34d399';
   const modeBg  = mode==='ctc' ? 'rgba(167,139,250,0.1)' : 'rgba(52,211,153,0.1)';
   const modeBdr = mode==='ctc' ? 'rgba(167,139,250,0.25)' : 'rgba(52,211,153,0.25)';
-  const modeLabel = mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Jadwal';
+  const modeLabel = mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Signal';
   // Derive 2-letter abbreviation for icon
   const abbr = assetSymbol ? assetSymbol.slice(0,2).toUpperCase() : '—';
   return (
@@ -457,8 +457,8 @@ const ScheduleViewModal: React.FC<{
         {/* Header */}
         <div className="flex items-center justify-between px-[18px] py-[14px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
           <div>
-            <h2 className="text-[15px] font-semibold mb-[2px]" style={{ color: C.text }}>Jadwal Hari Ini</h2>
-            <p className="text-[11px]" style={{ color: C.muted }}>{schedules.length} jadwal · {done} sudah eksekusi</p>
+            <h2 className="text-[15px] font-semibold mb-[2px]" style={{ color: C.text }}>Signal Hari Ini</h2>
+            <p className="text-[11px]" style={{ color: C.muted }}>{schedules.length} signal · {done} sudah eksekusi</p>
           </div>
           <button onClick={onClose} className="w-[30px] h-[30px] flex items-center justify-center rounded-md cursor-pointer"
             style={{ background:C.faint, border:`1px solid ${C.bdr}`, color:C.sub }}>
@@ -623,7 +623,7 @@ const SchedulePanel: React.FC<{
       />
       <Card className={`flex flex-col ${fillHeight?'h-full flex-1':''}`}>
         <div className="flex items-center justify-between px-3.5 py-[11px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
-          <span className="text-xs font-semibold" style={{ color: C.sub }}>Jadwal</span>
+          <span className="text-xs font-semibold" style={{ color: C.sub }}>Signal</span>
           {schedules.length>0&&activeIdx>=0&&(
             <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border" style={{ color:C.cyan,background:'rgba(52,211,153,0.08)',borderColor:'rgba(52,211,153,0.2)' }}>
               <span className="inline-block w-[5px] h-[5px] rounded-full" style={{ background: C.cyan }} />
@@ -634,7 +634,7 @@ const SchedulePanel: React.FC<{
         {schedules.length===0?(
           <div className="flex-1 flex flex-col items-center justify-center p-5 gap-2">
             <Calendar className="w-7 h-7" strokeWidth={1.5} style={{ color: C.muted }} />
-            <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada jadwal</p>
+            <p className="text-xs text-center" style={{ color: C.muted }}>Belum ada signal</p>
           </div>
         ):(
           <div ref={listRef} className="overflow-y-auto" style={{ maxHeight:tabletMaxItems?tabletMaxItems*36:fillHeight?'none':200 }}>
@@ -1055,7 +1055,7 @@ const BulkScheduleModal: React.FC<{
       >
         <div className="flex items-center justify-between px-[18px] py-[15px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
           <div>
-            <h2 className="text-[15px] font-semibold mb-[3px]" style={{ color: C.text }}>Input Jadwal</h2>
+            <h2 className="text-[15px] font-semibold mb-[3px]" style={{ color: C.text }}>Input Signal</h2>
             <p className="text-[11px]" style={{ color: C.muted }}>Format: <span className="font-medium" style={{ color: C.cyan }}>09:30 buy</span> · satu per baris</p>
           </div>
           <button onClick={onClose} className="w-[30px] h-[30px] flex items-center justify-center rounded-md cursor-pointer" style={{ background:C.faint,border:`1px solid ${C.bdr}`,color:C.sub }}>
@@ -1066,8 +1066,8 @@ const BulkScheduleModal: React.FC<{
           {schedules.length>0&&(
             <div className="mb-[14px]">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-medium" style={{ color: C.sub }}>{schedules.length} jadwal aktif</span>
-                <button onClick={()=>window.confirm('Hapus semua jadwal?')&&onClearAll()} className="flex items-center gap-1 text-[11px] font-medium opacity-80 bg-transparent border-none cursor-pointer py-[3px]" style={{ color: C.coral }}>
+                <span className="text-xs font-medium" style={{ color: C.sub }}>{schedules.length} signal aktif</span>
+                <button onClick={()=>window.confirm('Hapus semua signal?')&&onClearAll()} className="flex items-center gap-1 text-[11px] font-medium opacity-80 bg-transparent border-none cursor-pointer py-[3px]" style={{ color: C.coral }}>
                   <Trash2 className="w-[10px] h-[10px]" /> Hapus semua
                 </button>
               </div>
@@ -1320,7 +1320,7 @@ const OrderSettingsCard: React.FC<{
     <>
       <PickerModal isOpen={pickerOpen==='asset'} onClose={()=>setPickerOpen(null)} title="Pilih Aset" options={assetOptions} value={settings.assetSymbol} searchable onSelect={handleAssetSelect} />
       <PickerModal isOpen={pickerOpen==='mode'} onClose={()=>setPickerOpen(null)} title="Pilih Mode Trading" options={[
-        {value:'schedule', label:'Jadwal', sub:'Eksekusi order di waktu yang ditentukan'},
+        {value:'schedule', label:'Signal', sub:'Eksekusi order di waktu yang ditentukan'},
         {value:'fastrade', label:'FastTrade', sub:'Order otomatis per candle berdasarkan arah tren'},
         {value:'ctc',      label:'CTC (Copy The Candle)', sub:'Copy arah candle 1m — WIN lanjut · LOSE martingale'},
       ]} value={mode} onSelect={v=>{ onModeChange(v as TradingMode); }} />
@@ -1346,7 +1346,7 @@ const OrderSettingsCard: React.FC<{
             <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
               style={{ background: mode==='ctc'?'rgba(167,139,250,0.12)':mode==='fastrade'?'rgba(52,211,153,0.12)':'rgba(255,255,255,0.04)', color: mode==='ctc'?C.violet:mode==='fastrade'?C.cyan:C.muted, border:`1px solid ${mode==='ctc'?'rgba(167,139,250,0.25)':mode==='fastrade'?'rgba(52,211,153,0.25)':C.bdr}` }}
             >
-              {mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Jadwal'}
+              {mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Signal'}
             </span>
             {settings.assetSymbol&&<span className="text-[11px]" style={{ color:C.muted }}>{settings.assetSymbol}</span>}
             {open?<ChevronUp className="w-[13px] h-[13px]" style={{ color:C.muted }}/>:<ChevronDown className="w-[13px] h-[13px]" style={{ color:C.muted }}/>}
@@ -1690,7 +1690,7 @@ const BotControlCard: React.FC<{
             <Calendar className="w-[13px] h-[13px]" style={{ color: C.cyan }} />
           </div>
           <div>
-            <span className="block text-[13px] font-semibold leading-none mb-[3px]" style={{ color: C.text }}>Bot Jadwal</span>
+            <span className="block text-[13px] font-semibold leading-none mb-[3px]" style={{ color: C.text }}>Bot Signal</span>
             <span className="text-[10px]" style={{ color: C.muted }}>Eksekusi terjadwal</span>
           </div>
         </div>
@@ -1704,7 +1704,7 @@ const BotControlCard: React.FC<{
           {/* Stats row */}
           <div className="flex gap-2 mb-3">
             <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Jadwal</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Signal</span>
               <span className="text-[22px] font-bold leading-none" style={{ color:C.text }}>{status.activeSchedules}</span>
             </div>
             <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:`1px solid ${profitPos?'rgba(52,211,153,0.12)'  :'rgba(248,113,113,0.12)'}` }}>
@@ -1732,7 +1732,7 @@ const BotControlCard: React.FC<{
             {status.isRunning&&<CtrlBtn onClick={onStop} loading={isLoading} accent={C.coral} label="Stop" icon={<StopCircle className="w-3.5 h-3.5" />} />}
           </div>
           {!canStart&&!errorMessage&&(
-            <p className="mt-2.5 text-[10px] text-center" style={{ color:C.muted }}>Pilih aset + tambah jadwal untuk memulai</p>
+            <p className="mt-2.5 text-[10px] text-center" style={{ color:C.muted }}>Pilih aset + tambah signal untuk memulai</p>
           )}
         </div>
       )}
@@ -2173,7 +2173,7 @@ const ModeSessionPanel: React.FC<{
   const MODES: {v: TradingMode; label: string; icon: React.ReactNode; accent: string; desc: string}[] = [
     {
       v: 'schedule',
-      label: 'Jadwal',
+      label: 'Signal',
       icon: <Calendar className="w-3 h-3" />,
       accent: C.cyan,
       desc: 'Order di waktu terjadwal',
