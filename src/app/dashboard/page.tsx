@@ -18,8 +18,8 @@ import {
 // ═══════════════════════════════════════════════════════════════
 const C = {
   bg:    '#050807',
-  card:  '#111915',
-  card2: '#141f1a',
+  card:  '#172219',
+  card2: '#1a2c1f',
   bdr:   'rgba(255,255,255,0.08)',
   bdrAct:'rgba(52,211,153,0.3)',
   cyan:  '#34d399',
@@ -147,15 +147,22 @@ const Skeleton: React.FC<{
   />
 );
 
-const Card: React.FC<{ children:React.ReactNode; style?:React.CSSProperties; className?:string }> =
-({ children, style, className='' }) => (
-  <div
-    className={`ds-card relative overflow-hidden rounded-[10px] ${className}`}
-    style={{ boxShadow: '0 4px 18px rgba(52,211,153,0.05), 0 2px 8px rgba(0,0,0,0.3)', ...style }}
-  >
-    {children}
-  </div>
-);
+const Card: React.FC<{ children:React.ReactNode; style?:React.CSSProperties; className?:string; flashResult?:'win'|'lose'|null }> =
+({ children, style, className='', flashResult }) => {
+  const animStyle: React.CSSProperties = flashResult === 'win'
+    ? { animation: 'win-flash 2s ease forwards' }
+    : flashResult === 'lose'
+    ? { animation: 'lose-flash 2s ease forwards' }
+    : { boxShadow: '0 4px 18px rgba(52,211,153,0.05), 0 2px 8px rgba(0,0,0,0.3)' };
+  return (
+    <div
+      className={`ds-card relative overflow-hidden rounded-[10px] ${className}`}
+      style={{ transition: 'box-shadow 0.3s ease', ...animStyle, ...style }}
+    >
+      {children}
+    </div>
+  );
+};
 
 const Divider = () => <div className="h-px my-3" style={{ background: C.bdr }} />;
 
@@ -385,30 +392,54 @@ const BalanceCard: React.FC<{ demoBalance:number; realBalance:number; accountTyp
 };
 
 
-const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ todayProfit, isLoading=false }) => {
+const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean; lastResult?:'win'|'lose'|null }> = ({ todayProfit, isLoading=false, lastResult }) => {
   const isPos  = todayProfit >= 0;
   const col    = isPos ? C.cyan : C.coral;
   const colDim = isPos ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)';
   const colBdr = isPos ? 'rgba(52,211,153,0.22)'  : 'rgba(248,113,113,0.22)';
+
+  // Animate number on profit change
+  const prevProfit = React.useRef(todayProfit);
+  const [animKey, setAnimKey] = React.useState(0);
+  const [slideDir, setSlideDir] = React.useState<'up'|'down'>('up');
+  useEffect(() => {
+    if (todayProfit !== prevProfit.current) {
+      setSlideDir(todayProfit > prevProfit.current ? 'up' : 'down');
+      setAnimKey(k => k + 1);
+      prevProfit.current = todayProfit;
+    }
+  }, [todayProfit]);
+
+  const activeCol = lastResult === 'win' ? C.cyan : lastResult === 'lose' ? C.coral : col;
+
   return (
-    <Card className="px-4 py-3">
+    <Card className="px-4 py-3" flashResult={lastResult}>
       <div className="flex items-center gap-3">
         <div className="flex flex-col gap-[4px] shrink-0">
           <span className="text-[10px] font-medium uppercase tracking-[0.1em]" style={{ color: C.muted }}>Profit Hari Ini</span>
           <span className="flex items-center gap-[5px] self-start px-[7px] py-[2px] rounded-full"
             style={{ background: colDim, border: `1px solid ${colBdr}` }}>
             <span className="inline-block w-[5px] h-[5px] rounded-full"
-              style={{ background: col, boxShadow: `0 0 5px ${col}`, animation: 'pulse 1.8s ease-in-out infinite' }} />
-            <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: col }}>Live</span>
+              style={{ background: activeCol, boxShadow: `0 0 5px ${activeCol}`, animation: 'pulse 1.8s ease-in-out infinite' }} />
+            <span className="text-[9px] font-bold tracking-widest uppercase" style={{ color: activeCol }}>Live</span>
           </span>
         </div>
         <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.07)' }} />
         <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
-          <div className="min-w-0 overflow-hidden">
+          <div className="min-w-0 overflow-hidden" style={{ position:'relative' }}>
             {isLoading ? <Skeleton width="85%" height={24} variant="shimmer" /> : (
-              <p className="font-bold tracking-[-0.02em] leading-none overflow-hidden"
-                style={{ color: col, fontSize: 'clamp(13px,1.6vw,20px)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
+              <p
+                key={animKey}
+                className="font-bold tracking-[-0.02em] leading-none overflow-hidden"
+                style={{
+                  color: activeCol,
+                  fontSize: 'clamp(13px,1.6vw,20px)', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                  animation: animKey > 0
+                    ? `${slideDir === 'up' ? 'profit-slide-up' : 'profit-slide-down'} 0.4s cubic-bezier(0.4,0,0.2,1) both`
+                    : undefined,
+                }}
+              >
+                {isPos?'+':'-'}Rp {Math.abs(todayProfit).toLocaleString('id-ID')}
               </p>
             )}
           </div>
@@ -416,8 +447,11 @@ const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ toda
             <div className="flex items-end gap-[3px] shrink-0 h-5">
               {[0.4,0.7,1,0.6,0.85,0.5,0.9].map((h, i) => (
                 <div key={i} className="w-[3px] rounded-sm"
-                  style={{ height:`${h*100}%`, background:col, opacity:0.3+h*0.45,
-                    animation:`pulse ${1.2+i*0.15}s ease-in-out infinite`, animationDelay:`${i*0.1}s` }} />
+                  style={{
+                    height:`${h*100}%`, background: activeCol,
+                    opacity: lastResult ? 0.55+h*0.45 : 0.3+h*0.45,
+                    animation:`pulse ${1.2+i*0.15}s ease-in-out infinite`, animationDelay:`${i*0.1}s`,
+                  }} />
               ))}
             </div>
           )}
@@ -425,7 +459,7 @@ const ProfitCard: React.FC<{ todayProfit:number; isLoading?:boolean }> = ({ toda
       </div>
     </Card>
   );
-};
+}
 
 // ═══════════════════════════════════════════════════════════════
 // SCHEDULE PANEL
@@ -1908,7 +1942,20 @@ export default function DashboardPage() {
   const [isModalOpen,setIsModalOpen]   = useState(false);
   const [isActionLoad,setIsActionLoad] = useState(false);
 
-  // Mode
+  // Win/lose result flash
+  const [lastTradeResult,setLastTradeResult] = useState<'win'|'lose'|null>(null);
+  const resultTimerRef    = React.useRef<ReturnType<typeof setTimeout>|null>(null);
+  const prevSchExecRef    = React.useRef(0);
+  const prevFtWRef        = React.useRef(0);
+  const prevFtLRef        = React.useRef(0);
+  const prevCtcWRef       = React.useRef(0);
+  const prevCtcLRef       = React.useRef(0);
+
+  const flashResult = React.useCallback((r:'win'|'lose') => {
+    if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+    setLastTradeResult(r);
+    resultTimerRef.current = setTimeout(() => setLastTradeResult(null), 2500);
+  }, []);
   const [tradingMode,setTradingMode] = useState<TradingMode>('schedule');
 
   // Schedule settings
@@ -1945,6 +1992,33 @@ export default function DashboardPage() {
   const isPollingRef   = React.useRef(false);
   useEffect(()=>{ tradingModeRef.current = tradingMode; },[tradingMode]);
   useEffect(()=>{ isMountedRef.current=true; return()=>{ isMountedRef.current=false; }; },[]);
+
+  // ── Win/Lose flash detection ──
+  useEffect(()=>{
+    const total = executions.length;
+    if(total > prevSchExecRef.current && total > 0){
+      const last = executions[executions.length-1];
+      if(last.result==='win') flashResult('win');
+      else if(last.result==='loss') flashResult('lose');
+    }
+    prevSchExecRef.current = total;
+  },[executions]); // eslint-disable-line
+
+  useEffect(()=>{
+    if(!ftSession){ prevFtWRef.current=0; prevFtLRef.current=0; return; }
+    const w=ftSession.wins??0, l=ftSession.losses??0;
+    if(w > prevFtWRef.current && prevFtWRef.current+prevFtLRef.current > 0) flashResult('win');
+    else if(l > prevFtLRef.current && prevFtWRef.current+prevFtLRef.current > 0) flashResult('lose');
+    prevFtWRef.current=w; prevFtLRef.current=l;
+  },[ftSession?.wins,ftSession?.losses]); // eslint-disable-line
+
+  useEffect(()=>{
+    if(!ctcSession){ prevCtcWRef.current=0; prevCtcLRef.current=0; return; }
+    const w=ctcSession.wins??0, l=ctcSession.losses??0;
+    if(w > prevCtcWRef.current && prevCtcWRef.current+prevCtcLRef.current > 0) flashResult('win');
+    else if(l > prevCtcLRef.current && prevCtcWRef.current+prevCtcLRef.current > 0) flashResult('lose');
+    prevCtcWRef.current=w; prevCtcLRef.current=l;
+  },[ctcSession?.wins,ctcSession?.losses]); // eslint-disable-line
 
   useEffect(()=>{
     if(!hasHydrated)return;
@@ -2358,7 +2432,7 @@ const ModeSessionPanel: React.FC<{
             <div className="grid grid-cols-4" style={{ gap: g }}>
               <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
-              <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
+              <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} lastResult={lastTradeResult} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
             <div className="grid" style={{ gridTemplateColumns:'1fr 340px',gap:g,alignItems:'start' }}>
@@ -2403,7 +2477,7 @@ const ModeSessionPanel: React.FC<{
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
-            <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
+            <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} lastResult={lastTradeResult} />
             <div className="grid grid-cols-2 items-stretch" style={{ gap: g }}>
               <Card className="p-3"><ChartCard assetSymbol={settings.assetSymbol} height={220} /></Card>
               <ModeSessionPanel
@@ -2432,7 +2506,7 @@ const ModeSessionPanel: React.FC<{
         {/* ── MOBILE ── */}
         {deviceType==='mobile'&&(
           <div className="flex flex-col" style={{ gap: g }}>
-            <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} />
+            <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} lastResult={lastTradeResult} />
             <div className="grid items-stretch" style={{ gridTemplateColumns:'3fr 2fr',gap:g }}>
               <div className="flex flex-col gap-2">
                 <RealtimeClockCompact />
