@@ -10,6 +10,12 @@ const PRECACHE_URLS = [
   '/history',
   '/profile',
   '/manifest.json',
+  '/favicon.ico',
+  '/favicon-16x16.png',
+  '/favicon-32x32.png',
+  '/apple-touch-icon.png',
+  '/android-chrome-192x192.png',
+  '/android-chrome-512x512.png',
 ];
 
 // ── Install: pre-cache shell ─────────────────────────────────────────────────
@@ -58,7 +64,6 @@ self.addEventListener('fetch', (event) => {
 
   // Static assets (_next/static) → Cache First
   if (url.pathname.startsWith('/_next/static/') ||
-      url.pathname.startsWith('/icons/') ||
       url.pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|woff2?|ttf)$/)) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
@@ -120,8 +125,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'STC AutoTrade', {
       body:  data.body  || '',
-      icon:  data.icon  || '/icons/icon-192x192.png',
-      badge: data.badge || '/icons/icon-72x72.png',
+      icon:  data.icon  || '/android-chrome-192x192.png',
+      badge: data.badge || '/favicon-32x32.png',
       tag:   data.tag   || 'stc-notification',
       data:  data.url   || '/dashboard',
     })
