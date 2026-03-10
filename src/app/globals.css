@@ -34,7 +34,7 @@
 html { overflow-x: hidden; }
 body {
   font-family: var(--font-exo);
-  background: var(--bg);
+  background: #0f0f0f;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -158,38 +158,37 @@ textarea.ds-input { resize: none; }
     linear-gradient(135deg, #08140f 0%, #0b1c15 100%) padding-box,
     conic-gradient(
       from var(--border-angle),
-      rgba(52, 211, 153, 0.05) 0%,
-      rgba(52, 211, 153, 0.05) 58%,
-      rgba(52, 211, 153, 0.5)  70%,
-      rgba(180, 255, 220, 0.88) 76%,
-      rgba(52, 211, 153, 0.5)  82%,
-      rgba(52, 211, 153, 0.05) 94%,
-      rgba(52, 211, 153, 0.05) 100%
+      rgba(52, 211, 153, 0.08) 0%,
+      rgba(52, 211, 153, 0.08) 58%,
+      rgba(52, 211, 153, 0.55)  70%,
+      rgba(180, 255, 220, 0.9) 76%,
+      rgba(52, 211, 153, 0.55)  82%,
+      rgba(52, 211, 153, 0.08) 94%,
+      rgba(52, 211, 153, 0.08) 100%
     ) border-box;
-  border: 1px solid transparent;
+  border: 1px solid rgba(52, 211, 153, 0.12);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   clip-path: var(--clip-md);
   position: relative;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  animation: slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) both,
-             card-border-spin 7s linear infinite;
+  animation: card-border-spin 7s linear infinite;
 }
 /* Each card gets a unique speed + offset so they never look in sync */
-.ds-card:nth-child(1)  { animation-duration: 0.4s, 6.1s;  animation-delay: 0s, -0.8s;  }
-.ds-card:nth-child(2)  { animation-duration: 0.4s, 8.3s;  animation-delay: 0s, -3.2s;  }
-.ds-card:nth-child(3)  { animation-duration: 0.4s, 5.7s;  animation-delay: 0s, -1.5s;  }
-.ds-card:nth-child(4)  { animation-duration: 0.4s, 9.4s;  animation-delay: 0s, -4.7s;  }
-.ds-card:nth-child(5)  { animation-duration: 0.4s, 7.1s;  animation-delay: 0s, -2.1s;  }
-.ds-card:nth-child(6)  { animation-duration: 0.4s, 11.2s; animation-delay: 0s, -5.9s;  }
-.ds-card:nth-child(7)  { animation-duration: 0.4s, 6.8s;  animation-delay: 0s, -0.4s;  }
-.ds-card:nth-child(8)  { animation-duration: 0.4s, 8.9s;  animation-delay: 0s, -6.3s;  }
-.ds-card:nth-child(9)  { animation-duration: 0.4s, 5.4s;  animation-delay: 0s, -2.7s;  }
-.ds-card:nth-child(10) { animation-duration: 0.4s, 10.6s; animation-delay: 0s, -3.8s;  }
-.ds-card:nth-child(11) { animation-duration: 0.4s, 7.7s;  animation-delay: 0s, -1.2s;  }
-.ds-card:nth-child(12) { animation-duration: 0.4s, 9.1s;  animation-delay: 0s, -7.0s;  }
-.ds-card:nth-child(odd)  { animation-direction: normal,  normal;  }
-.ds-card:nth-child(even) { animation-direction: normal, reverse; }
+.ds-card:nth-child(1)  { animation-duration: 6.1s;  animation-delay: -0.8s;  }
+.ds-card:nth-child(2)  { animation-duration: 8.3s;  animation-delay: -3.2s;  }
+.ds-card:nth-child(3)  { animation-duration: 5.7s;  animation-delay: -1.5s;  }
+.ds-card:nth-child(4)  { animation-duration: 9.4s;  animation-delay: -4.7s;  }
+.ds-card:nth-child(5)  { animation-duration: 7.1s;  animation-delay: -2.1s;  }
+.ds-card:nth-child(6)  { animation-duration: 11.2s; animation-delay: -5.9s;  }
+.ds-card:nth-child(7)  { animation-duration: 6.8s;  animation-delay: -0.4s;  }
+.ds-card:nth-child(8)  { animation-duration: 8.9s;  animation-delay: -6.3s;  }
+.ds-card:nth-child(9)  { animation-duration: 5.4s;  animation-delay: -2.7s;  }
+.ds-card:nth-child(10) { animation-duration: 10.6s; animation-delay: -3.8s;  }
+.ds-card:nth-child(11) { animation-duration: 7.7s;  animation-delay: -1.2s;  }
+.ds-card:nth-child(12) { animation-duration: 9.1s;  animation-delay: -7.0s;  }
+.ds-card:nth-child(odd)  { animation-direction: normal;  }
+.ds-card:nth-child(even) { animation-direction: reverse; }
 
 .ds-card:hover {
   transform: translateY(-2px);
@@ -298,7 +297,7 @@ button { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 /* Background lock when dashboard is active */
 html.dashboard-page,
 html.dashboard-page body {
-  background: #0a0f0d !important;
+  background: #0f0f0f !important;
 }
 
 /* Hide badge text on mobile (<768px) */

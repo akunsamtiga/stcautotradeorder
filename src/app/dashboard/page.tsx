@@ -17,7 +17,7 @@ import {
 // DESIGN TOKENS
 // ═══════════════════════════════════════════════════════════════
 const C = {
-  bg:    '#050807',
+  bg:    '#0f0f0f',
   card:  '#172219',
   card2: '#1a2c1f',
   bdr:   'rgba(255,255,255,0.08)',
@@ -253,42 +253,79 @@ const RealtimeClockCompact: React.FC = () => {
 // ASSET CARD — replaces execution count card
 // ═══════════════════════════════════════════════════════════════
 const AssetCard: React.FC<{
-  assetSymbol:string; assetName:string; mode:TradingMode; isLoading?:boolean;
-}> = ({ assetSymbol, assetName, mode, isLoading=false }) => {
-  const modeCol = mode==='ctc' ? '#a78bfa' : mode==='fastrade' ? '#34d399' : '#34d399';
-  const modeBg  = mode==='ctc' ? 'rgba(167,139,250,0.1)' : 'rgba(52,211,153,0.1)';
-  const modeBdr = mode==='ctc' ? 'rgba(167,139,250,0.25)' : 'rgba(52,211,153,0.25)';
-  const modeLabel = mode==='ctc'?'CTC':mode==='fastrade'?'FastTrade':'Signal';
-  // Derive 2-letter abbreviation for icon
-  const abbr = assetSymbol ? assetSymbol.slice(0,2).toUpperCase() : '—';
+  assetSymbol:string; assetName:string; mode:TradingMode; isLoading?:boolean; icon?:string;
+}> = ({ assetSymbol, assetName, mode, isLoading=false, icon }) => {
+  const modeCol   = mode==='ctc' ? '#a78bfa' : '#34d399';
+  const modeBg    = mode==='ctc' ? 'rgba(167,139,250,0.1)' : 'rgba(52,211,153,0.1)';
+  const modeBdr   = mode==='ctc' ? 'rgba(167,139,250,0.25)' : 'rgba(52,211,153,0.25)';
+  const modeLabel = mode==='ctc' ? 'CTC' : mode==='fastrade' ? 'FastTrade' : 'Signal';
+  const abbr      = assetSymbol ? assetSymbol.slice(0,2).toUpperCase() : '—';
+  const [imgErr, setImgErr] = React.useState(false);
+  const showImg = !!icon && !imgErr;
+
+  // ── Belum ada aset: satu baris compact ─────────────────────
+  if (isLoading) {
+    return (
+      <Card className="px-[14px] py-[11px]">
+        <p className="text-[10px] font-medium uppercase tracking-[0.08em] mb-[6px]"
+          style={{ color:'rgba(255,255,255,0.35)' }}>Aset</p>
+        <Skeleton width={100} height={22} variant="shimmer" />
+      </Card>
+    );
+  }
+
+  if (!assetSymbol) {
+    return (
+      <Card className="px-[14px] py-[11px]">
+        <div className="flex items-center gap-2">
+          <div style={{
+            width:28, height:28, borderRadius:8, flexShrink:0,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+          }}>
+            <span style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.2)' }}>—</span>
+          </div>
+          <div>
+            <p style={{ fontSize:10, fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.35)', lineHeight:1, marginBottom:3 }}>Aset</p>
+            <p style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>Belum dipilih</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // ── Ada aset: dua baris dengan icon ────────────────────────
   return (
-    <Card className="px-[14px] py-[11px]">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] mb-[5px]" style={{ color:'rgba(255,255,255,0.35)' }}>Aset</p>
-          {isLoading ? <Skeleton width={80} height={26} variant="shimmer" /> : (
-            assetSymbol ? (
-              <div>
-                <p className="text-[18px] font-bold leading-none tracking-tight" style={{ color:'#f0faf6' }}>{assetSymbol}</p>
-                <p className="text-[10px] mt-[3px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color:'rgba(255,255,255,0.45)' }}>{assetName}</p>
-              </div>
-            ) : (
-              <p className="text-[15px] font-medium" style={{ color:'rgba(255,255,255,0.2)' }}>—</p>
-            )
+    <Card className="px-[14px]" style={{ height:'100%' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, height:68, overflow:'hidden' }}>
+        {/* Icon */}
+        <div style={{
+          width:40, height:40, borderRadius:11, overflow:'hidden', flexShrink:0,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          background: modeBg, border:`1.5px solid ${modeBdr}`,
+        }}>
+          {showImg ? (
+            <img src={icon} alt={assetSymbol} onError={()=>setImgErr(true)}
+              style={{ width:'100%', height:'100%', objectFit:'contain', padding:4 }} />
+          ) : (
+            <span style={{ fontWeight:700, fontSize:14, color:modeCol, letterSpacing:'-0.02em' }}>{abbr}</span>
           )}
         </div>
-        <div className="flex flex-col items-center gap-2 shrink-0">
-          {/* Asset icon circle */}
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] tracking-tight"
-            style={{ background: modeBg, border:`1.5px solid ${modeBdr}`, color: modeCol }}>
-            {abbr}
-          </div>
-          {!isLoading && (
-            <span className="text-[9px] font-bold px-1.5 py-[2px] rounded-full"
-              style={{ color:modeCol, background:modeBg, border:`1px solid ${modeBdr}` }}>
-              {modeLabel}
-            </span>
-          )}
+
+        {/* Text */}
+        <div style={{ flex:1, minWidth:0, overflow:'hidden' }}>
+          <p style={{
+            fontSize:10, fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em',
+            color:'rgba(255,255,255,0.35)', lineHeight:1, marginBottom:5,
+          }}>Aset</p>
+          <p style={{
+            fontSize:15, fontWeight:700, lineHeight:1, color:'#f0faf6',
+            letterSpacing:'-0.02em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+          }}>{assetSymbol}</p>
+          <p style={{
+            fontSize:10, marginTop:3, color:'rgba(255,255,255,0.45)', lineHeight:1.2,
+            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+          }}>{assetName}</p>
         </div>
       </div>
     </Card>
@@ -1154,7 +1191,30 @@ const BulkScheduleModal: React.FC<{
 // ═══════════════════════════════════════════════════════════════
 // PICKER MODAL
 // ═══════════════════════════════════════════════════════════════
-interface PickerOption { value:string; label:string; sub?:string; }
+interface PickerOption { value:string; label:string; sub?:string; icon?:string; }
+
+// ── Helper: icon kecil untuk setiap baris di PickerModal ──────
+const PickerItemIcon: React.FC<{ icon:string|null|undefined; abbr:string; isSelected:boolean }> =
+({ icon, abbr, isSelected }) => {
+  const [err, setErr] = React.useState(false);
+  return (
+    <div style={{
+      width:32, height:32, borderRadius:8, overflow:'hidden', flexShrink:0,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      background: isSelected?'rgba(52,211,153,0.1)':'rgba(255,255,255,0.05)',
+      border:`1px solid ${isSelected?'rgba(52,211,153,0.25)':'rgba(255,255,255,0.08)'}`,
+    }}>
+      {icon && !err ? (
+        <img src={icon} alt={abbr} onError={()=>setErr(true)}
+          style={{ width:'100%', height:'100%', objectFit:'contain', padding:4 }} />
+      ) : (
+        <span style={{ fontSize:11, fontWeight:700, color: isSelected?C.cyan:'rgba(255,255,255,0.4)', letterSpacing:'-0.02em' }}>
+          {abbr}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const PickerModal: React.FC<{
   isOpen:boolean; onClose:()=>void; title:string;
@@ -1211,18 +1271,22 @@ const PickerModal: React.FC<{
               const isSelected=opt.value===value;
               return (
                 <button key={opt.value} onClick={()=>handleSelect(opt.value)}
-                  className="w-full text-left flex items-center justify-between px-5 py-[11px] border-none cursor-pointer transition-all duration-100"
+                  className="w-full text-left flex items-center gap-3 px-4 py-[10px] border-none cursor-pointer transition-all duration-100"
                   style={{ background:isSelected?'rgba(52,211,153,0.08)'  :'transparent',
                     borderBottom:i<filtered.length-1?'1px solid rgba(255,255,255,0.04)'  :'none',
                     borderLeft: isSelected?'2px solid rgba(52,211,153,0.6)'  :'2px solid transparent' }}
                   onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderLeftColor='rgba(52,211,153,0.2)';}}}
                   onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background='transparent';e.currentTarget.style.borderLeftColor='transparent';}}}
                 >
-                  <div className="min-w-0">
+                  {/* Asset icon */}
+                  {opt.icon !== undefined && (
+                    <PickerItemIcon icon={opt.icon} abbr={opt.value.slice(0,2).toUpperCase()} isSelected={isSelected} />
+                  )}
+                  <div className="min-w-0 flex-1">
                     <span className="block text-[13px] truncate" style={{ color:isSelected?C.cyan:C.text,fontWeight:isSelected?600:400 }}>{opt.label}</span>
                     {opt.sub&&<span className="block text-[11px] mt-[2px] truncate" style={{ color:C.muted }}>{opt.sub}</span>}
                   </div>
-                  <div className="shrink-0 ml-3">
+                  <div className="shrink-0 ml-1">
                     {isSelected
                       ? <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background:'rgba(52,211,153,0.15)',border:'1.5px solid '+C.cyan }}>
                           <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1326,7 +1390,7 @@ const OrderSettingsCard: React.FC<{
     {value:'demo',label:'Demo',sub:'Trading dengan dana virtual'},
     {value:'real',label:'Real',sub:'Trading dengan dana nyata'},
   ];
-  const assetOptions:   PickerOption[] = assets.map((a:any)=>({value:a.symbol,label:a.name||a.symbol,sub:a.symbol!==(a.name||a.symbol)?a.symbol:undefined}));
+  const assetOptions: PickerOption[] = assets.map((a:any)=>({value:a.symbol,label:a.name||a.symbol,sub:a.symbol!==(a.name||a.symbol)?a.symbol:undefined,icon:a.icon||null}));
   const durationLabel = DURATIONS.find(d=>d.value===settings.duration.toString())?.label||'';
   const assetLabel    = assets.find((a:any)=>a.symbol===settings.assetSymbol)?.name||settings.assetSymbol||'';
   const accountLabel  = accountOptions.find(o=>o.value===settings.accountType)?.label||'';
@@ -2406,7 +2470,7 @@ const ModeSessionPanel: React.FC<{
               style={{
                 background: 'linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(180,255,220,0.12) 50%, rgba(255,255,255,0.07) 60%, transparent 80%)',
                 backgroundSize: '200% 100%',
-                animation: 'shimmer-h 6s ease-in-out infinite',
+                animation: 'shimmer-h 18s ease-in-out infinite',
               }} />
             {/* Soft glow at bottom edge */}
             <div className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
@@ -2430,7 +2494,7 @@ const ModeSessionPanel: React.FC<{
         {deviceType==='desktop'&&(
           <div className="pt-6 flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-4" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} lastResult={lastTradeResult} />
               <div className="h-full"><RealtimeClock /></div>
@@ -2473,7 +2537,7 @@ const ModeSessionPanel: React.FC<{
         {deviceType==='tablet'&&(
           <div className="flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-3" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
@@ -2540,7 +2604,7 @@ const ModeSessionPanel: React.FC<{
               />
             </div>
             <div className="grid grid-cols-2" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
             </div>
             <OrderSettingsCard
