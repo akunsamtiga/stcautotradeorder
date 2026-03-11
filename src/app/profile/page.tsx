@@ -364,9 +364,9 @@ export default function ProfilePage() {
         // Method: getMyAffiliatorProgram (ada huruf 'r'), response wrapped di .data
         const res = await api.getMyAffiliateProgram();
         const prog = res?.data;
-        if (prog?.autotradeEnabled) {
+        if (prog?.autotrade?.enabled) {
           setAutotradeEnabled(true);
-          setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
+          setAffiliateFee(prog.autotrade.withdrawalFeePercent ?? 5);
           setAffiliateCode(prog.affiliateCode ?? null);
         } else {
           setAutotradeEnabled(false);
