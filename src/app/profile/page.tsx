@@ -330,11 +330,9 @@ export default function ProfilePage() {
   const [logoutModal,  setLogoutModal]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
   const [autotradeEnabled,    setAutotradeEnabled]    = useState(false);
-  const [affiliateFee,        setAffiliateFee]        = useState(5);
   const [affiliateCode,       setAffiliateCode]       = useState<string | null>(null);
   const [affiliatePanelReady, setAffiliatePanelReady] = useState(false);
 
-  // Prevent re-fetch on tab switch — only load once on first mount
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -359,27 +357,21 @@ export default function ProfilePage() {
         );
       }
 
-      // ── Cek status affiliate program (autotrade) ───────────────
-      // api.getMyAffiliateProgram() sudah unwrap data.data, jadi prog langsung
-      // berisi { affiliateCode, autotrade: { enabled, withdrawalFeePercent, ... }, ... }
       try {
         const prog = await api.getMyAffiliateProgram();
         if (prog?.autotrade?.enabled) {
           setAutotradeEnabled(true);
-          setAffiliateFee(prog.autotrade.withdrawalFeePercent ?? 5);
           setAffiliateCode(prog.affiliateCode ?? null);
         } else {
           setAutotradeEnabled(false);
           setAffiliateCode(null);
         }
       } catch {
-        // Non-blocking — bukan affiliator atau program belum ada
         setAutotradeEnabled(false);
         setAffiliateCode(null);
       } finally {
         setAffiliatePanelReady(true);
       }
-      // ───────────────────────────────────────────────────────────
 
     } catch (e: any) {
       if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
@@ -581,100 +573,80 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Autotrade Whitelist Panel — hanya tampil jika affiliator + autotrade aktif ── */}
+        {/* ── Autotrade Whitelist Button — simpel, tanpa deskripsi fee ── */}
         {affiliatePanelReady && autotradeEnabled && (
           <>
             <SL>Panel Affiliator</SL>
 
             <button
               onClick={() => router.push('/whitelist')}
-              className="w-full rounded-xl p-4 text-left cursor-pointer relative overflow-hidden group"
+              className="w-full rounded-xl text-left cursor-pointer"
               style={{
-                background: 'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)',
+                background: C.card,
                 border: '1px solid rgba(52,211,153,0.22)',
-                boxShadow: '0 0 0 1px rgba(52,211,153,0.04), 0 4px 18px rgba(52,211,153,0.06)',
-                transition: 'all 0.22s ease',
+                boxShadow: '0 0 0 1px rgba(52,211,153,0.04), 0 4px 14px rgba(52,211,153,0.06)',
+                transition: 'all 0.2s ease',
+                padding: '14px 16px',
               }}
               onMouseEnter={e => {
                 const el = e.currentTarget;
-                el.style.background = 'linear-gradient(135deg, rgba(52,211,153,0.13) 0%, rgba(52,211,153,0.06) 100%)';
                 el.style.borderColor = 'rgba(52,211,153,0.4)';
-                el.style.boxShadow = '0 0 0 1px rgba(52,211,153,0.08), 0 6px 24px rgba(52,211,153,0.1)';
+                el.style.background = '#141f1a';
                 el.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget;
-                el.style.background = 'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)';
                 el.style.borderColor = 'rgba(52,211,153,0.22)';
-                el.style.boxShadow = '0 0 0 1px rgba(52,211,153,0.04), 0 4px 18px rgba(52,211,153,0.06)';
+                el.style.background = C.card;
                 el.style.transform = 'translateY(0)';
               }}
             >
-              {/* Top glow line */}
-              <div style={{
-                position: 'absolute', top: 0, left: '15%', right: '15%', height: 1,
-                background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.6), transparent)',
-              }} />
-
               <div className="flex items-center gap-3">
-                {/* Robot icon */}
+                {/* Icon */}
                 <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
                   style={{
                     background: 'rgba(52,211,153,0.1)',
-                    border: '1px solid rgba(52,211,153,0.28)',
-                    boxShadow: '0 0 14px rgba(52,211,153,0.15)',
+                    border: '1px solid rgba(52,211,153,0.25)',
                   }}
                 >
-                  <Robot size={20} weight="duotone" style={{ color: C.cyan }} />
+                  <Robot size={18} weight="duotone" style={{ color: C.cyan }} />
                 </div>
 
-                {/* Text */}
+                {/* Label */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[13px] font-bold" style={{ color: C.text }}>
-                      Panel Whitelist Autotrade
-                    </p>
-                    {/* Pulse badge */}
-                    <span
-                      className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-[2px] rounded"
-                      style={{
-                        color: C.cyan,
-                        background: 'rgba(52,211,153,0.1)',
-                        border: '1px solid rgba(52,211,153,0.25)',
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      <span style={{
-                        width: 5, height: 5, borderRadius: '50%',
-                        background: C.cyan, display: 'inline-block',
-                        boxShadow: '0 0 5px rgba(52,211,153,0.9)',
-                        animation: 'pulse 2s ease infinite',
-                      }} />
-                      Aktif
-                    </span>
-                  </div>
-                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                    Kelola User ID yang bisa login ke bot autotrade kamu
+                  <p className="text-[13px] font-semibold" style={{ color: C.text }}>
+                    Whitelist Autotrade
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5">
-                    {affiliateCode && (
-                      <span className="text-[10px]" style={{ color: 'rgba(52,211,153,0.55)' }}>
-                        Kode: <span style={{ fontWeight: 700, color: C.cyan, fontFamily: 'monospace' }}>{affiliateCode}</span>
-                      </span>
-                    )}
-                    <span className="text-[10px]" style={{ color: 'rgba(52,211,153,0.5)' }}>
-                      Fee penarikan: <span style={{ fontWeight: 700, color: C.cyan }}>{affiliateFee}%</span>
-                    </span>
-                  </div>
+                  {affiliateCode && (
+                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Kode: <span style={{ color: 'rgba(52,211,153,0.7)', fontFamily: 'monospace' }}>{affiliateCode}</span>
+                    </p>
+                  )}
                 </div>
 
-                {/* Arrow */}
-                <ArrowRight
-                  size={17}
-                  style={{ color: 'rgba(52,211,153,0.5)', flexShrink: 0, transition: 'transform 0.2s ease' }}
-                />
+                {/* Active badge + arrow */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span
+                    className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-[2px] rounded"
+                    style={{
+                      color: C.cyan,
+                      background: 'rgba(52,211,153,0.1)',
+                      border: '1px solid rgba(52,211,153,0.22)',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    <span style={{
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: C.cyan, display: 'inline-block',
+                      boxShadow: '0 0 5px rgba(52,211,153,0.9)',
+                      animation: 'pulse 2s ease infinite',
+                    }} />
+                    Aktif
+                  </span>
+                  <ArrowRight size={15} style={{ color: 'rgba(52,211,153,0.4)' }} />
+                </div>
               </div>
             </button>
           </>
