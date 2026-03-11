@@ -805,12 +805,12 @@ const FastTradeSessionPanel: React.FC<{
   return (
     <Card className={`flex flex-col ${fillHeight ? 'h-full flex-1' : ''}`}>
       <div className="flex items-center justify-between px-3.5 py-[11px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
-        <div className="flex items-center gap-2">
-          <Zap className="w-3.5 h-3.5" style={{ color: C.cyan }} />
-          <span className="text-xs font-semibold" style={{ color: C.sub }}>Sesi FastTrade</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: C.cyan }} />
+          <span className="text-xs font-semibold truncate" style={{ color: C.sub }}>Sesi FastTrade</span>
         </div>
         {session?.isActive && (
-          <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border" style={{ color:C.cyan,background:'rgba(52,211,153,0.08)',borderColor:'rgba(52,211,153,0.2)' }}>
+          <span className="flex items-center gap-[5px] text-[10px] font-medium px-2 py-0.5 rounded-full border shrink-0 ml-2" style={{ color:C.cyan,background:'rgba(52,211,153,0.08)',borderColor:'rgba(52,211,153,0.2)' }}>
             <span className="inline-block w-[5px] h-[5px] rounded-full animate-pulse" style={{ background: C.cyan }} />
             Aktif
           </span>
@@ -827,35 +827,35 @@ const FastTradeSessionPanel: React.FC<{
           <p className="text-[10px] text-center" style={{ color: C.muted }}>Konfigurasi dan mulai sesi FastTrade</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {session.isActive && (
-            <div className="mx-3 mt-3 px-3 py-2.5 rounded-lg flex items-center justify-between" style={{ background:'rgba(52,211,153,0.06)',border:`1px solid rgba(52,211,153,0.15)` }}>
-              <div className="flex items-center gap-2">
-                <Timer className="w-3.5 h-3.5" style={{ color: C.cyan }} />
-                <span className="text-[11px]" style={{ color: C.sub }}>Candle berikutnya</span>
+            <div className="mx-3 mt-3 px-3 py-2.5 rounded-lg flex items-center justify-between gap-2" style={{ background:'rgba(52,211,153,0.06)',border:`1px solid rgba(52,211,153,0.15)` }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <Timer className="w-3.5 h-3.5 shrink-0" style={{ color: C.cyan }} />
+                <span className="text-[11px] truncate" style={{ color: C.sub }}>Candle berikutnya</span>
               </div>
-              <span className="text-[15px] font-bold tracking-widest font-mono" style={{ color: C.cyan }}>{countdown || '--:--'}</span>
+              <span className="text-[15px] font-bold tracking-widest font-mono shrink-0" style={{ color: C.cyan }}>{countdown || '--:--'}</span>
             </div>
           )}
           {statusInfo && (
-            <div className="mx-3 mt-2 flex items-center justify-between px-3 py-2 rounded-md" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
-              <span className="text-[11px]" style={{ color: C.muted }}>Status</span>
-              <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: statusInfo.col }}>
-                <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: statusInfo.col }} />
-                {statusInfo.label}
+            <div className="mx-3 mt-2 flex items-center justify-between gap-2 px-3 py-2 rounded-md" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
+              <span className="text-[11px] shrink-0" style={{ color: C.muted }}>Status</span>
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold truncate" style={{ color: statusInfo.col }}>
+                <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0" style={{ background: statusInfo.col }} />
+                <span className="truncate">{statusInfo.label}</span>
               </span>
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 mx-3 mt-2">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Total P&L</p>
-              <p className="text-[15px] font-semibold leading-none" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
+            <div className="rounded-lg px-2.5 py-2 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
+              <p className="text-[10px] mb-1 truncate" style={{ color: C.muted }}>Total P&L</p>
+              <p className="text-[13px] font-semibold leading-none truncate" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
                 {(session.totalPnL??0)>=0?'+':''}{(session.totalPnL??0).toLocaleString('id-ID')}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Win / Loss</p>
-              <p className="text-[15px] font-semibold leading-none">
+            <div className="rounded-lg px-2.5 py-2 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
+              <p className="text-[10px] mb-1 truncate" style={{ color: C.muted }}>Win / Loss</p>
+              <p className="text-[13px] font-semibold leading-none">
                 <span style={{ color: C.cyan }}>{session.wins??0}</span>
                 <span className="text-[11px]" style={{ color: C.muted }}> / </span>
                 <span style={{ color: C.coral }}>{session.losses??0}</span>
@@ -863,33 +863,33 @@ const FastTradeSessionPanel: React.FC<{
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mx-3 mt-2 mb-3">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Martingale Step</p>
-              <p className="text-[15px] font-semibold leading-none" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
+            <div className="rounded-lg px-2.5 py-2 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
+              <p className="text-[10px] mb-1 truncate" style={{ color: C.muted }}>Martingale</p>
+              <p className="text-[13px] font-semibold leading-none truncate" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
                 {(session.currentStep??0) > 0 ? `Step ${session.currentStep}` : 'Reset'}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
-              <p className="text-[10px] mb-1" style={{ color: C.muted }}>Amount Saat Ini</p>
-              <p className="text-[13px] font-semibold leading-none" style={{ color: C.text }}>
-                Rp {(session.currentAmount??0).toLocaleString('id-ID')}
+            <div className="rounded-lg px-2.5 py-2 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
+              <p className="text-[10px] mb-1 truncate" style={{ color: C.muted }}>Amount</p>
+              <p className="text-[11px] font-semibold leading-none truncate" style={{ color: C.text }}>
+                {(session.currentAmount??0).toLocaleString('id-ID')}
               </p>
             </div>
           </div>
           <div className="mx-3 pb-3">
             <div className="flex items-center rounded-lg overflow-hidden" style={{ background:C.card2, border:`1px solid ${C.bdr}` }}>
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Timeframe</span>
+              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center min-w-0 px-1">
+                <span className="text-[9px] uppercase tracking-widest truncate w-full" style={{ color:C.muted }}>Timeframe</span>
                 <span className="text-[12px] font-bold mt-0.5" style={{ color:C.cyan }}>{session.timeframe??'—'}</span>
               </div>
-              <div className="w-[1px] self-stretch" style={{ background:C.bdr }} />
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Akun</span>
-                <span className="text-[12px] font-bold mt-0.5 capitalize" style={{ color:C.text }}>{session.accountType??'—'}</span>
+              <div className="w-[1px] self-stretch shrink-0" style={{ background:C.bdr }} />
+              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center min-w-0 px-1">
+                <span className="text-[9px] uppercase tracking-widest truncate w-full" style={{ color:C.muted }}>Akun</span>
+                <span className="text-[12px] font-bold mt-0.5 capitalize truncate" style={{ color:C.text }}>{session.accountType??'—'}</span>
               </div>
-              <div className="w-[1px] self-stretch" style={{ background:C.bdr }} />
-              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center">
-                <span className="text-[9px] uppercase tracking-widest" style={{ color:C.muted }}>Total Order</span>
+              <div className="w-[1px] self-stretch shrink-0" style={{ background:C.bdr }} />
+              <div className="flex-1 flex flex-col items-center justify-center py-2 text-center min-w-0 px-1">
+                <span className="text-[9px] uppercase tracking-widest truncate w-full" style={{ color:C.muted }}>Orders</span>
                 <span className="text-[12px] font-bold mt-0.5" style={{ color:C.text }}>{session.totalOrders??0}</span>
               </div>
             </div>
