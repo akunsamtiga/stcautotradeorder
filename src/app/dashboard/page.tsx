@@ -1196,10 +1196,65 @@ const BulkScheduleModal: React.FC<{
 // ═══════════════════════════════════════════════════════════════
 interface PickerOption { value:string; label:string; sub?:string; icon?:string; }
 
+// ── Crypto icon resolution (same logic as AssetIcon.tsx) ───────
+const _CRYPTO_ICON_MAP: Record<string,string> = {
+  BTC:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/btc.png',
+  ETH:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/eth.png',
+  BNB:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/bnb.png',
+  XRP:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/xrp.png',
+  ADA:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/ada.png',
+  SOL:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/sol.png',
+  DOT:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/dot.png',
+  DOGE:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/doge.png',
+  MATIC:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/matic.png',
+  LTC:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/ltc.png',
+  AVAX:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/avax.png',
+  LINK:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/link.png',
+  UNI:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/uni.png',
+  ATOM:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/atom.png',
+  XLM:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/xlm.png',
+  TRX:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/trx.png',
+  ETC:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/etc.png',
+  NEAR:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/near.png',
+  APT:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/apt.png',
+  ARB:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/arb.png',
+  OP:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/op.png',
+  SHIB:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/shib.png',
+  FTM:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/ftm.png',
+  SAND:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/sand.png',
+  MANA:'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/mana.png',
+};
+const _QUOTE_CURRENCIES = ['USDT','USDC','BUSD','USD','EUR','BTC','ETH','BNB'];
+function _extractBase(symbol: string): string {
+  const u = symbol.toUpperCase();
+  const m = u.match(/^([A-Z]{2,6})[\/\-_]/);
+  if (m) return m[1];
+  for (const q of _QUOTE_CURRENCIES) {
+    if (u.endsWith(q) && u.length > q.length) {
+      const b = u.slice(0, u.length - q.length);
+      if (b.length >= 2) return b;
+    }
+  }
+  return u.length >= 6 ? u.slice(0, u.length >= 8 ? 4 : 3) : u;
+}
+function resolveIconUrl(icon: string|null|undefined, symbol: string): string {
+  // Ganti cryptologos.cc (hotlink diblokir) dengan CDN aman
+  if (icon && icon.includes('cryptologos.cc')) {
+    return _CRYPTO_ICON_MAP[_extractBase(symbol)] || '';
+  }
+  // Jika icon kosong, coba derive dari symbol
+  if (!icon) {
+    return _CRYPTO_ICON_MAP[_extractBase(symbol)] || '';
+  }
+  return icon;
+}
+
 // ── Helper: icon kecil untuk setiap baris di PickerModal ──────
-const PickerItemIcon: React.FC<{ icon:string|null|undefined; abbr:string; isSelected:boolean }> =
-({ icon, abbr, isSelected }) => {
+const PickerItemIcon: React.FC<{ icon:string|null|undefined; symbol:string; isSelected:boolean }> =
+({ icon, symbol, isSelected }) => {
   const [err, setErr] = React.useState(false);
+  const resolvedIcon = resolveIconUrl(icon, symbol);
+  const abbr = _extractBase(symbol).slice(0, 3);
   return (
     <div style={{
       width:32, height:32, borderRadius:8, overflow:'hidden', flexShrink:0,
@@ -1207,11 +1262,11 @@ const PickerItemIcon: React.FC<{ icon:string|null|undefined; abbr:string; isSele
       background: isSelected?'rgba(52,211,153,0.1)':'rgba(255,255,255,0.05)',
       border:`1px solid ${isSelected?'rgba(52,211,153,0.25)':'rgba(255,255,255,0.08)'}`,
     }}>
-      {icon && !err ? (
-        <img src={icon} alt={abbr} onError={()=>setErr(true)}
+      {resolvedIcon && !err ? (
+        <img src={resolvedIcon} alt={abbr} onError={()=>setErr(true)}
           style={{ width:'100%', height:'100%', objectFit:'contain', padding:4 }} />
       ) : (
-        <span style={{ fontSize:11, fontWeight:700, color: isSelected?C.cyan:'rgba(255,255,255,0.4)', letterSpacing:'-0.02em' }}>
+        <span style={{ fontSize:10, fontWeight:700, color: isSelected?C.cyan:'rgba(255,255,255,0.4)', letterSpacing:'-0.02em' }}>
           {abbr}
         </span>
       )}
@@ -1225,82 +1280,117 @@ const PickerModal: React.FC<{
   onSelect:(v:string)=>void; searchable?:boolean;
 }> = ({ isOpen,onClose,title,options,value,onSelect,searchable=false }) => {
   const [query,setQuery]=useState('');
+  React.useEffect(()=>{ if(isOpen) setQuery(''); },[isOpen]);
   if(!isOpen)return null;
-  const filtered=searchable&&query.trim()?options.filter(o=>o.label.toLowerCase().includes(query.toLowerCase())||o.value.toLowerCase().includes(query.toLowerCase())):options;
+  const filtered=searchable&&query.trim()
+    ?options.filter(o=>o.label.toLowerCase().includes(query.toLowerCase())||o.value.toLowerCase().includes(query.toLowerCase()))
+    :options;
   const handleSelect=(v:string)=>{onSelect(v);onClose();};
+  const BOTTOM_NAV_H=64;
+  const TOP_MARGIN=48;
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center p-4 pb-[88px] animate-[fade-in_0.15s_ease]">
-      <div className="absolute inset-0 backdrop-blur-[10px]" style={{ background:'rgba(0,0,0,0.7)' }} onClick={onClose} />
-      <div className="relative w-full max-w-[420px] flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-[slide-up_0.22s_cubic-bezier(0.4,0,0.2,1)]"
-        style={{ background:'linear-gradient(160deg,#0b1812 0%,#081310 100%)', borderRadius:16,
-          border:'1px solid rgba(52,211,153,0.18)',
-          boxShadow:'0 -4px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.06), inset 0 1px 0 rgba(52,211,153,0.08)' }}
-      >
-        {/* Top accent line */}
-        <div className="absolute top-0 left-[15%] right-[15%] h-px" style={{ background:'linear-gradient(90deg,transparent,rgba(52,211,153,0.5),transparent)' }} />
+    <div style={{
+      position:'fixed',inset:0,zIndex:60,
+      display:'flex',flexDirection:'column',justifyContent:'flex-end',alignItems:'center',
+      animation:'fade-in 0.15s ease',
+    }}>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.78)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}} />
+
+      {/* Panel */}
+      <div style={{
+        position:'relative',
+        width:'100%',maxWidth:480,
+        maxHeight:`calc(100dvh - ${TOP_MARGIN}px - ${BOTTOM_NAV_H}px)`,
+        display:'flex',flexDirection:'column',
+        background:'linear-gradient(160deg,#0b1812 0%,#081310 100%)',
+        borderRadius:'16px 16px 0 0',
+        border:'1px solid rgba(52,211,153,0.18)',
+        borderBottom:'none',
+        boxShadow:'0 -8px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(52,211,153,0.07)',
+        marginBottom:BOTTOM_NAV_H,
+        overflow:'hidden',
+        animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)',
+      }}>
+        {/* Top glow */}
+        <div style={{position:'absolute',top:0,left:'15%',right:'15%',height:1,background:'linear-gradient(90deg,transparent,rgba(52,211,153,0.55),transparent)',pointerEvents:'none'}} />
+
         {/* Drag handle */}
-        <div className="w-8 h-[3px] rounded-full mx-auto mt-3 shrink-0" style={{ background:'rgba(255,255,255,0.1)' }} />
+        <div style={{width:32,height:3,borderRadius:99,background:'rgba(255,255,255,0.12)',margin:'12px auto 0',flexShrink:0}} />
+
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-3 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
-          <span className="text-[14px] font-semibold tracking-[0.01em]" style={{ color: C.text }}>{title}</span>
-          <button onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer transition-colors duration-150"
-            style={{ background:'rgba(255,255,255,0.04)',border:'1px solid rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.4)' }}
-            onMouseEnter={e=>{e.currentTarget.style.background='rgba(248,113,113,0.1)';e.currentTarget.style.color=C.coral;}}
-            onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.color='rgba(255,255,255,0.4)';}}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.06)',flexShrink:0}}>
+          <span style={{fontSize:14,fontWeight:600,color:C.text,letterSpacing:'0.01em'}}>{title}</span>
+          <button onClick={onClose} style={{width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'rgba(255,255,255,0.4)',cursor:'pointer',flexShrink:0,transition:'all 0.15s'}}
+            onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(248,113,113,0.12)';(e.currentTarget as HTMLButtonElement).style.color=C.coral;}}
+            onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.04)';(e.currentTarget as HTMLButtonElement).style.color='rgba(255,255,255,0.4)';}}
           >
-            <X className="w-3 h-3" />
+            <X size={13} />
           </button>
         </div>
+
+        {/* Search */}
         {searchable&&(
-          <div className="px-4 py-2.5 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color:'rgba(52,211,153,0.5)' }}>
+          <div style={{padding:'10px 14px',borderBottom:'1px solid rgba(255,255,255,0.05)',flexShrink:0}}>
+            <div style={{position:'relative'}}>
+              <svg style={{position:'absolute',left:11,top:'50%',transform:'translateY(-50%)',width:13,height:13,color:'rgba(52,211,153,0.5)',pointerEvents:'none'}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
               </svg>
-              <input autoFocus className="ds-input text-[13px]" style={{ paddingLeft:30,borderRadius:8,background:'rgba(0,0,0,0.3)' }}
+              <input autoFocus className="ds-input" style={{paddingLeft:32,fontSize:13,borderRadius:8,background:'rgba(0,0,0,0.35)'}}
                 placeholder="Cari aset..." value={query} onChange={e=>setQuery(e.target.value)} />
             </div>
           </div>
         )}
-        <div className="overflow-y-auto flex-1 py-1">
+
+        {/* List */}
+        <div style={{overflowY:'auto',flex:1,WebkitOverflowScrolling:'touch' as any}}>
           {filtered.length===0?(
-            <div className="px-5 py-8 text-center flex flex-col items-center gap-2">
-              <svg className="w-8 h-8 opacity-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <p className="text-xs" style={{ color: C.muted }}>Tidak ditemukan</p>
+            <div style={{padding:'40px 20px',display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+              <svg style={{width:32,height:32,opacity:0.18}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <p style={{fontSize:12,color:C.muted}}>Tidak ditemukan</p>
             </div>
           ):(
             filtered.map((opt,i)=>{
               const isSelected=opt.value===value;
               return (
-                <button key={opt.value} onClick={()=>handleSelect(opt.value)}
-                  className="w-full text-left flex items-center gap-3 px-4 py-[10px] border-none cursor-pointer transition-all duration-100"
-                  style={{ background:isSelected?'rgba(52,211,153,0.08)'  :'transparent',
-                    borderBottom:i<filtered.length-1?'1px solid rgba(255,255,255,0.04)'  :'none',
-                    borderLeft: isSelected?'2px solid rgba(52,211,153,0.6)'  :'2px solid transparent' }}
-                  onMouseEnter={e=>{if(!isSelected){e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderLeftColor='rgba(52,211,153,0.2)';}}}
-                  onMouseLeave={e=>{if(!isSelected){e.currentTarget.style.background='transparent';e.currentTarget.style.borderLeftColor='transparent';}}}
+                <button key={opt.value} onClick={()=>handleSelect(opt.value)} style={{
+                  width:'100%',textAlign:'left',display:'flex',alignItems:'center',gap:12,
+                  padding:'11px 16px',
+                  background:isSelected?'rgba(52,211,153,0.08)':'transparent',
+                  borderBottom:i<filtered.length-1?'1px solid rgba(255,255,255,0.04)':'none',
+                  borderLeft:isSelected?'2px solid rgba(52,211,153,0.6)':'2px solid transparent',
+                  borderTop:'none',borderRight:'none',
+                  cursor:'pointer',transition:'background 0.1s,border-color 0.1s',
+                }}
+                  onMouseEnter={e=>{if(!isSelected){(e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.03)';(e.currentTarget as HTMLButtonElement).style.borderLeftColor='rgba(52,211,153,0.2)';}}}
+                  onMouseLeave={e=>{if(!isSelected){(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.borderLeftColor='transparent';}}}
                 >
-                  {/* Asset icon */}
-                  {opt.icon !== undefined && (
-                    <PickerItemIcon icon={opt.icon} abbr={opt.value.slice(0,2).toUpperCase()} isSelected={isSelected} />
+                  {opt.icon!==undefined&&(
+                    <PickerItemIcon icon={opt.icon} symbol={opt.value} isSelected={isSelected} />
                   )}
-                  <div className="min-w-0 flex-1">
-                    <span className="block text-[13px] truncate" style={{ color:isSelected?C.cyan:C.text,fontWeight:isSelected?600:400 }}>{opt.label}</span>
-                    {opt.sub&&<span className="block text-[11px] mt-[2px] truncate" style={{ color:C.muted }}>{opt.sub}</span>}
+                  <div style={{minWidth:0,flex:1}}>
+                    <span style={{display:'block',fontSize:13,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:isSelected?C.cyan:C.text,fontWeight:isSelected?600:400}}>
+                      {opt.label}
+                    </span>
+                    {opt.sub&&(
+                      <span style={{display:'block',fontSize:11,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:C.muted}}>
+                        {opt.sub}
+                      </span>
+                    )}
                   </div>
-                  <div className="shrink-0 ml-1">
+                  <div style={{flexShrink:0,marginLeft:4}}>
                     {isSelected
-                      ? <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background:'rgba(52,211,153,0.15)',border:'1.5px solid '+C.cyan }}>
+                      ?<span style={{width:20,height:20,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(52,211,153,0.15)',border:'1.5px solid '+C.cyan}}>
                           <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                         </span>
-                      : <span className="w-5 h-5 rounded-full flex items-center justify-center" style={{ border:'1px solid rgba(255,255,255,0.08)' }} />
+                      :<span style={{width:20,height:20,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.08)'}} />
                     }
                   </div>
                 </button>
               );
             })
           )}
+          <div style={{height:8}} />
         </div>
       </div>
     </div>
@@ -1393,7 +1483,7 @@ const OrderSettingsCard: React.FC<{
     {value:'demo',label:'Demo',sub:'Trading dengan dana virtual'},
     {value:'real',label:'Real',sub:'Trading dengan dana nyata'},
   ];
-  const assetOptions: PickerOption[] = assets.map((a:any)=>({value:a.symbol,label:a.name||a.symbol,sub:a.symbol!==(a.name||a.symbol)?a.symbol:undefined,icon:a.icon||null}));
+  const assetOptions: PickerOption[] = assets.map((a:any)=>({value:a.symbol,label:a.name||a.symbol,sub:a.symbol!==(a.name||a.symbol)?a.symbol:undefined,icon:resolveIconUrl(a.icon,a.symbol)}));
   const durationLabel = DURATIONS.find(d=>d.value===settings.duration.toString())?.label||'';
   const assetLabel    = assets.find((a:any)=>a.symbol===settings.assetSymbol)?.name||settings.assetSymbol||'';
   const accountLabel  = accountOptions.find(o=>o.value===settings.accountType)?.label||'';
