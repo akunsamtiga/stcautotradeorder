@@ -361,12 +361,11 @@ export default function ProfilePage() {
 
       // ── Cek status affiliate program (autotrade) ───────────────
       try {
-        // Method: getMyAffiliatorProgram (ada huruf 'r'), response wrapped di .data
-        const res = await api.getMyAffiliateProgram();
-        const prog = res?.data;
-        if (prog?.autotrade?.enabled) {
+        // api.getMyAffiliateProgram() sudah unwrap data.data — jangan .data lagi
+        const prog = await api.getMyAffiliateProgram();
+        if (prog?.autotradeEnabled) {
           setAutotradeEnabled(true);
-          setAffiliateFee(prog.autotrade.withdrawalFeePercent ?? 5);
+          setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
           setAffiliateCode(prog.affiliateCode ?? null);
         } else {
           setAutotradeEnabled(false);

@@ -35,9 +35,15 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (!raw) return null;
+    const { state } = JSON.parse(raw);
+    return state?.token ?? null;
+  } catch {
+    return null;
+  }
 }
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('id-ID', {
     day: '2-digit', month: 'short', year: 'numeric',
