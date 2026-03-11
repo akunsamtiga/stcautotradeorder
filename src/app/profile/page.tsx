@@ -9,6 +9,7 @@ import {
   User, EnvelopeSimple, Phone, ShieldCheck, SignOut,
   PencilSimple, Check, X, ArrowClockwise, WarningCircle,
   CheckCircle, Medal, Star, Lightning, UserCircle,
+  Robot, ArrowRight,
 } from '@phosphor-icons/react';
 
 // ─── TOKENS — synced with dashboard ──────────────────────────
@@ -328,6 +329,8 @@ export default function ProfilePage() {
   const [error,        setError]        = useState<string | null>(null);
   const [logoutModal,  setLogoutModal]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
+  const [autotradeEnabled, setAutotradeEnabled] = useState(false);
+  const [affiliateFee,     setAffiliateFee]     = useState(5);
 
   // Prevent re-fetch on tab switch — only load once on first mount
   const hasFetchedRef = useRef(false);
@@ -353,6 +356,30 @@ export default function ProfilePage() {
           useAuthStore.getState().token!
         );
       }
+
+      // ── Cek status affiliate program (autotrade) ──────────────
+      try {
+        const token = useAuthStore.getState().token;
+        const affRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/affiliate-program/my-program`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (affRes.ok) {
+          const affJson = await affRes.json();
+          const prog = affJson?.data;
+          if (prog?.autotradeEnabled) {
+            setAutotradeEnabled(true);
+            setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
+          } else {
+            setAutotradeEnabled(false);
+          }
+        }
+      } catch {
+        // Non-blocking — bukan affiliator atau endpoint tidak ada
+        setAutotradeEnabled(false);
+      }
+      // ─────────────────────────────────────────────────────────
+
     } catch (e: any) {
       if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
       setError('Gagal memuat profil.');
@@ -551,6 +578,93 @@ export default function ProfilePage() {
             <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: C.muted }}>Kode Referral</p>
             <p className="text-[15px] font-bold tracking-widest" style={{ color: C.cyan }}>{user.referralCode}</p>
           </div>
+        )}
+
+        {/* ── Autotrade Whitelist Panel — only for affiliator with autotrade ── */}
+        {autotradeEnabled && (
+          <>
+            <SL>Panel Affiliator</SL>
+            <button
+              onClick={() => router.push('/whitelist')}
+              className="w-full rounded-xl p-4 text-left cursor-pointer relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)',
+                border: '1px solid rgba(52,211,153,0.22)',
+                boxShadow: '0 0 0 1px rgba(52,211,153,0.04), 0 4px 18px rgba(52,211,153,0.06)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  'linear-gradient(135deg, rgba(52,211,153,0.12) 0%, rgba(52,211,153,0.06) 100%)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(52,211,153,0.38)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(52,211,153,0.22)';
+              }}
+            >
+              {/* top glow line */}
+              <div style={{
+                position: 'absolute', top: 0, left: '15%', right: '15%', height: 1,
+                background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.55), transparent)',
+              }} />
+
+              <div className="flex items-center gap-3">
+                {/* Icon */}
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: 'rgba(52,211,153,0.1)',
+                    border: '1px solid rgba(52,211,153,0.25)',
+                    boxShadow: '0 0 12px rgba(52,211,153,0.12)',
+                  }}
+                >
+                  <Robot size={18} weight="duotone" style={{ color: C.cyan }} />
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <p className="text-[13px] font-bold" style={{ color: C.text }}>
+                      Manajemen Whitelist
+                    </p>
+                    {/* Live badge */}
+                    <span
+                      className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-[2px] rounded"
+                      style={{
+                        color: C.cyan,
+                        background: 'rgba(52,211,153,0.1)',
+                        border: '1px solid rgba(52,211,153,0.22)',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 5, height: 5, borderRadius: '50%',
+                          background: C.cyan,
+                          display: 'inline-block',
+                          boxShadow: '0 0 4px rgba(52,211,153,0.8)',
+                          animation: 'pulse 2s ease infinite',
+                        }}
+                      />
+                      Aktif
+                    </span>
+                  </div>
+                  <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                    Kelola User ID yang bisa akses bot autotrade
+                  </p>
+                  <p className="text-[10px] mt-1" style={{ color: 'rgba(52,211,153,0.5)' }}>
+                    Fee penarikan komisi: <span style={{ fontWeight: 700, color: C.cyan }}>{affiliateFee}%</span>
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight size={16} style={{ color: 'rgba(52,211,153,0.45)', flexShrink: 0 }} />
+              </div>
+            </button>
+          </>
         )}
 
         {/* Logout */}

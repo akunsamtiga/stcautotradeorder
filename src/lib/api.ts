@@ -70,6 +70,17 @@ class ApiClient {
     return data;
   }
 
+  /**
+   * POST /auth/autotrade-login
+   * Login khusus bot autotrade — selain email+password, backend juga
+   * memverifikasi bahwa User ID terdaftar di whitelist autotrade affiliator.
+   * Berbeda jalur dengan login biasa: jika ID tidak diwhitelist → 403.
+   */
+  async autotradeLogin(email: string, password: string) {
+    const { data } = await this.client.post('/auth/autotrade-login', { email, password });
+    return data;
+  }
+
   async register(userData: { 
     email: string; 
     password: string; 
@@ -938,6 +949,88 @@ class ApiClient {
   async getCtcOhlcData(assetId: string, limit = 20) {
     const { data: res } = await this.client.get(`/ctc/ohlc/${assetId}?limit=${limit}`);
     return res?.data ?? res;
+  }
+
+  // ============================================================================
+  // AFFILIATE PROGRAM METHODS
+  // ============================================================================
+
+  /** GET /affiliate-program/my-program — dashboard affiliator (termasuk info autotrade) */
+  async getMyAffiliateProgram() {
+    try {
+      const { data } = await this.client.get('/affiliate-program/my-program');
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      // 403 = bukan affiliator, return null agar page bisa handle gracefully
+      if (error?.response?.status === 403) return null;
+      console.error('❌ Failed to fetch affiliate program:', error);
+      return null;
+    }
+  }
+
+  // ============================================================================
+  // AUTOTRADE WHITELIST METHODS
+  // ============================================================================
+
+  /**
+   * GET /affiliate-program/autotrade/whitelist
+   * Ambil daftar whitelist milik affiliator yang sedang login.
+   * ⚠️  Hanya berhasil jika user adalah affiliator dengan autotrade aktif.
+   */
+  async getAutotradeWhitelist(params?: { page?: number; limit?: number }) {
+    try {
+      const { data } = await this.client.get('/affiliate-program/autotrade/whitelist', { params });
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      console.error('❌ Failed to fetch autotrade whitelist:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * POST /affiliate-program/autotrade/whitelist
+   * Tambah user ID ke whitelist autotrade.
+   */
+  async addAutotradeWhitelist(payload: { userId: string; note?: string }) {
+    try {
+      const { data } = await this.client.post('/affiliate-program/autotrade/whitelist', payload);
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      console.error('❌ Failed to add to autotrade whitelist:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * DELETE /affiliate-program/autotrade/whitelist/:targetUserId
+   * Hapus user ID dari whitelist autotrade.
+   */
+  async removeAutotradeWhitelist(targetUserId: string) {
+    try {
+      const { data } = await this.client.delete(
+        `/affiliate-program/autotrade/whitelist/${targetUserId}`
+      );
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      console.error('❌ Failed to remove from autotrade whitelist:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * GET /affiliate-program/autotrade/whitelist/check/:targetUserId
+   * Cek apakah user ID tertentu ada di whitelist autotrade.
+   */
+  async checkAutotradeWhitelist(targetUserId: string) {
+    try {
+      const { data } = await this.client.get(
+        `/affiliate-program/autotrade/whitelist/check/${targetUserId}`
+      );
+      return data.success ? data.data : data;
+    } catch (error: any) {
+      console.error('❌ Failed to check autotrade whitelist:', error);
+      throw error;
+    }
   }
 
 }
