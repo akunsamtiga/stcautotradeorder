@@ -361,7 +361,9 @@ export default function ProfilePage() {
 
       // ── Cek status affiliate program (autotrade) ───────────────
       try {
-        const prog = await api.getMyAffiliateProgram();
+        // Method: getMyAffiliatorProgram (ada huruf 'r'), response wrapped di .data
+        const res = await api.getMyAffiliateProgram();
+        const prog = res?.data;
         if (prog?.autotradeEnabled) {
           setAutotradeEnabled(true);
           setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);

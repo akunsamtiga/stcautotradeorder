@@ -273,3 +273,42 @@ export interface DurationOption {
   label: string;
   display: string;
 }
+// ============================================================================
+// AFFILIATE PROGRAM TYPES
+// ============================================================================
+
+export interface AffiliatorDashboard {
+  affiliateCode: string
+  isCommissionUnlocked: boolean
+  revenueSharePercentage: number
+  /** Apakah fitur autotrade aktif */
+  autotradeEnabled: boolean
+  /** Fee penarikan komisi jika autotrade aktif (persen, default 5) */
+  autotradeWithdrawalFee: number
+  balances: {
+    commissionBalance: number
+    lockedCommissionBalance: number
+    isLocked: boolean
+  }
+  unlockProgress: {
+    current: number
+    required: number
+    percentage: number
+    isUnlocked: boolean
+    message: string
+  }
+  stats: {
+    totalInvited: number
+    depositedInvites: number
+    pendingInvites: number
+    totalCommissionEarned: number
+    totalCommissionWithdrawn: number
+  }
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean
+  data?: T
+  message?: string
+  error?: string
+}
