@@ -360,12 +360,13 @@ export default function ProfilePage() {
       }
 
       // ── Cek status affiliate program (autotrade) ───────────────
+      // api.getMyAffiliateProgram() sudah unwrap data.data, jadi prog langsung
+      // berisi { affiliateCode, autotrade: { enabled, withdrawalFeePercent, ... }, ... }
       try {
-        // api.getMyAffiliateProgram() sudah unwrap data.data — jangan .data lagi
         const prog = await api.getMyAffiliateProgram();
-        if (prog?.autotradeEnabled) {
+        if (prog?.autotrade?.enabled) {
           setAutotradeEnabled(true);
-          setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
+          setAffiliateFee(prog.autotrade.withdrawalFeePercent ?? 5);
           setAffiliateCode(prog.affiliateCode ?? null);
         } else {
           setAutotradeEnabled(false);
