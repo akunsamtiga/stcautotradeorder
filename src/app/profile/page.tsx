@@ -329,8 +329,10 @@ export default function ProfilePage() {
   const [error,        setError]        = useState<string | null>(null);
   const [logoutModal,  setLogoutModal]  = useState(false);
   const [refreshing,   setRefreshing]   = useState(false);
-  const [autotradeEnabled, setAutotradeEnabled] = useState(false);
-  const [affiliateFee,     setAffiliateFee]     = useState(5);
+  const [autotradeEnabled,    setAutotradeEnabled]    = useState(false);
+  const [affiliateFee,        setAffiliateFee]        = useState(5);
+  const [affiliateCode,       setAffiliateCode]       = useState<string | null>(null);
+  const [affiliatePanelReady, setAffiliatePanelReady] = useState(false);
 
   // Prevent re-fetch on tab switch — only load once on first mount
   const hasFetchedRef = useRef(false);
@@ -357,28 +359,25 @@ export default function ProfilePage() {
         );
       }
 
-      // ── Cek status affiliate program (autotrade) ──────────────
+      // ── Cek status affiliate program (autotrade) ───────────────
       try {
-        const token = useAuthStore.getState().token;
-        const affRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/affiliate-program/my-program`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (affRes.ok) {
-          const affJson = await affRes.json();
-          const prog = affJson?.data;
-          if (prog?.autotradeEnabled) {
-            setAutotradeEnabled(true);
-            setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
-          } else {
-            setAutotradeEnabled(false);
-          }
+        const prog = await api.getMyAffiliateProgram();
+        if (prog?.autotradeEnabled) {
+          setAutotradeEnabled(true);
+          setAffiliateFee(prog.autotradeWithdrawalFee ?? 5);
+          setAffiliateCode(prog.affiliateCode ?? null);
+        } else {
+          setAutotradeEnabled(false);
+          setAffiliateCode(null);
         }
       } catch {
-        // Non-blocking — bukan affiliator atau endpoint tidak ada
+        // Non-blocking — bukan affiliator atau program belum ada
         setAutotradeEnabled(false);
+        setAffiliateCode(null);
+      } finally {
+        setAffiliatePanelReady(true);
       }
-      // ─────────────────────────────────────────────────────────
+      // ───────────────────────────────────────────────────────────
 
     } catch (e: any) {
       if (e?.response?.status === 401) { clearAuth(); router.push('/'); return; }
@@ -580,88 +579,100 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Autotrade Whitelist Panel — only for affiliator with autotrade ── */}
-        {autotradeEnabled && (
+        {/* ── Autotrade Whitelist Panel — hanya tampil jika affiliator + autotrade aktif ── */}
+        {affiliatePanelReady && autotradeEnabled && (
           <>
             <SL>Panel Affiliator</SL>
+
             <button
               onClick={() => router.push('/whitelist')}
-              className="w-full rounded-xl p-4 text-left cursor-pointer relative overflow-hidden"
+              className="w-full rounded-xl p-4 text-left cursor-pointer relative overflow-hidden group"
               style={{
                 background: 'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)',
                 border: '1px solid rgba(52,211,153,0.22)',
                 boxShadow: '0 0 0 1px rgba(52,211,153,0.04), 0 4px 18px rgba(52,211,153,0.06)',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.22s ease',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  'linear-gradient(135deg, rgba(52,211,153,0.12) 0%, rgba(52,211,153,0.06) 100%)';
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(52,211,153,0.38)';
+                const el = e.currentTarget;
+                el.style.background = 'linear-gradient(135deg, rgba(52,211,153,0.13) 0%, rgba(52,211,153,0.06) 100%)';
+                el.style.borderColor = 'rgba(52,211,153,0.4)';
+                el.style.boxShadow = '0 0 0 1px rgba(52,211,153,0.08), 0 6px 24px rgba(52,211,153,0.1)';
+                el.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.background =
-                  'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)';
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(52,211,153,0.22)';
+                const el = e.currentTarget;
+                el.style.background = 'linear-gradient(135deg, rgba(52,211,153,0.07) 0%, rgba(52,211,153,0.03) 100%)';
+                el.style.borderColor = 'rgba(52,211,153,0.22)';
+                el.style.boxShadow = '0 0 0 1px rgba(52,211,153,0.04), 0 4px 18px rgba(52,211,153,0.06)';
+                el.style.transform = 'translateY(0)';
               }}
             >
-              {/* top glow line */}
+              {/* Top glow line */}
               <div style={{
                 position: 'absolute', top: 0, left: '15%', right: '15%', height: 1,
-                background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.55), transparent)',
+                background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.6), transparent)',
               }} />
 
               <div className="flex items-center gap-3">
-                {/* Icon */}
+                {/* Robot icon */}
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
                   style={{
                     background: 'rgba(52,211,153,0.1)',
-                    border: '1px solid rgba(52,211,153,0.25)',
-                    boxShadow: '0 0 12px rgba(52,211,153,0.12)',
+                    border: '1px solid rgba(52,211,153,0.28)',
+                    boxShadow: '0 0 14px rgba(52,211,153,0.15)',
                   }}
                 >
-                  <Robot size={18} weight="duotone" style={{ color: C.cyan }} />
+                  <Robot size={20} weight="duotone" style={{ color: C.cyan }} />
                 </div>
 
                 {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
+                  <div className="flex items-center gap-2 mb-1">
                     <p className="text-[13px] font-bold" style={{ color: C.text }}>
-                      Manajemen Whitelist
+                      Panel Whitelist Autotrade
                     </p>
-                    {/* Live badge */}
+                    {/* Pulse badge */}
                     <span
                       className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-[2px] rounded"
                       style={{
                         color: C.cyan,
                         background: 'rgba(52,211,153,0.1)',
-                        border: '1px solid rgba(52,211,153,0.22)',
+                        border: '1px solid rgba(52,211,153,0.25)',
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
                       }}
                     >
-                      <span
-                        style={{
-                          width: 5, height: 5, borderRadius: '50%',
-                          background: C.cyan,
-                          display: 'inline-block',
-                          boxShadow: '0 0 4px rgba(52,211,153,0.8)',
-                          animation: 'pulse 2s ease infinite',
-                        }}
-                      />
+                      <span style={{
+                        width: 5, height: 5, borderRadius: '50%',
+                        background: C.cyan, display: 'inline-block',
+                        boxShadow: '0 0 5px rgba(52,211,153,0.9)',
+                        animation: 'pulse 2s ease infinite',
+                      }} />
                       Aktif
                     </span>
                   </div>
                   <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                    Kelola User ID yang bisa akses bot autotrade
+                    Kelola User ID yang bisa login ke bot autotrade kamu
                   </p>
-                  <p className="text-[10px] mt-1" style={{ color: 'rgba(52,211,153,0.5)' }}>
-                    Fee penarikan komisi: <span style={{ fontWeight: 700, color: C.cyan }}>{affiliateFee}%</span>
-                  </p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    {affiliateCode && (
+                      <span className="text-[10px]" style={{ color: 'rgba(52,211,153,0.55)' }}>
+                        Kode: <span style={{ fontWeight: 700, color: C.cyan, fontFamily: 'monospace' }}>{affiliateCode}</span>
+                      </span>
+                    )}
+                    <span className="text-[10px]" style={{ color: 'rgba(52,211,153,0.5)' }}>
+                      Fee penarikan: <span style={{ fontWeight: 700, color: C.cyan }}>{affiliateFee}%</span>
+                    </span>
+                  </div>
                 </div>
 
                 {/* Arrow */}
-                <ArrowRight size={16} style={{ color: 'rgba(52,211,153,0.45)', flexShrink: 0 }} />
+                <ArrowRight
+                  size={17}
+                  style={{ color: 'rgba(52,211,153,0.5)', flexShrink: 0, transition: 'transform 0.2s ease' }}
+                />
               </div>
             </button>
           </>
