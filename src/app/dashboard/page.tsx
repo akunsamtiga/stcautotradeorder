@@ -19,22 +19,22 @@ import {
 // ═══════════════════════════════════════════════════════════════
 const C = {
   bg:    '#0f0f0f',
-  card:  '#1b3224',
-  card2: '#1e3a2a',
-  bdr:   'rgba(52,211,153,0.12)',
-  bdrAct:'rgba(52,211,153,0.35)',
+  card:  '#1e5c3c',
+  card2: '#134529',
+  bdr:   'rgba(52,211,153,0.28)',
+  bdrAct:'rgba(52,211,153,0.60)',
   cyan:  '#34d399',
-  cyand: 'rgba(52,211,153,0.12)',
+  cyand: 'rgba(52,211,153,0.15)',
   coral: '#f87171',
-  cord:  'rgba(248,113,113,0.1)',
+  cord:  'rgba(248,113,113,0.12)',
   amber: '#fbbf24',
-  ambd:  'rgba(251,191,36,0.1)',
+  ambd:  'rgba(251,191,36,0.10)',
   violet:'#a78bfa',
-  vltd:  'rgba(167,139,250,0.1)',
-  text:  '#f0faf6',
-  sub:   'rgba(255,255,255,0.7)',
-  muted: 'rgba(255,255,255,0.4)',
-  faint: 'rgba(52,211,153,0.05)',
+  vltd:  'rgba(167,139,250,0.10)',
+  text:  '#ffffff',
+  sub:   'rgba(255,255,255,0.95)',
+  muted: 'rgba(255,255,255,0.72)',   /* was 0.60 — boosted for green card readability */
+  faint: 'rgba(52,211,153,0.10)',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -175,7 +175,7 @@ const SL: React.FC<{ children:React.ReactNode; accent?:string }> = ({ children, 
 );
 
 const FL: React.FC<{ children:React.ReactNode }> = ({ children }) => (
-  <label className="block text-[10px] font-semibold mb-[6px] tracking-[0.06em] uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>{children}</label>
+  <label className="block text-[10px] font-semibold mb-[6px] tracking-[0.06em] uppercase" style={{ color: 'rgba(255,255,255,0.65)' }}>{children}</label>
 );
 
 const Toggle: React.FC<{ checked:boolean; onChange:(v:boolean)=>void; disabled?:boolean }> =
@@ -269,7 +269,7 @@ const AssetCard: React.FC<{
     return (
       <Card className="px-[14px] py-[11px]">
         <p className="text-[10px] font-medium uppercase tracking-[0.08em] mb-[6px]"
-          style={{ color:'rgba(255,255,255,0.35)' }}>Aset</p>
+          style={{ color:'rgba(255,255,255,0.65)' }}>Aset</p>
         <Skeleton width={100} height={22} variant="shimmer" />
       </Card>
     );
@@ -287,7 +287,7 @@ const AssetCard: React.FC<{
             <span style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.2)' }}>—</span>
           </div>
           <div>
-            <p style={{ fontSize:10, fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.35)', lineHeight:1, marginBottom:3 }}>Aset</p>
+            <p style={{ fontSize:10, fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,255,255,0.65)', lineHeight:1, marginBottom:3 }}>Aset</p>
             <p style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>Belum dipilih</p>
           </div>
         </div>
@@ -319,14 +319,14 @@ const AssetCard: React.FC<{
         <div style={{ flex:1, minWidth:0, overflow:'hidden' }}>
           <p style={{
             fontSize:10, fontWeight:500, textTransform:'uppercase', letterSpacing:'0.08em',
-            color:'rgba(255,255,255,0.35)', lineHeight:1, marginBottom:5,
+            color:'rgba(255,255,255,0.65)', lineHeight:1, marginBottom:5,
           }}>Aset</p>
           <p style={{
             fontSize:15, fontWeight:700, lineHeight:1, color:'#f0faf6',
             letterSpacing:'-0.02em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
           }}>{assetSymbol}</p>
           <p style={{
-            fontSize:10, marginTop:3, color:'rgba(255,255,255,0.45)', lineHeight:1.2,
+            fontSize:10, marginTop:3, color:'rgba(255,255,255,0.68)', lineHeight:1.2,
             overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
           }}>{assetName}</p>
         </div>
@@ -347,7 +347,7 @@ const StatCard: React.FC<{
   showDots?:boolean;
 }> = ({ title, value, icon, trend='neutral', isLoading=false, showDots=false }) => {
   const col = trend==='up'?C.cyan:trend==='down'?C.coral:C.text;
-  const dotCol = trend==='up'?C.cyan:trend==='down'?C.coral:'rgba(255,255,255,0.35)';
+  const dotCol = trend==='up'?C.cyan:trend==='down'?C.coral:'rgba(255,255,255,0.65)';
   return (
     <Card className="px-[14px] py-[11px]">
       <div className="flex items-center justify-between gap-2">
@@ -522,21 +522,23 @@ const ScheduleViewModal: React.FC<{
   const done   = wins + losses + draws;
   const winRate = done > 0 ? Math.round((wins / done) * 100) : null;
 
+  const BNAV=64, TMAR=48;
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-[88px] animate-[fade-in_0.15s_ease]">
-      <div className="absolute inset-0 backdrop-blur-md" style={{ background:'rgba(0,0,0,0.75)' }} onClick={onClose} />
-      <div className="relative w-full max-w-[500px] flex flex-col max-h-[calc(100vh-104px)] rounded-xl animate-[slide-up_0.2s_ease]"
-        style={{ background:C.card, border:`1px solid ${C.bdr}`, boxShadow:'0 -8px 40px rgba(0,0,0,0.35)' }}
-      >
+    <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',flexDirection:'column',justifyContent:'flex-end',alignItems:'center',animation:'fade-in 0.15s ease' }}>
+      <div onClick={onClose} style={{ position:'absolute',inset:0,background:'rgba(0,0,0,0.78)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)' }} />
+      <div style={{ position:'relative',width:'100%',maxWidth:500,maxHeight:`calc(100dvh - ${TMAR}px - ${BNAV}px)`,display:'flex',flexDirection:'column',background:C.card,borderRadius:'16px 16px 0 0',border:`1px solid ${C.bdr}`,borderBottom:'none',boxShadow:'0 -8px 40px rgba(0,0,0,0.5)',marginBottom:BNAV,overflow:'hidden',animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)' }}>
+        <div style={{ position:'absolute',top:0,left:'15%',right:'15%',height:1,background:`linear-gradient(90deg,transparent,${C.cyan}55,transparent)`,pointerEvents:'none' }} />
+        <div style={{ width:32,height:3,borderRadius:99,background:'rgba(255,255,255,0.12)',margin:'12px auto 0',flexShrink:0 }} />
         {/* Header */}
-        <div className="flex items-center justify-between px-[18px] py-[14px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 16px 12px',borderBottom:`1px solid ${C.bdr}`,flexShrink:0 }}>
           <div>
-            <h2 className="text-[15px] font-semibold mb-[2px]" style={{ color: C.text }}>Signal Hari Ini</h2>
-            <p className="text-[11px]" style={{ color: C.muted }}>{schedules.length} signal · {done} sudah eksekusi</p>
+            <h2 style={{ fontSize:14,fontWeight:600,color:C.text,marginBottom:2 }}>Signal Hari Ini</h2>
+            <p style={{ fontSize:11,color:C.muted }}>{schedules.length} signal · {done} sudah eksekusi</p>
           </div>
-          <button onClick={onClose} className="w-[30px] h-[30px] flex items-center justify-center rounded-md cursor-pointer"
-            style={{ background:C.faint, border:`1px solid ${C.bdr}`, color:C.sub }}>
-            <X className="w-[13px] h-[13px]" />
+          <button onClick={onClose} style={{ width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:8,border:`1px solid rgba(255,255,255,0.08)`,background:'rgba(255,255,255,0.04)',color:'rgba(255,255,255,0.4)',cursor:'pointer',transition:'all 0.15s' }}
+            onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(248,113,113,0.12)';(e.currentTarget as HTMLButtonElement).style.color=C.coral;}}
+            onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.04)';(e.currentTarget as HTMLButtonElement).style.color='rgba(255,255,255,0.4)';}}>
+            <X size={13} />
           </button>
         </div>
 
@@ -569,7 +571,7 @@ const ScheduleViewModal: React.FC<{
         )}
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto">
+        <div style={{ flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch' as any }}>
           {schedules.map((s, i) => {
             const isActive  = i === activeIdx;
             const isBuy     = s.trend === 'buy';
@@ -643,10 +645,8 @@ const ScheduleViewModal: React.FC<{
         </div>
 
         {/* Footer */}
-        <div className="px-[18px] py-3" style={{ borderTop:`1px solid ${C.bdr}` }}>
-          <button onClick={onClose}
-            className="w-full py-2.5 rounded-md text-[13px] font-medium cursor-pointer"
-            style={{ background:C.faint, border:`1px solid ${C.bdr}`, color:C.sub }}>
+        <div style={{ padding:'10px 16px',borderTop:`1px solid ${C.bdr}`,flexShrink:0 }}>
+          <button onClick={onClose} style={{ width:'100%',padding:'11px 0',borderRadius:8,fontSize:13,fontWeight:500,background:'rgba(255,255,255,0.05)',border:`1px solid ${C.bdr}`,color:C.sub,cursor:'pointer' }}>
             Tutup
           </button>
         </div>
@@ -1122,21 +1122,23 @@ const BulkScheduleModal: React.FC<{
     onAddSchedules(result);setInput('');
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 pb-[88px] animate-[fade-in_0.15s_ease]">
-      <div className="absolute inset-0 backdrop-blur-md" style={{ background:'rgba(0,0,0,0.75)' }} onClick={onClose} />
-      <div className="relative w-full max-w-[500px] flex flex-col max-h-[calc(100vh-104px)] rounded-xl animate-[slide-up_0.2s_ease]"
-        style={{ background:C.card,border:`1px solid ${C.bdr}`,boxShadow:'0 -8px 40px rgba(0,0,0,0.35)' }}
-      >
-        <div className="flex items-center justify-between px-[18px] py-[15px]" style={{ borderBottom:`1px solid ${C.bdr}` }}>
+    <div style={{ position:'fixed',inset:0,zIndex:50,display:'flex',flexDirection:'column',justifyContent:'flex-end',alignItems:'center',animation:'fade-in 0.15s ease' }}>
+      <div onClick={onClose} style={{ position:'absolute',inset:0,background:'rgba(0,0,0,0.78)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)' }} />
+      <div style={{ position:'relative',width:'100%',maxWidth:500,maxHeight:'calc(100dvh - 48px - 64px)',display:'flex',flexDirection:'column',background:C.card,borderRadius:'16px 16px 0 0',border:`1px solid ${C.bdr}`,borderBottom:'none',boxShadow:'0 -8px 40px rgba(0,0,0,0.5)',marginBottom:64,overflow:'hidden',animation:'slide-up 0.25s cubic-bezier(0.32,0.72,0,1)' }}>
+        <div style={{ position:'absolute',top:0,left:'15%',right:'15%',height:1,background:`linear-gradient(90deg,transparent,${C.cyan}55,transparent)`,pointerEvents:'none' }} />
+        <div style={{ width:32,height:3,borderRadius:99,background:'rgba(255,255,255,0.12)',margin:'12px auto 0',flexShrink:0 }} />
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 16px 12px',borderBottom:`1px solid ${C.bdr}`,flexShrink:0 }}>
           <div>
-            <h2 className="text-[15px] font-semibold mb-[3px]" style={{ color: C.text }}>Input Signal</h2>
-            <p className="text-[11px]" style={{ color: C.muted }}>Format: <span className="font-medium" style={{ color: C.cyan }}>09:30 buy</span> · satu per baris</p>
+            <h2 style={{ fontSize:14,fontWeight:600,color:C.text,marginBottom:2 }}>Input Signal</h2>
+            <p style={{ fontSize:11,color:C.muted }}>Format: <span style={{ fontWeight:600,color:C.cyan }}>09:30 buy</span> · satu per baris</p>
           </div>
-          <button onClick={onClose} className="w-[30px] h-[30px] flex items-center justify-center rounded-md cursor-pointer" style={{ background:C.faint,border:`1px solid ${C.bdr}`,color:C.sub }}>
-            <X className="w-[13px] h-[13px]" />
+          <button onClick={onClose} style={{ width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',background:'rgba(255,255,255,0.04)',color:'rgba(255,255,255,0.4)',cursor:'pointer',transition:'all 0.15s' }}
+            onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(248,113,113,0.12)';(e.currentTarget as HTMLButtonElement).style.color=C.coral;}}
+            onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(255,255,255,0.04)';(e.currentTarget as HTMLButtonElement).style.color='rgba(255,255,255,0.4)';}}>
+            <X size={13} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-[14px_18px]">
+        <div style={{ flex:1,overflowY:'auto',padding:'14px 16px',WebkitOverflowScrolling:'touch' as any }}>
           {schedules.length>0&&(
             <div className="mb-[14px]">
               <div className="flex justify-between items-center mb-2">
@@ -1174,14 +1176,11 @@ const BulkScheduleModal: React.FC<{
             </div>
           )}
         </div>
-        <div className="flex gap-2 px-[18px] py-3" style={{ borderTop:`1px solid ${C.bdr}` }}>
-          <button onClick={handleAdd} disabled={!input.trim()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md text-[13px] font-medium"
-            style={{ background:!input.trim()?C.faint:'rgba(52,211,153,0.1)',border:`1px solid ${!input.trim()?C.bdr:'rgba(52,211,153,0.3)'}`,color:!input.trim()?C.muted:C.cyan,cursor:!input.trim()?'not-allowed':'pointer',opacity:!input.trim()?0.5:1 }}
-          >
-            <Plus className="w-[13px] h-[13px]" /> Tambah
+        <div style={{ display:'flex',gap:10,padding:'10px 16px',borderTop:`1px solid ${C.bdr}`,flexShrink:0 }}>
+          <button onClick={handleAdd} disabled={!input.trim()} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:6,padding:'11px 0',borderRadius:8,fontSize:13,fontWeight:600,background:!input.trim()?'rgba(255,255,255,0.04)':`rgba(52,211,153,0.12)`,border:`1px solid ${!input.trim()?'rgba(255,255,255,0.08)':'rgba(52,211,153,0.3)'}`,color:!input.trim()?C.muted:C.cyan,cursor:!input.trim()?'not-allowed':'pointer',opacity:!input.trim()?0.45:1,transition:'all 0.2s' }}>
+            <Plus size={13} /> Tambah
           </button>
-          <button onClick={onClose} className="px-5 py-2.5 rounded-md text-[13px] font-medium bg-transparent cursor-pointer" style={{ border:`1px solid ${C.bdr}`,color:C.sub }}>
+          <button onClick={onClose} style={{ padding:'11px 20px',borderRadius:8,fontSize:13,fontWeight:500,background:'rgba(255,255,255,0.05)',border:`1px solid ${C.bdr}`,color:C.sub,cursor:'pointer' }}>
             Tutup
           </button>
         </div>
