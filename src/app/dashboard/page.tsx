@@ -5,6 +5,7 @@ import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { BottomNav } from '@/components/BottomNav';
 import { ChartCard } from '@/components/ChartCard';
+import AssetIcon from '@/components/common/AssetIcon';
 import {
   Activity, AlertCircle, BarChart2, Calendar,
   ChevronDown, ChevronUp, Info, Plus,
@@ -253,8 +254,8 @@ const RealtimeClockCompact: React.FC = () => {
 // ASSET CARD — replaces execution count card
 // ═══════════════════════════════════════════════════════════════
 const AssetCard: React.FC<{
-  assetSymbol:string; assetName:string; mode:TradingMode; isLoading?:boolean; icon?:string;
-}> = ({ assetSymbol, assetName, mode, isLoading=false, icon }) => {
+  assetSymbol:string; assetName:string; mode:TradingMode; isLoading?:boolean; icon?:string; asset?:any;
+}> = ({ assetSymbol, assetName, mode, isLoading=false, icon, asset }) => {
   const modeCol   = mode==='ctc' ? '#a78bfa' : '#34d399';
   const modeBg    = mode==='ctc' ? 'rgba(167,139,250,0.1)' : 'rgba(52,211,153,0.1)';
   const modeBdr   = mode==='ctc' ? 'rgba(167,139,250,0.25)' : 'rgba(52,211,153,0.25)';
@@ -304,7 +305,9 @@ const AssetCard: React.FC<{
           display:'flex', alignItems:'center', justifyContent:'center',
           background: modeBg, border:`1.5px solid ${modeBdr}`,
         }}>
-          {showImg ? (
+          {asset ? (
+            <AssetIcon asset={asset} size="sm" className="!rounded-none" />
+          ) : showImg ? (
             <img src={icon} alt={assetSymbol} onError={()=>setImgErr(true)}
               style={{ width:'100%', height:'100%', objectFit:'contain', padding:4 }} />
           ) : (
@@ -2494,7 +2497,7 @@ const ModeSessionPanel: React.FC<{
         {deviceType==='desktop'&&(
           <div className="pt-6 flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-4" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} asset={assets.find((a:any)=>a.symbol===settings.assetSymbol)} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <ProfitCard todayProfit={todayStats.profit} isLoading={isLoading} lastResult={lastTradeResult} />
               <div className="h-full"><RealtimeClock /></div>
@@ -2537,7 +2540,7 @@ const ModeSessionPanel: React.FC<{
         {deviceType==='tablet'&&(
           <div className="flex flex-col" style={{ gap: g }}>
             <div className="grid grid-cols-3" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} asset={assets.find((a:any)=>a.symbol===settings.assetSymbol)} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
               <div className="h-full"><RealtimeClock /></div>
             </div>
@@ -2604,7 +2607,7 @@ const ModeSessionPanel: React.FC<{
               />
             </div>
             <div className="grid grid-cols-2" style={{ gap: g }}>
-              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} />
+              <AssetCard assetSymbol={settings.assetSymbol} assetName={settings.assetName} mode={tradingMode} isLoading={isLoading} icon={assets.find((a:any)=>a.symbol===settings.assetSymbol)?.icon} asset={assets.find((a:any)=>a.symbol===settings.assetSymbol)} />
               <BalanceCard demoBalance={balance.demo_balance} realBalance={balance.real_balance} accountType={activeAccountType} isLoading={isLoading} />
             </div>
             <OrderSettingsCard
