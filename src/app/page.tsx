@@ -574,7 +574,7 @@ const useMultiTicker = (): TickerItem[] => {
       });
 
     // ── GOLD: goldprice.org (free, no key) ──────────────────────────────
-    fetch('https://data-asg.goldprice.org/dbXRates/USD')
+    fetch('/api/gold-price')
       .then(r => r.json())
       .then(d => {
         const price = d?.items?.[0]?.xauPrice;
@@ -590,7 +590,7 @@ const useMultiTicker = (): TickerItem[] => {
           if (d.rates?.EUR) update('EUR/USD', { price: +(1 / d.rates.EUR).toFixed(4) });
           if (d.rates?.GBP) update('GBP/USD', { price: +(1 / d.rates.GBP).toFixed(4) });
         }).catch(() => {});
-      fetch('https://data-asg.goldprice.org/dbXRates/USD')
+      fetch('/api/gold-price')
         .then(r => r.json())
         .then(d => {
           const price = d?.items?.[0]?.xauPrice;

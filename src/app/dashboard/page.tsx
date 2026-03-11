@@ -18,12 +18,12 @@ import {
 // ═══════════════════════════════════════════════════════════════
 const C = {
   bg:    '#0f0f0f',
-  card:  '#172219',
-  card2: '#1a2c1f',
-  bdr:   'rgba(255,255,255,0.08)',
-  bdrAct:'rgba(52,211,153,0.3)',
+  card:  '#1b3224',
+  card2: '#1e3a2a',
+  bdr:   'rgba(52,211,153,0.12)',
+  bdrAct:'rgba(52,211,153,0.35)',
   cyan:  '#34d399',
-  cyand: 'rgba(52,211,153,0.1)',
+  cyand: 'rgba(52,211,153,0.12)',
   coral: '#f87171',
   cord:  'rgba(248,113,113,0.1)',
   amber: '#fbbf24',
@@ -31,9 +31,9 @@ const C = {
   violet:'#a78bfa',
   vltd:  'rgba(167,139,250,0.1)',
   text:  '#f0faf6',
-  sub:   'rgba(255,255,255,0.6)',
-  muted: 'rgba(255,255,255,0.35)',
-  faint: 'rgba(255,255,255,0.05)',
+  sub:   'rgba(255,255,255,0.7)',
+  muted: 'rgba(255,255,255,0.4)',
+  faint: 'rgba(52,211,153,0.05)',
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -539,7 +539,7 @@ const ScheduleViewModal: React.FC<{
 
         {/* Summary bar */}
         {done > 0 && (
-          <div className="flex items-center gap-3 px-[18px] py-[10px]" style={{ borderBottom:`1px solid ${C.bdr}`, background:'rgba(0,0,0,0.2)' }}>
+          <div className="flex items-center gap-3 px-[18px] py-[10px]" style={{ borderBottom:`1px solid ${C.bdr}`, background:'rgba(52,211,153,0.04)' }}>
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-semibold" style={{ color: C.cyan }}>{wins} Win</span>
             </div>
@@ -835,7 +835,7 @@ const FastTradeSessionPanel: React.FC<{
             </div>
           )}
           {statusInfo && (
-            <div className="mx-3 mt-2 flex items-center justify-between px-3 py-2 rounded-md" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="mx-3 mt-2 flex items-center justify-between px-3 py-2 rounded-md" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <span className="text-[11px]" style={{ color: C.muted }}>Status</span>
               <span className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: statusInfo.col }}>
                 <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: statusInfo.col }} />
@@ -844,13 +844,13 @@ const FastTradeSessionPanel: React.FC<{
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 mx-3 mt-2">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[10px] mb-1" style={{ color: C.muted }}>Total P&L</p>
               <p className="text-[15px] font-semibold leading-none" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
                 {(session.totalPnL??0)>=0?'+':''}{(session.totalPnL??0).toLocaleString('id-ID')}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[10px] mb-1" style={{ color: C.muted }}>Win / Loss</p>
               <p className="text-[15px] font-semibold leading-none">
                 <span style={{ color: C.cyan }}>{session.wins??0}</span>
@@ -860,13 +860,13 @@ const FastTradeSessionPanel: React.FC<{
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mx-3 mt-2 mb-3">
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[10px] mb-1" style={{ color: C.muted }}>Martingale Step</p>
               <p className="text-[15px] font-semibold leading-none" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
                 {(session.currentStep??0) > 0 ? `Step ${session.currentStep}` : 'Reset'}
               </p>
             </div>
-            <div className="rounded-lg px-2.5 py-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2.5 py-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[10px] mb-1" style={{ color: C.muted }}>Amount Saat Ini</p>
               <p className="text-[13px] font-semibold leading-none" style={{ color: C.text }}>
                 Rp {(session.currentAmount??0).toLocaleString('id-ID')}
@@ -1009,7 +1009,7 @@ const CtcSessionPanel: React.FC<{
 
           {/* Status */}
           {statusInfo && (
-            <div className="mx-2 mt-1.5 flex items-center justify-between px-2.5 py-1.5 rounded-md gap-2" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="mx-2 mt-1.5 flex items-center justify-between px-2.5 py-1.5 rounded-md gap-2" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <span className="text-[10px] shrink-0" style={{ color: C.muted }}>Status</span>
               <span className="flex items-center gap-1 text-[10px] font-semibold min-w-0 overflow-hidden" style={{ color: statusInfo.col }}>
                 <span className="inline-block w-[5px] h-[5px] rounded-full shrink-0" style={{ background: statusInfo.col }} />
@@ -1020,13 +1020,13 @@ const CtcSessionPanel: React.FC<{
 
           {/* P&L + Win/Loss */}
           <div className="grid grid-cols-2 gap-1.5 mx-2 mt-1.5">
-            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>Total P&L</p>
               <p className="text-[12px] font-semibold leading-none truncate" style={{ color:(session.totalPnL??0)>=0?C.cyan:C.coral }}>
                 {(session.totalPnL??0)>=0?'+':''}{(session.totalPnL??0).toLocaleString('id-ID')}
               </p>
             </div>
-            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[9px] mb-1" style={{ color: C.muted }}>Win / Loss</p>
               <p className="text-[13px] font-semibold leading-none">
                 <span style={{ color: C.cyan }}>{session.wins??0}</span>
@@ -1038,13 +1038,13 @@ const CtcSessionPanel: React.FC<{
 
           {/* Martingale step + amount */}
           <div className="grid grid-cols-2 gap-1.5 mx-2 mt-1.5 mb-2">
-            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>M. Step</p>
               <p className="text-[12px] font-semibold leading-none truncate" style={{ color:(session.currentStep??0)>0?C.amber:C.text }}>
                 {(session.currentStep??0) > 0 ? `Step ${session.currentStep}` : 'Reset'}
               </p>
             </div>
-            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:C.card2,border:`1px solid ${C.bdr}` }}>
+            <div className="rounded-lg px-2 py-1.5 min-w-0 overflow-hidden" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <p className="text-[9px] mb-1 truncate" style={{ color: C.muted }}>Amount</p>
               <p className="text-[11px] font-semibold leading-none truncate" style={{ color: C.text }}>
                 {(session.currentAmount??0).toLocaleString('id-ID')}
@@ -1577,7 +1577,7 @@ const OrderSettingsCard: React.FC<{
 
             <Divider />
             <SL>Martingale</SL>
-            <div className="rounded-xl p-3 mb-3" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.06)' }}>
+            <div className="rounded-xl p-3 mb-3" style={{ background:'rgba(52,211,153,0.06)',border:'1px solid rgba(52,211,153,0.12)' }}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[13px] font-semibold" style={{ color: C.sub }}>Aktifkan Martingale</p>
@@ -1698,7 +1698,7 @@ const OrderSettingsCard: React.FC<{
 
             <Divider />
             <SL accent="rgba(248,113,113,0.55)">Risk Management</SL>
-            <div className="rounded-xl p-3 mb-1" style={{ background:'rgba(0,0,0,0.2)',border:'1px solid rgba(248,113,113,0.08)' }}>
+            <div className="rounded-xl p-3 mb-1" style={{ background:'rgba(248,113,113,0.05)',border:'1px solid rgba(248,113,113,0.12)' }}>
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <FL>Stop Loss</FL>
@@ -1801,7 +1801,7 @@ const BotControlCard: React.FC<{
         <div className="px-4 pb-4 pt-3">
           {/* Stats row */}
           <div className="flex gap-2 mb-3">
-            <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+            <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.1)' }}>
               <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Signal</span>
               <span className="text-[22px] font-bold leading-none" style={{ color:C.text }}>{status.activeSchedules}</span>
             </div>
@@ -1880,7 +1880,7 @@ const FastTradeControlCard: React.FC<{
                   {pnlPos?'+':''}{pnl.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.1)' }}>
                 <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>W / L</span>
                 <span className="text-[17px] font-bold leading-none">
                   <span style={{ color:C.cyan }}>{session.wins??0}</span>
@@ -1889,7 +1889,7 @@ const FastTradeControlCard: React.FC<{
                 </span>
               </div>
               {winRate!==null&&(
-                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.1)' }}>
                   <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Win%</span>
                   <span className="text-[17px] font-bold leading-none" style={{ color:winRate>=50?C.cyan:C.coral }}>{winRate}%</span>
                 </div>
@@ -1957,7 +1957,7 @@ const CtcControlCard: React.FC<{
                   {pnlPos?'+':''}{pnl.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.1)' }}>
                 <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>W / L</span>
                 <span className="text-[17px] font-bold leading-none">
                   <span style={{ color:C.cyan }}>{session.wins??0}</span>
@@ -1966,7 +1966,7 @@ const CtcControlCard: React.FC<{
                 </span>
               </div>
               {winRate!==null&&(
-                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(0,0,0,0.25)',border:'1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex-1 rounded-xl px-3 py-2.5 flex flex-col gap-[3px]" style={{ background:'rgba(52,211,153,0.05)',border:'1px solid rgba(52,211,153,0.1)' }}>
                   <span className="text-[9px] font-bold uppercase tracking-[0.1em]" style={{ color:C.muted }}>Win%</span>
                   <span className="text-[17px] font-bold leading-none" style={{ color:winRate>=50?C.cyan:C.coral }}>{winRate}%</span>
                 </div>

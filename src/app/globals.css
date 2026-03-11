@@ -155,24 +155,45 @@ textarea.ds-input { resize: none; }
 .ds-card {
   --border-angle: 0deg;
   background:
-    linear-gradient(135deg, #08140f 0%, #0b1c15 100%) padding-box,
+    linear-gradient(
+      145deg,
+      #1a3326 0%,
+      #172d21 25%,
+      #1e3c2c 50%,
+      #162919 75%,
+      #1b3223 100%
+    ) padding-box,
     conic-gradient(
       from var(--border-angle),
-      rgba(52, 211, 153, 0.08) 0%,
-      rgba(52, 211, 153, 0.08) 58%,
-      rgba(52, 211, 153, 0.55)  70%,
-      rgba(180, 255, 220, 0.9) 76%,
-      rgba(52, 211, 153, 0.55)  82%,
-      rgba(52, 211, 153, 0.08) 94%,
-      rgba(52, 211, 153, 0.08) 100%
+      rgba(52, 211, 153, 0.06) 0%,
+      rgba(52, 211, 153, 0.06) 55%,
+      rgba(52, 211, 153, 0.6)  68%,
+      rgba(180, 255, 220, 1.0) 74%,
+      rgba(52, 211, 153, 0.6)  80%,
+      rgba(52, 211, 153, 0.06) 93%,
+      rgba(52, 211, 153, 0.06) 100%
     ) border-box;
-  border: 1px solid rgba(52, 211, 153, 0.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(52, 211, 153, 0.1),
+    inset 0 0 30px rgba(52, 211, 153, 0.03);
   clip-path: var(--clip-md);
   position: relative;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   animation: card-border-spin 7s linear infinite;
+}
+
+/* Top highlight line on every card */
+.ds-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.35), transparent);
+  pointer-events: none;
+  z-index: 1;
 }
 /* Each card gets a unique speed + offset so they never look in sync */
 .ds-card:nth-child(1)  { animation-duration: 6.1s;  animation-delay: -0.8s;  }
@@ -192,7 +213,11 @@ textarea.ds-input { resize: none; }
 
 .ds-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(52, 211, 153, 0.08), 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow:
+    0 10px 32px rgba(52, 211, 153, 0.1),
+    0 4px 12px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(52, 211, 153, 0.18),
+    inset 0 0 40px rgba(52, 211, 153, 0.05);
 }
 
 /* ============================================================
@@ -317,4 +342,9 @@ html.dashboard-page body {
 .ds-card {
   border-radius: 10px !important;
   clip-path: none !important;
+}
+
+/* Ensure the ::before top-line still renders after clip-path removal */
+.ds-card::before {
+  border-radius: 10px 10px 0 0;
 }
