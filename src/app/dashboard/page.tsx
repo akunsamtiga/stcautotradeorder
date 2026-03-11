@@ -2112,6 +2112,16 @@ export default function DashboardPage() {
     setLastTradeResult(r);
     resultTimerRef.current = setTimeout(() => setLastTradeResult(null), 2500);
   }, []);
+
+  // Mode-block toast
+  const [modeBlockMsg, setModeBlockMsg] = useState<string|null>(null);
+  const modeBlockTimerRef = React.useRef<ReturnType<typeof setTimeout>|null>(null);
+  const showModeBlock = React.useCallback((msg: string) => {
+    if (modeBlockTimerRef.current) clearTimeout(modeBlockTimerRef.current);
+    setModeBlockMsg(msg);
+    modeBlockTimerRef.current = setTimeout(() => setModeBlockMsg(null), 3000);
+  }, []);
+
   const [tradingMode,setTradingMode] = useState<TradingMode>('schedule');
 
   // Schedule settings
@@ -2344,11 +2354,13 @@ export default function DashboardPage() {
   };
 
   const handleModeChange=(m:TradingMode)=>{
-    if(m==='fastrade'&&(botStatus.isRunning&&!botStatus.isPaused))return;
-    if(m==='fastrade'&&ctcSession?.isActive)return;
-    if(m==='ctc'&&(botStatus.isRunning&&!botStatus.isPaused))return;
-    if(m==='ctc'&&ftSession?.isActive)return;
-    if(m==='schedule'&&(ftSession?.isActive||ctcSession?.isActive))return;
+    if(m===tradingMode)return;
+    if(m==='fastrade'&&(botStatus.isRunning&&!botStatus.isPaused)){showModeBlock('Mode Signal sedang aktif. Hentikan bot Signal terlebih dahulu.');return;}
+    if(m==='fastrade'&&ctcSession?.isActive){showModeBlock('Mode CTC sedang aktif. Hentikan sesi CTC terlebih dahulu.');return;}
+    if(m==='ctc'&&(botStatus.isRunning&&!botStatus.isPaused)){showModeBlock('Mode Signal sedang aktif. Hentikan bot Signal terlebih dahulu.');return;}
+    if(m==='ctc'&&ftSession?.isActive){showModeBlock('Mode FastTrade sedang aktif. Hentikan sesi FastTrade terlebih dahulu.');return;}
+    if(m==='schedule'&&ftSession?.isActive){showModeBlock('Mode FastTrade sedang aktif. Hentikan sesi FastTrade terlebih dahulu.');return;}
+    if(m==='schedule'&&ctcSession?.isActive){showModeBlock('Mode CTC sedang aktif. Hentikan sesi CTC terlebih dahulu.');return;}
     setTradingMode(m);
   };
 
@@ -2360,6 +2372,15 @@ export default function DashboardPage() {
     : tradingMode==='fastrade'
     ? !!(ftSession?.isActive)
     : !!(ctcSession?.isActive);
+
+  // Modes that are blocked because another mode is currently active
+  const blockedModes: TradingMode[] = (() => {
+    const blocked: TradingMode[] = [];
+    if((botStatus.isRunning&&!botStatus.isPaused)){ blocked.push('fastrade'); blocked.push('ctc'); }
+    if(ftSession?.isActive){ blocked.push('schedule'); blocked.push('ctc'); }
+    if(ctcSession?.isActive){ blocked.push('schedule'); blocked.push('fastrade'); }
+    return blocked.filter((v, i, a) => a.indexOf(v) === i);
+  })();
 
   const activeAccountType: 'demo'|'real' = tradingMode==='fastrade'
     ? ftSettings.accountType
@@ -2378,6 +2399,7 @@ const ModeSessionPanel: React.FC<{
   mode: TradingMode;
   onModeChange: (m: TradingMode) => void;
   modeDisabled: boolean;
+  blockedModes?: TradingMode[];
   // schedule props
   schedules: {time:string;trend:'buy'|'sell'}[];
   executions: {scheduledTime:string;result:'win'|'loss'|'draw'}[];
@@ -2393,7 +2415,7 @@ const ModeSessionPanel: React.FC<{
   fillHeight?: boolean;
   tabletMaxItems?: number;
 }> = ({
-  mode, onModeChange, modeDisabled,
+  mode, onModeChange, modeDisabled, blockedModes=[],
   schedules, executions, onOpenModal, botRunning,
   ftSession, ftLoading, ctcSession, ctcLoading,
   fillHeight=false, tabletMaxItems,
@@ -2434,14 +2456,12 @@ const ModeSessionPanel: React.FC<{
       <div className="shrink-0 relative">
         <button
           type="button"
-          disabled={modeDisabled}
-          onClick={() => !modeDisabled && setModeDropOpen(v => !v)}
+          onClick={() => setModeDropOpen(v => !v)}
           className="w-full flex items-center justify-between px-3 py-[8px] rounded-xl transition-all duration-150 select-none"
           style={{
             background: modeDropOpen ? `${modeAccentColor}14` : 'rgba(0,0,0,0.4)',
             border: `1px solid ${modeDropOpen ? modeAccentColor + '40' : 'rgba(255,255,255,0.08)'}`,
-            cursor: modeDisabled ? 'not-allowed' : 'pointer',
-            opacity: modeDisabled ? 0.7 : 1,
+            cursor: 'pointer',
           }}
         >
           <div className="flex items-center gap-2">
@@ -2469,7 +2489,7 @@ const ModeSessionPanel: React.FC<{
         </button>
 
         {/* Dropdown menu */}
-        {modeDropOpen && !modeDisabled && (
+        {modeDropOpen && (
           <>
             <div className="fixed inset-0 z-[9]" onClick={() => setModeDropOpen(false)} />
             <div className="absolute left-0 right-0 mt-1 z-[10] rounded-xl overflow-hidden"
@@ -2481,18 +2501,20 @@ const ModeSessionPanel: React.FC<{
               }}>
               {MODES.map(({ v, label, icon, accent, desc }, idx) => {
                 const isActive = mode === v;
+                const isLocked = blockedModes.includes(v);
                 return (
                   <button key={v} type="button"
-                    onClick={() => { onModeChange(v); setModeDropOpen(false); }}
+                    onClick={() => { onModeChange(v); if(!isLocked) setModeDropOpen(false); }}
                     className="w-full flex items-center gap-3 px-4 py-[11px] transition-colors duration-100"
                     style={{
                       background: isActive ? `${accent}10` : 'transparent',
                       borderBottom: idx < MODES.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                       borderLeft: isActive ? `2px solid ${accent}` : '2px solid transparent',
-                      cursor: 'pointer',
+                      cursor: isLocked ? 'not-allowed' : 'pointer',
+                      opacity: isLocked ? 0.5 : 1,
                     }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                    onMouseEnter={e => { if (!isActive && !isLocked) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = isActive ? `${accent}10` : 'transparent'; }}
                   >
                     <span className="flex items-center justify-center w-6 h-6 rounded-lg shrink-0"
                       style={{ background: `${accent}15`, color: accent }}>
@@ -2505,9 +2527,30 @@ const ModeSessionPanel: React.FC<{
                         <path d="M1 4L4 7L9 1" stroke="#34d399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
+                    {isLocked && !isActive && (
+                      <span className="shrink-0 flex items-center justify-center w-[18px] h-[18px] rounded-md"
+                        style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.25)' }}>
+                        <svg width="9" height="10" viewBox="0 0 9 10" fill="none">
+                          <rect x="1" y="4" width="7" height="5.5" rx="1" fill="rgba(248,113,113,0.7)"/>
+                          <path d="M2.5 4V3a2 2 0 0 1 4 0v1" stroke="rgba(248,113,113,0.8)" strokeWidth="1.2" fill="none"/>
+                        </svg>
+                      </span>
+                    )}
                   </button>
                 );
               })}
+              {blockedModes.length > 0 && (
+                <div className="px-4 py-2.5 flex items-center gap-2"
+                  style={{ borderTop: '1px solid rgba(255,255,255,0.04)', background: 'rgba(248,113,113,0.04)' }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}>
+                    <circle cx="5" cy="5" r="4.5" stroke="rgba(248,113,113,0.6)" strokeWidth="1"/>
+                    <path d="M5 3v2.5M5 7h.01" stroke="rgba(248,113,113,0.8)" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-[10px]" style={{ color: 'rgba(248,113,113,0.75)' }}>
+                    Hentikan mode aktif untuk berpindah
+                  </span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -2582,6 +2625,20 @@ const ModeSessionPanel: React.FC<{
           </div>
         )}
 
+        {modeBlockMsg&&(
+          <div className="flex items-center gap-[9px] px-[14px] py-2.5 rounded-[7px] mb-5" style={{ background:'rgba(251,191,36,0.07)',border:`1px solid rgba(251,191,36,0.2)`,borderLeft:`2px solid ${C.amber}`,animation:'slide-up 0.25s ease' }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink:0 }}>
+              <rect x="1" y="5.5" width="11" height="7" rx="1.5" fill="rgba(251,191,36,0.25)" stroke="rgba(251,191,36,0.7)" strokeWidth="1"/>
+              <path d="M3.5 5.5V4a3 3 0 0 1 6 0v1.5" stroke="rgba(251,191,36,0.8)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+              <circle cx="6.5" cy="9" r="1" fill="rgba(251,191,36,0.9)"/>
+            </svg>
+            <span className="text-xs flex-1" style={{ color: C.amber }}>{modeBlockMsg}</span>
+            <button onClick={()=>setModeBlockMsg(null)} className="bg-transparent border-none cursor-pointer opacity-50" style={{ color: C.amber }}>
+              <X className="w-[13px] h-[13px]" />
+            </button>
+          </div>
+        )}
+
         {/* ── DESKTOP ── */}
         {deviceType==='desktop'&&(
           <div className="pt-6 flex flex-col" style={{ gap: g }}>
@@ -2605,7 +2662,7 @@ const ModeSessionPanel: React.FC<{
               </Card>
               <div className="flex flex-col" style={{ gap: g }}>
                 <ModeSessionPanel
-                  mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                  mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked} blockedModes={blockedModes}
                   schedules={settings.schedules} executions={executions}
                   onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
                   ftSession={ftSession} ftLoading={ftLoading}
@@ -2637,7 +2694,7 @@ const ModeSessionPanel: React.FC<{
             <div className="grid grid-cols-2 items-stretch" style={{ gap: g }}>
               <Card className="p-3"><ChartCard assetSymbol={settings.assetSymbol} height={220} /></Card>
               <ModeSessionPanel
-                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked} blockedModes={blockedModes}
                 schedules={settings.schedules} executions={executions}
                 onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
                 ftSession={ftSession} ftLoading={ftLoading}
@@ -2688,7 +2745,7 @@ const ModeSessionPanel: React.FC<{
                 </Card>
               </div>
               <ModeSessionPanel
-                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked}
+                mode={tradingMode} onModeChange={handleModeChange} modeDisabled={isBotLocked} blockedModes={blockedModes}
                 schedules={settings.schedules} executions={executions}
                 onOpenModal={()=>setIsModalOpen(true)} botRunning={botStatus.isRunning&&!botStatus.isPaused}
                 ftSession={ftSession} ftLoading={ftLoading}
