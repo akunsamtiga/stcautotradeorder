@@ -167,14 +167,14 @@ textarea.ds-input { resize: none; }
     ) padding-box,
     conic-gradient(
       from var(--border-angle),
-      rgba(148, 163, 184, 0.03)   0%,
-      rgba(148, 163, 184, 0.35)  50%,
-      rgba(220, 230, 245, 0.80)  68%,
-      rgba(148, 163, 184, 0.35)  85%,
-      rgba(148, 163, 184, 0.03)  100%
+      rgba(16, 185, 129, 0.03)   0%,
+      rgba(16, 185, 129, 0.40)  50%,
+      rgba(52, 211, 153, 0.90)  68%,
+      rgba(16, 185, 129, 0.40)  85%,
+      rgba(16, 185, 129, 0.03)  100%
     ) border-box;
 
-  border: 1.5px solid rgba(148, 163, 184, 0.20);
+  border: 1.5px solid rgba(16, 185, 129, 0.25);
 
   /* ── Full 3D shadow stack ── */
   box-shadow:
@@ -186,15 +186,15 @@ textarea.ds-input { resize: none; }
     3px 5px 0px rgba(0, 0, 0, 0.55),
     2px 3px 0px rgba(0, 0, 0, 0.32),
     /* Bevel top+left (highlight side) */
-    -1px -1px 0px rgba(200, 215, 235, 0.18),
-    /* Silver ambient glow */
-    0 14px 48px rgba(20, 25, 40, 0.35),
+    -1px -1px 0px rgba(16, 185, 129, 0.20),
+    /* Emerald ambient glow */
+    0 14px 48px rgba(10, 40, 30, 0.35),
     /* Inner surface highlights */
-    inset 0 1px 0 rgba(200, 215, 235, 0.22),
+    inset 0 1px 0 rgba(52, 211, 153, 0.22),
     inset 0 -2px 5px rgba(0, 0, 0, 0.5),
-    inset 2px 0 8px rgba(180, 200, 225, 0.04),
+    inset 2px 0 8px rgba(16, 185, 129, 0.05),
     inset -3px 0 8px rgba(0, 0, 0, 0.25),
-    inset 0 0 28px rgba(20, 25, 45, 0.4);
+    inset 0 0 28px rgba(10, 30, 25, 0.4);
 
   clip-path: var(--clip-md);
   position: relative;
@@ -217,8 +217,8 @@ textarea.ds-input { resize: none; }
   position: absolute;
   top: 0; left: 10%; right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(210, 225, 245, 0.7), transparent);
-  box-shadow: 0 0 10px rgba(148, 163, 184, 0.45), 0 0 3px rgba(255,255,255,0.2);
+  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.7), transparent);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.45), 0 0 3px rgba(52, 211, 153, 0.3);
   pointer-events: none;
   z-index: 2;
 }
@@ -258,14 +258,14 @@ textarea.ds-input { resize: none; }
     0 5px 12px rgba(0, 0, 0, 0.45),
     4px 7px 0px rgba(0, 0, 0, 0.55),
     2px 3px 0px rgba(0, 0, 0, 0.3),
-    -1px -1px 0px rgba(200, 215, 235, 0.25),
-    0 24px 70px rgba(30, 35, 55, 0.45),
-    0 0 40px rgba(148, 163, 184, 0.10),
-    inset 0 1px 0 rgba(210, 225, 245, 0.30),
+    -1px -1px 0px rgba(16, 185, 129, 0.25),
+    0 24px 70px rgba(10, 40, 30, 0.45),
+    0 0 40px rgba(16, 185, 129, 0.12),
+    inset 0 1px 0 rgba(52, 211, 153, 0.30),
     inset 0 -2px 5px rgba(0, 0, 0, 0.5),
-    inset 2px 0 10px rgba(180, 200, 225, 0.06),
+    inset 2px 0 10px rgba(16, 185, 129, 0.07),
     inset -3px 0 10px rgba(0, 0, 0, 0.28),
-    inset 0 0 38px rgba(20, 28, 50, 0.45);
+    inset 0 0 38px rgba(10, 35, 28, 0.45);
 }
 
 /* ============================================================
@@ -390,8 +390,8 @@ html.dashboard-page body {
 
 .ds-card::before {
   border-radius: 10px 10px 0 0;
-  background: linear-gradient(90deg, transparent, rgba(210,225,245,0.65), transparent);
-  box-shadow: 0 0 10px rgba(148,163,184,0.40), 0 0 3px rgba(255,255,255,0.15);
+  background: linear-gradient(90deg, transparent, rgba(52,211,153,0.65), transparent);
+  box-shadow: 0 0 10px rgba(16,185,129,0.40), 0 0 3px rgba(52,211,153,0.25);
 }
 
 .ds-card::after {
