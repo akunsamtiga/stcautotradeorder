@@ -17,26 +17,25 @@ export const BottomNav = () => {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
-        background: 'rgba(5, 8, 7, 0.96)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(10, 10, 12, 0.97)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {/* Active tab top indicator line */}
+      {/* Active indicator line */}
       <div className="relative flex">
         {navItems.map(({ href }) => {
           const isActive = pathname === href;
           return (
             <div
               key={href}
-              className="flex-1 h-[1.5px] transition-all duration-300"
+              className="flex-1 h-[1px] transition-all duration-400"
               style={{
                 background: isActive
-                  ? 'linear-gradient(to right, transparent, rgba(52,211,153,0.9), transparent)'
+                  ? 'linear-gradient(to right, transparent, rgba(180, 195, 215, 0.7), transparent)'
                   : 'transparent',
-                boxShadow: isActive ? '0 0 8px rgba(52,211,153,0.4)' : 'none',
               }}
             />
           );
@@ -51,44 +50,38 @@ export const BottomNav = () => {
             <Link
               key={href}
               href={href}
-              className="flex-1 flex flex-col items-center justify-center gap-[5px] py-3 relative transition-all duration-200"
+              className="flex-1 flex flex-col items-center justify-center gap-[4px] py-3 relative"
               style={{
-                color: isActive ? '#34d399' : 'rgba(255,255,255,0.3)',
+                color: isActive ? 'rgba(210, 220, 235, 0.95)' : 'rgba(255, 255, 255, 0.25)',
                 textDecoration: 'none',
+                transition: 'color 0.2s ease',
               }}
             >
-              {/* Icon */}
               <div
-                className="relative flex items-center justify-center transition-transform duration-200"
-                style={{ transform: isActive ? 'translateY(-1px)' : 'translateY(0)' }}
+                style={{
+                  transform: isActive ? 'translateY(-1px)' : 'translateY(0)',
+                  transition: 'transform 0.2s ease',
+                }}
               >
                 <Icon
-                  size={20}
+                  size={19}
                   weight={isActive ? 'fill' : 'regular'}
-                  style={{
-                    filter: isActive
-                      ? 'drop-shadow(0 0 6px rgba(52,211,153,0.5))'
-                      : 'none',
-                    transition: 'filter 0.2s ease',
-                  }}
                 />
               </div>
 
-              {/* Label */}
               <span
-                className="transition-all duration-200"
                 style={{
                   fontFamily: 'var(--font-exo)',
-                  fontSize: 10,
-                  fontWeight: isActive ? 600 : 400,
-                  letterSpacing: '0.06em',
-                  opacity: isActive ? 1 : 0.7,
+                  fontSize: 9,
+                  fontWeight: isActive ? 500 : 400,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  opacity: isActive ? 0.9 : 0.5,
+                  transition: 'all 0.2s ease',
                 }}
               >
                 {label}
               </span>
-
-
             </Link>
           );
         })}
