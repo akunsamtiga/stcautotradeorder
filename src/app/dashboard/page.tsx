@@ -2599,7 +2599,7 @@ const ModeSessionPanel: React.FC<{
       {deviceType!=='desktop'&&(
         <div className="relative mb-5">
           <div className="relative w-full overflow-hidden">
-            <img src="/header3.jpeg" alt="" className="w-full h-auto block" />
+            <img src="/header3.png" alt="" className="w-full h-auto block" />
             {/* Slow shimmer sweep overlay */}
             <div className="absolute inset-0 pointer-events-none"
               style={{
