@@ -6,7 +6,7 @@ import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { BottomNav } from '@/components/BottomNav';
 import {
-  TrendUp, TrendDown, ArrowClockwise, WarningCircle,
+  TrendUp, TrendDown, WarningCircle,
   Clock, MagnifyingGlass, CaretLeft, CaretRight, X,
 } from '@phosphor-icons/react';
 
@@ -245,7 +245,6 @@ export default function HistoryPage() {
 
   const [allExecs,      setAllExecs]      = useState<ExecutionDisplay[]>([]);
   const [isLoading,     setIsLoading]     = useState(true);
-  const [isRefreshing,  setIsRefreshing]  = useState(false);
   const [error,         setError]         = useState<string | null>(null);
   const [filterResult,  setFilterResult]  = useState<'all'|'win'|'loss'|'draw'>('all');
   const [filterAccount, setFilterAccount] = useState<'all'|'demo'|'real'>('all');
@@ -295,13 +294,6 @@ export default function HistoryPage() {
       setAllExecs([]);
     } finally { setIsLoading(false); }
   }, [clearAuth, router, page, filterResult, filterAccount, filterTrend, search]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    hasFetchedRef.current = true;
-    await load();
-    setIsRefreshing(false);
-  };
 
   const stats = allExecs.reduce(
     (acc, e) => {
@@ -353,35 +345,11 @@ export default function HistoryPage() {
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ fontSize: 14, fontWeight: 700, color: C.text, letterSpacing: '0.02em' }}>History</h1>
-            <p style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
-              {isLoading ? '—' : `${totalOrders.toLocaleString()} transaksi`}
-            </p>
-          </div>
-
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px',
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: 7,
-              color: isRefreshing ? C.cyan : C.muted,
-              fontSize: 11, cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              opacity: (isRefreshing || isLoading) ? 0.4 : 1,
-            }}
-          >
-            <ArrowClockwise
-              size={12}
-              style={{ animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none' }}
-            />
-            Refresh
-          </button>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px 16px' }}>
+          <h1 style={{ fontSize: 14, fontWeight: 700, color: C.text, letterSpacing: '0.02em' }}>History</h1>
+          <p style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
+            {isLoading ? '—' : `${totalOrders.toLocaleString()} transaksi`}
+          </p>
         </div>
       </div>
 
