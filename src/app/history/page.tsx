@@ -7,27 +7,31 @@ import { api } from '@/lib/api';
 import { BottomNav } from '@/components/BottomNav';
 import {
   TrendUp, TrendDown, ArrowClockwise, WarningCircle,
-  Clock, MagnifyingGlass, CaretLeft, CaretRight,
+  Clock, MagnifyingGlass, CaretLeft, CaretRight, X,
 } from '@phosphor-icons/react';
 
-// ─── TOKENS — synced with dashboard ──────────────────────────
+// ─── DESIGN TOKENS — exact match with dashboard/globals ──────
 const C = {
-  bg:    '#050807',
-  card:  '#111915',
-  card2: '#141f1a',
-  bdr:   'rgba(52,211,153,0.22)',
+  bg:    '#0f0f0f',
+  card:  '#1a1a1a',
+  card2: '#141414',
+  bdr:   'rgba(52,211,153,0.18)',
+  bdrLo: 'rgba(255,255,255,0.06)',
   cyan:  '#34d399',
+  cyand: 'rgba(52,211,153,0.10)',
   coral: '#f87171',
-  text:  '#f0faf6',
-  sub:   '#e8f5f1',
-  muted: 'rgba(255,255,255,0.45)',
-  faint: 'rgba(255,255,255,0.05)',
+  cord:  'rgba(248,113,113,0.10)',
+  text:  '#ffffff',
+  sub:   'rgba(255,255,255,0.85)',
+  muted: 'rgba(255,255,255,0.40)',
+  faint: 'rgba(255,255,255,0.04)',
 };
 
-const cardStyle: React.CSSProperties = {
+const ROW_STYLE: React.CSSProperties = {
   background: C.card,
-  border: `1px solid ${C.bdr}`,
-  boxShadow: '0 0 0 1px rgba(52,211,153,0.06), 0 4px 18px rgba(52,211,153,0.07), 0 2px 8px rgba(0,0,0,0.3)',
+  border: `1px solid ${C.bdrLo}`,
+  borderRadius: 10,
+  transition: 'border-color 0.15s ease, background 0.15s ease',
 };
 
 // ─── TYPES ────────────────────────────────────────────────────
@@ -55,10 +59,13 @@ interface ExecutionDisplay {
 
 // ─── HELPERS ──────────────────────────────────────────────────
 const fmt = {
-  date: (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
-  time: (iso: string) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+  date: (iso: string) => new Date(iso).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+  time: (iso: string) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }),
   dur:  (s: number)   => s >= 3600 ? `${s/3600}j` : s >= 60 ? `${s/60}m` : `${s}d`,
   idr:  (n: number)   => `Rp ${Math.abs(n).toLocaleString('id-ID')}`,
+  idrK: (n: number)   => Math.abs(n) >= 1_000_000
+    ? `${(n/1_000_000).toFixed(1)}jt`
+    : `${(n/1_000).toFixed(0)}k`,
 };
 
 const transformOrder = (o: BinaryOrder): ExecutionDisplay => {
@@ -70,118 +77,161 @@ const transformOrder = (o: BinaryOrder): ExecutionDisplay => {
   else if (o.status === 'DRAW')   { result = 'draw'; status = 'completed'; }
   else if (o.status === 'ACTIVE') { status = 'active'; }
   else                            { status = 'pending'; }
-  return { id: o.id, executedAt: o.createdAt, trend, assetSymbol: o.assetSymbol, amount: o.amount, duration: o.duration, accountType: o.accountType, status, result, profit: o.profit };
+  return { id: o.id, executedAt: o.createdAt, trend, assetSymbol: o.assetSymbol,
+    amount: o.amount, duration: o.duration, accountType: o.accountType, status, result, profit: o.profit };
 };
 
 // ─── SKELETON ─────────────────────────────────────────────────
-const skeletonStyle = {
-  background: 'linear-gradient(90deg, #1a2420 25%, #22302a 50%, #1a2420 75%)',
+const skBase: React.CSSProperties = {
+  background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 75%)',
   backgroundSize: '200% 100%',
   animation: 'skeleton-pulse 1.6s ease infinite',
-} as const;
-
-const Sk = ({ w = '100%', h = 14, className = '' }: { w?: string | number; h?: number; className?: string }) => (
-  <div className={`rounded-md ${className}`} style={{ width: w, height: h, ...skeletonStyle }} />
+  borderRadius: 5,
+};
+const Sk = ({ w = '100%', h = 12 }: { w?: string | number; h?: number }) => (
+  <div style={{ width: w, height: h, ...skBase }} />
 );
 
-// ─── PILL ─────────────────────────────────────────────────────
-const Pill: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode; accent?: string }> = ({
-  active, onClick, children, accent = C.cyan,
-}) => (
+// ─── FILTER PILL ──────────────────────────────────────────────
+const Pill: React.FC<{
+  active: boolean; onClick: () => void; children: React.ReactNode; accent?: string;
+}> = ({ active, onClick, children, accent = C.cyan }) => (
   <button
     onClick={onClick}
-    className="px-3 py-[5px] text-[11px] font-semibold rounded-md cursor-pointer transition-all duration-150"
     style={{
-      background: active ? `${accent}18` : C.faint,
-      border: `1px solid ${active ? `${accent}40` : 'rgba(255,255,255,0.07)'}`,
-      color: active ? accent : 'rgba(255,255,255,0.3)',
-      letterSpacing: '0.05em',
+      padding: '4px 10px',
+      background: active ? `${accent}14` : 'transparent',
+      border: `1px solid ${active ? `${accent}35` : 'rgba(255,255,255,0.08)'}`,
+      borderRadius: 6,
+      color: active ? accent : C.muted,
+      fontSize: 11,
+      fontWeight: active ? 600 : 400,
+      letterSpacing: '0.04em',
+      cursor: 'pointer',
+      transition: 'all 0.15s ease',
+      whiteSpace: 'nowrap',
     }}
   >
     {children}
   </button>
 );
 
-// ─── STAT CARD ────────────────────────────────────────────────
-const StatCard = ({ label, value, sub, accent = C.text }: { label: string; value: string | number; sub?: string; accent?: string }) => (
-  <div className="rounded-lg p-3" style={cardStyle}>
-    <p className="text-[10px] font-medium uppercase tracking-widest mb-2" style={{ color: C.muted }}>{label}</p>
-    <p className="text-[20px] font-semibold leading-none" style={{ color: accent }}>{value}</p>
-    {sub && <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>{sub}</p>}
+// ─── STAT MINI ────────────────────────────────────────────────
+const StatMini = ({
+  label, value, accent = C.muted
+}: { label: string; value: string | number; accent?: string }) => (
+  <div
+    style={{
+      flex: 1,
+      padding: '10px 12px',
+      background: C.card,
+      border: `1px solid ${C.bdrLo}`,
+      borderRadius: 10,
+      minWidth: 0,
+    }}
+  >
+    <p style={{ fontSize: 10, color: C.muted, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+      {label}
+    </p>
+    <p style={{ fontSize: 18, fontWeight: 700, color: accent, lineHeight: 1 }}>
+      {value}
+    </p>
   </div>
 );
 
 // ─── EXECUTION ROW ────────────────────────────────────────────
 const ExecutionRow = ({ exec }: { exec: ExecutionDisplay }) => {
   const isBuy = exec.trend === 'buy';
-  const trendColor = isBuy ? C.cyan : C.coral;
-  const resultCfg: Record<string, { label: string; col: string }> = {
-    win:  { label: 'WIN',  col: C.cyan  },
-    loss: { label: 'LOSS', col: C.coral },
-    draw: { label: 'DRAW', col: 'rgba(255,255,255,0.4)' },
+  const trendCol = isBuy ? C.cyan : C.coral;
+  const resultMap = {
+    win:  { label: 'WIN',  bg: 'rgba(52,211,153,0.10)',  col: C.cyan,  bdr: 'rgba(52,211,153,0.22)' },
+    loss: { label: 'LOSS', bg: 'rgba(248,113,113,0.10)', col: C.coral, bdr: 'rgba(248,113,113,0.22)' },
+    draw: { label: 'DRAW', bg: 'rgba(255,255,255,0.05)', col: C.muted, bdr: 'rgba(255,255,255,0.10)' },
   };
-  const rc = exec.result ? resultCfg[exec.result] : null;
+  const rc = exec.result ? resultMap[exec.result] : null;
+  const profitPositive = exec.profit !== undefined && exec.profit > 0;
+  const profitNegative = exec.profit !== undefined && exec.profit < 0;
 
   return (
     <div
-      className="flex items-center gap-3 px-3.5 py-3 rounded-lg transition-colors duration-150"
-      style={cardStyle}
+      className="flex items-center gap-3 px-3.5 py-2.5"
+      style={ROW_STYLE}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.borderColor = C.bdr;
+        (e.currentTarget as HTMLDivElement).style.background = '#1e1e1e';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.borderColor = C.bdrLo;
+        (e.currentTarget as HTMLDivElement).style.background = C.card;
+      }}
     >
+      {/* Icon */}
       <div
-        className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
         style={{
-          background: isBuy ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
-          border: `1px solid ${isBuy ? 'rgba(52,211,153,0.18)' : 'rgba(248,113,113,0.18)'}`,
+          width: 32, height: 32, borderRadius: 8, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          background: isBuy ? 'rgba(52,211,153,0.07)' : 'rgba(248,113,113,0.07)',
         }}
       >
         {isBuy
-          ? <TrendUp size={14} weight="bold" style={{ color: C.cyan }} />
-          : <TrendDown size={14} weight="bold" style={{ color: C.coral }} />
-        }
+          ? <TrendUp  size={14} weight="bold" color={C.cyan} />
+          : <TrendDown size={14} weight="bold" color={C.coral} />}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[13px] font-semibold" style={{ color: C.text }}>{exec.assetSymbol}</span>
-          <span
-            className="text-[10px] font-semibold px-1.5 py-[2px] rounded"
-            style={{ color: trendColor, background: isBuy ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)' }}
-          >
+      {/* Main info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{exec.assetSymbol}</span>
+          <span style={{
+            fontSize: 9, fontWeight: 700, color: trendCol,
+            background: isBuy ? 'rgba(52,211,153,0.08)' : 'rgba(248,113,113,0.08)',
+            padding: '1px 5px', borderRadius: 4,
+            letterSpacing: '0.06em',
+          }}>
             {exec.trend.toUpperCase()}
           </span>
-          <span className="text-[10px] px-1.5 py-[2px] rounded" style={{ color: C.muted, background: C.faint }}>
+          <span style={{
+            fontSize: 9, color: 'rgba(255,255,255,0.25)',
+            background: 'rgba(255,255,255,0.04)',
+            padding: '1px 5px', borderRadius: 4,
+            textTransform: 'uppercase', letterSpacing: '0.04em',
+          }}>
             {exec.accountType}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5 text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
-          <Clock size={9} />
-          <span>{fmt.date(exec.executedAt)} · {fmt.time(exec.executedAt)}</span>
-          <span className="hidden sm:inline">· {fmt.dur(exec.duration)} · {fmt.idr(exec.amount)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+          <Clock size={9} color="rgba(255,255,255,0.18)" />
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)' }}>
+            {fmt.date(exec.executedAt)} · {fmt.time(exec.executedAt)}
+            <span className="hidden sm:inline"> · {fmt.dur(exec.duration)} · {fmt.idr(exec.amount)}</span>
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-col items-end gap-1 shrink-0">
+      {/* Right side */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
         {rc && (
-          <span
-            className="text-[10px] font-semibold px-2 py-[2px] rounded"
-            style={{ color: rc.col, background: `${rc.col}12`, border: `1px solid ${rc.col}25` }}
-          >
+          <span style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+            color: rc.col, background: rc.bg, border: `1px solid ${rc.bdr}`,
+            padding: '2px 7px', borderRadius: 5,
+          }}>
             {rc.label}
           </span>
         )}
         {exec.profit !== undefined && (
-          <span
-            className="text-[12px] font-semibold"
-            style={{ color: exec.profit > 0 ? C.cyan : exec.profit < 0 ? C.coral : C.muted }}
-          >
-            {exec.profit >= 0 ? '+' : '-'}{fmt.idr(exec.profit)}
+          <span style={{
+            fontSize: 12, fontWeight: 600,
+            color: profitPositive ? C.cyan : profitNegative ? C.coral : C.muted,
+          }}>
+            {exec.profit >= 0 ? '+' : '−'}{fmt.idr(exec.profit)}
           </span>
         )}
         {!exec.result && exec.status === 'active' && (
-          <span className="text-[10px]" style={{ color: 'rgba(96,165,250,0.6)' }}>Active</span>
+          <span style={{ fontSize: 10, color: 'rgba(96,165,250,0.55)' }}>Active</span>
         )}
         {!exec.result && exec.status === 'pending' && (
-          <span className="text-[10px]" style={{ color: 'rgba(252,211,77,0.6)' }}>Pending</span>
+          <span style={{ fontSize: 10, color: 'rgba(251,191,36,0.55)' }}>Pending</span>
         )}
       </div>
     </div>
@@ -204,18 +254,15 @@ export default function HistoryPage() {
   const [page,          setPage]          = useState(1);
   const [totalPages,    setTotalPages]    = useState(1);
   const [totalOrders,   setTotalOrders]   = useState(0);
+  const [searchFocused, setSearchFocused] = useState(false);
   const PER_PAGE = 25;
 
-  // Prevent re-fetch on tab switch — only load once on first mount
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (!isAuthenticated) { router.push('/'); return; }
-    if (!hasFetchedRef.current) {
-      hasFetchedRef.current = true;
-      load();
-    }
+    if (!hasFetchedRef.current) { hasFetchedRef.current = true; load(); }
   }, [hasHydrated, isAuthenticated]); // eslint-disable-line
 
   useEffect(() => {
@@ -275,184 +322,275 @@ export default function HistoryPage() {
     return [page-2, page-1, page, page+1, page+2];
   };
 
+  const hasActiveFilters = filterResult !== 'all' || filterAccount !== 'all' || filterTrend !== 'all' || search !== '';
+
+  const clearFilters = () => {
+    setFilterResult('all'); setFilterAccount('all');
+    setFilterTrend('all'); setSearch('');
+  };
+
+  // ── Loading gate ──────────────────────────────────────────────
   if (!hasHydrated) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: C.bg }}>
-      <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(52,211,153,0.2)', borderTopColor: C.cyan }} />
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
+      <div style={{
+        width: 22, height: 22, borderRadius: '50%',
+        border: `2px solid rgba(52,211,153,0.15)`,
+        borderTopColor: C.cyan,
+        animation: 'spin 0.8s linear infinite',
+      }} />
     </div>
   );
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: C.bg }}>
+    <div style={{ minHeight: '100vh', paddingBottom: 88, background: C.bg }}>
 
-      {/* Sticky header */}
-      <div
-        className="sticky top-0 z-40"
-        style={{
-          background: 'rgba(5,8,7,0.94)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid rgba(52,211,153,0.1)',
-        }}
-      >
-        <div className="max-w-[720px] mx-auto px-4 py-3.5 flex items-center justify-between">
+      {/* ── Sticky header ─────────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        background: 'rgba(15,15,15,0.92)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h1 className="text-sm font-bold tracking-wide" style={{ color: C.text }}>Riwayat</h1>
-            <p className="text-[10px] mt-0.5" style={{ color: C.muted }}>{totalOrders.toLocaleString()} transaksi</p>
+            <h1 style={{ fontSize: 14, fontWeight: 700, color: C.text, letterSpacing: '0.02em' }}>History</h1>
+            <p style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
+              {isLoading ? '—' : `${totalOrders.toLocaleString()} transaksi`}
+            </p>
           </div>
+
           <button
             onClick={handleRefresh}
             disabled={isRefreshing || isLoading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-40"
             style={{
-              background: C.faint,
-              border: '1px solid rgba(52,211,153,0.15)',
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 7,
               color: isRefreshing ? C.cyan : C.muted,
+              fontSize: 11, cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              opacity: (isRefreshing || isLoading) ? 0.4 : 1,
             }}
           >
-            <ArrowClockwise size={12} style={{ animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            <ArrowClockwise
+              size={12}
+              style={{ animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none' }}
+            />
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="max-w-[720px] mx-auto px-4 pt-4 flex flex-col gap-3">
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 16px 0' }}>
 
-        {/* Error */}
+        {/* ── Error ──────────────────────────────────────────── */}
         {error && (
-          <div
-            className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-xs"
-            style={{ background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.18)', borderLeft: `2px solid ${C.coral}`, color: '#fca5a5' }}
-          >
-            <WarningCircle size={13} className="shrink-0" /> {error}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+            background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)',
+            borderLeft: `2px solid ${C.coral}`,
+            borderRadius: 9, marginBottom: 12,
+            fontSize: 12, color: '#fca5a5',
+          }}>
+            <WarningCircle size={13} style={{ flexShrink: 0 }} />
+            {error}
           </div>
         )}
 
-        {/* Stats */}
+        {/* ── Stats row ──────────────────────────────────────── */}
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="rounded-lg p-3" style={cardStyle}>
-                <Sk w="60%" h={10} className="mb-2" />
-                <Sk w="70%" h={22} className="mb-1.5" />
-                <Sk w="40%" h={9} />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{ flex: 1, padding: '10px 12px', background: C.card, border: `1px solid ${C.bdrLo}`, borderRadius: 10 }}>
+                <Sk w="55%" h={9} />
+                <div style={{ marginTop: 6 }}><Sk w="70%" h={20} /></div>
               </div>
             ))}
           </div>
         ) : allExecs.length > 0 && (
-          <div className="grid grid-cols-4 gap-2">
-            <StatCard label="Eksekusi" value={stats.total.toLocaleString()} />
-            <StatCard label="Win Rate" value={`${winRate.toFixed(1)}%`} sub={`${stats.wins}W · ${stats.losses}L`} accent={winRate >= 50 ? C.cyan : C.coral} />
-            <StatCard label="Profit" value={`${stats.profit >= 0 ? '+' : ''}${(stats.profit/1000).toFixed(0)}k`} accent={stats.profit >= 0 ? C.cyan : C.coral} />
-            <StatCard label="Menang" value={stats.wins} sub={`dari ${stats.total}`} accent={C.cyan} />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <StatMini label="Total" value={stats.total} />
+            <StatMini
+              label="Win Rate"
+              value={`${winRate.toFixed(0)}%`}
+              accent={winRate >= 50 ? C.cyan : C.coral}
+            />
+            <StatMini
+              label="Profit"
+              value={(stats.profit >= 0 ? '+' : '') + fmt.idrK(stats.profit)}
+              accent={stats.profit >= 0 ? C.cyan : C.coral}
+            />
+            <StatMini label="Menang" value={stats.wins} accent={C.cyan} />
           </div>
         )}
 
-        {/* Filters */}
-        <div className="rounded-lg p-3.5 flex flex-col gap-3" style={cardStyle}>
-          {/* Search */}
-          <div className="relative">
-            <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.muted }} />
-            <input
-              type="text"
-              placeholder="Cari simbol aset…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 rounded-md text-[12px] outline-none transition-colors"
+        {/* ── Search ─────────────────────────────────────────── */}
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <MagnifyingGlass
+            size={13}
+            style={{
+              position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)',
+              color: searchFocused ? C.cyan : C.muted,
+              transition: 'color 0.15s ease',
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Cari aset…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            style={{
+              width: '100%', padding: '9px 11px 9px 30px',
+              background: C.card,
+              border: `1px solid ${searchFocused ? C.bdr : C.bdrLo}`,
+              borderRadius: 9,
+              color: C.text, fontSize: 12,
+              outline: 'none',
+              transition: 'border-color 0.15s ease',
+              fontFamily: 'inherit',
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
               style={{
-                background: 'rgba(0,0,0,0.4)',
-                border: '1px solid rgba(52,211,153,0.15)',
-                color: C.text,
+                position: 'absolute', right: 9, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: C.muted, display: 'flex', alignItems: 'center',
               }}
-              onFocus={e => e.target.style.borderColor = 'rgba(52,211,153,0.4)'}
-              onBlur={e  => e.target.style.borderColor = 'rgba(52,211,153,0.15)'}
-            />
-          </div>
-
-          {/* Filter pills */}
-          <div className="flex flex-wrap gap-1.5">
-            <Pill active={filterResult==='all'}  onClick={()=>setFilterResult('all')}>Semua</Pill>
-            <Pill active={filterResult==='win'}  onClick={()=>setFilterResult('win')}  accent={C.cyan}>Win</Pill>
-            <Pill active={filterResult==='loss'} onClick={()=>setFilterResult('loss')} accent={C.coral}>Loss</Pill>
-            <Pill active={filterResult==='draw'} onClick={()=>setFilterResult('draw')}>Draw</Pill>
-
-            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(52,211,153,0.12)' }} />
-
-            <Pill active={filterTrend==='all'}  onClick={()=>setFilterTrend('all')}>All</Pill>
-            <Pill active={filterTrend==='buy'}  onClick={()=>setFilterTrend('buy')}  accent={C.cyan}>Buy</Pill>
-            <Pill active={filterTrend==='sell'} onClick={()=>setFilterTrend('sell')} accent={C.coral}>Sell</Pill>
-
-            <span className="self-stretch w-px mx-0.5" style={{ background: 'rgba(52,211,153,0.12)' }} />
-
-            <Pill active={filterAccount==='all'}  onClick={()=>setFilterAccount('all')}>Semua</Pill>
-            <Pill active={filterAccount==='demo'} onClick={()=>setFilterAccount('demo')}>Demo</Pill>
-            <Pill active={filterAccount==='real'} onClick={()=>setFilterAccount('real')}>Real</Pill>
-          </div>
-
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-            {allExecs.length.toLocaleString()} ditampilkan
-          </p>
+            >
+              <X size={11} />
+            </button>
+          )}
         </div>
 
-        {/* List */}
+        {/* ── Filter pills ───────────────────────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
+          {/* Result */}
+          <Pill active={filterResult==='all'}  onClick={()=>setFilterResult('all')}>Semua</Pill>
+          <Pill active={filterResult==='win'}  onClick={()=>setFilterResult('win')}  accent={C.cyan}>Win</Pill>
+          <Pill active={filterResult==='loss'} onClick={()=>setFilterResult('loss')} accent={C.coral}>Loss</Pill>
+          <Pill active={filterResult==='draw'} onClick={()=>setFilterResult('draw')}>Draw</Pill>
+
+          <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.07)', margin: '0 2px' }} />
+
+          {/* Trend */}
+          <Pill active={filterTrend==='buy'}  onClick={()=>setFilterTrend(filterTrend==='buy'?'all':'buy')}  accent={C.cyan}>Buy</Pill>
+          <Pill active={filterTrend==='sell'} onClick={()=>setFilterTrend(filterTrend==='sell'?'all':'sell')} accent={C.coral}>Sell</Pill>
+
+          <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.07)', margin: '0 2px' }} />
+
+          {/* Account */}
+          <Pill active={filterAccount==='demo'} onClick={()=>setFilterAccount(filterAccount==='demo'?'all':'demo')}>Demo</Pill>
+          <Pill active={filterAccount==='real'} onClick={()=>setFilterAccount(filterAccount==='real'?'all':'real')}>Real</Pill>
+
+          {/* Clear all */}
+          {hasActiveFilters && (
+            <>
+              <span style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.07)', margin: '0 2px' }} />
+              <button
+                onClick={clearFilters}
+                style={{
+                  padding: '4px 10px', background: 'transparent',
+                  border: '1px solid rgba(248,113,113,0.2)',
+                  borderRadius: 6, color: C.coral, fontSize: 11, cursor: 'pointer',
+                  letterSpacing: '0.04em',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Reset
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* ── Count label ────────────────────────────────────── */}
+        {!isLoading && allExecs.length > 0 && (
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)', marginBottom: 8, letterSpacing: '0.04em' }}>
+            {allExecs.length.toLocaleString()} HASIL
+          </p>
+        )}
+
+        {/* ── List ───────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="flex flex-col gap-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 px-3.5 py-3 rounded-lg"
-                style={{ ...cardStyle, opacity: 1 - i * 0.1 }}
+                style={{ ...ROW_STYLE, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12, opacity: 1 - i * 0.1 }}
               >
-                <div className="w-8 h-8 rounded-md shrink-0" style={skeletonStyle} />
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <div className="flex gap-1.5">
-                    <Sk w={80} h={12} />
-                    <Sk w={36} h={12} />
-                    <Sk w={36} h={12} />
+                <div style={{ width: 32, height: 32, borderRadius: 8, ...skBase, flexShrink: 0 }} />
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Sk w={70} h={11} /><Sk w={32} h={11} /><Sk w={32} h={11} />
                   </div>
-                  <Sk w="55%" h={10} />
+                  <Sk w="48%" h={9} />
                 </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <Sk w={40} h={18} />
-                  <Sk w={60} h={13} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+                  <Sk w={36} h={16} /><Sk w={55} h={11} />
                 </div>
               </div>
             ))}
           </div>
         ) : allExecs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-2">
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>Tidak ada riwayat</p>
-            <p className="text-[11px] text-center" style={{ color: 'rgba(255,255,255,0.12)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', gap: 6 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.18)' }}>Tidak ada riwayat</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.1)', textAlign: 'center' }}>
               Tidak ada data yang cocok dengan filter yang dipilih.
             </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                style={{
+                  marginTop: 8, padding: '6px 14px',
+                  background: 'transparent', border: `1px solid ${C.bdr}`,
+                  borderRadius: 7, color: C.cyan, fontSize: 12, cursor: 'pointer',
+                }}
+              >
+                Reset filter
+              </button>
+            )}
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {allExecs.map(exec => <ExecutionRow key={exec.id} exec={exec} />)}
           </div>
         )}
 
-        {/* Pagination */}
+        {/* ── Pagination ─────────────────────────────────────── */}
         {totalPages > 1 && !isLoading && (
-          <div className="flex items-center justify-center gap-1.5 pt-1">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, paddingTop: 16 }}>
             <button
               onClick={() => setPage(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="w-8 h-8 flex items-center justify-center rounded-md cursor-pointer disabled:opacity-25 transition-colors"
-              style={{ background: C.faint, border: `1px solid ${C.bdr}`, color: C.muted }}
+              style={{
+                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: `1px solid ${C.bdrLo}`,
+                borderRadius: 7, color: C.muted, cursor: 'pointer',
+                opacity: page === 1 ? 0.3 : 1, transition: 'all 0.15s ease',
+              }}
             >
-              <CaretLeft size={13} />
+              <CaretLeft size={12} />
             </button>
 
             {pageNums().map(n => (
               <button
                 key={n}
                 onClick={() => setPage(n)}
-                className="w-8 h-8 rounded-md text-xs font-medium cursor-pointer transition-all"
                 style={{
-                  background: page === n ? 'rgba(52,211,153,0.1)' : C.faint,
-                  border: `1px solid ${page === n ? 'rgba(52,211,153,0.35)' : C.bdr}`,
+                  width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: page === n ? 'rgba(52,211,153,0.10)' : 'transparent',
+                  border: `1px solid ${page === n ? 'rgba(52,211,153,0.30)' : C.bdrLo}`,
+                  borderRadius: 7,
                   color: page === n ? C.cyan : C.muted,
+                  fontSize: 12, fontWeight: page === n ? 600 : 400,
+                  cursor: 'pointer', transition: 'all 0.15s ease',
                 }}
               >
                 {n}
@@ -462,13 +600,18 @@ export default function HistoryPage() {
             <button
               onClick={() => setPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="w-8 h-8 flex items-center justify-center rounded-md cursor-pointer disabled:opacity-25 transition-colors"
-              style={{ background: C.faint, border: `1px solid ${C.bdr}`, color: C.muted }}
+              style={{
+                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: `1px solid ${C.bdrLo}`,
+                borderRadius: 7, color: C.muted, cursor: 'pointer',
+                opacity: page === totalPages ? 0.3 : 1, transition: 'all 0.15s ease',
+              }}
             >
-              <CaretRight size={13} />
+              <CaretRight size={12} />
             </button>
           </div>
         )}
+
       </div>
 
       <BottomNav />
